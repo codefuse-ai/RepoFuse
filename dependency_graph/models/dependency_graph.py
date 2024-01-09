@@ -1,0 +1,112 @@
+import enum
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Self, Optional
+
+import networkx
+
+
+class EdgeRelation(enum.Enum):
+    """The relation between two nodes"""
+
+    # (x, y, z) represents (Relationship Category ID, Category Internal ID, Relationship Direction)
+    # 1. Syntax relations
+    ParentOf = (1, 0, 0)
+    ChildOf = (1, 0, 1)
+    Construct = (1, 1, 0)
+    ConstructedBy = (1, 1, 1)
+    # 2. Import relations
+    Imports = (2, 0, 0)
+    ImportedBy = (2, 0, 1)
+    # 3. Inheritance relations
+    BaseClassOf = (3, 0, 0)
+    DerivedClassOf = (3, 0, 1)
+    # 4. Method override relations
+    Overrides = (4, 0, 0)
+    OverriddenBy = (4, 0, 1)
+    # 5. Method call relations
+    Calls = (5, 0, 0)
+    CalledBy = (5, 0, 1)
+    # 6. Object instantiation relations
+    Instantiates = (6, 0, 0)
+    InstantiatedBy = (6, 0, 1)
+    # 7. Field use relations
+    Uses = (7, 0, 0)
+    UsedBy = (7, 0, 1)
+
+    def __str__(self):
+        return self.name
+
+    def get_inverse_kind(self) -> Self:
+        new_value = [*self.value]
+        new_value[2] = 1 - new_value[2]
+        return EdgeRelation(tuple(new_value))
+
+    def is_inverse_relationship(self, other) -> bool:
+        return (
+            self.value[0] == other.value[0]
+            and self.value[1] == other.value[1]
+            and self.value[2] != other.value[2]
+        )
+
+
+@dataclass
+class Location:
+    def __str__(self) -> str:
+        return f"{self.file_path}:{self.start_line}:{self.start_column}-{self.end_line}:{self.end_column}"
+
+    def __hash__(self) -> int:
+        return hash(self.__str__())
+
+    file_path: Path
+    """The file path"""
+    start_line: int
+    """The start line number, 1-based"""
+    start_column: int
+    """The start column number, 1-based"""
+    end_line: int
+    """The end line number, 1-based"""
+    end_column: int
+    """The end column number, 1-based"""
+
+
+@dataclass
+class Node:
+    def __str__(self) -> str:
+        return f"{self.name}@{self.location}"
+
+    def __hash__(self) -> int:
+        return hash(self.__str__())
+
+    name: str
+    """The name of the node"""
+    location: Location
+    """The location of the node"""
+
+
+@dataclass
+class Edge:
+    def __str__(self) -> str:
+        return f"{self.relation}@{self.location}"
+
+    def __hash__(self) -> int:
+        return hash(self.__str__())
+
+    location: Optional[Location]
+    """The location of the edge"""
+    relation: EdgeRelation
+    """The relation between two nodes"""
+
+
+class DependencyGraph:
+    def __init__(self):
+        self.graph = networkx.DiGraph()
+
+    def add_node(self, node: Node):
+        self.graph.add_node(node)
+
+    def add_relational_edge(self, n1, n2, r1: Edge, r2: Edge):
+        self.graph.add_node(n1)
+        self.graph.add_node(n2)
+        self.graph.add_edge(n1, n2, kind=r1)
+        self.graph.add_edge(n2, n1, kind=r2)
