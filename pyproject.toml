@@ -7,6 +7,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+gitpython = "^3.1.40"
+networkx = "^3.2.1"
+jedi = "^0.19.1"
+pyvis = "^0.3.2"
 
 [[tool.poetry.source]]
 name = "antgroup-pypi"

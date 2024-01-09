@@ -1,0 +1,46 @@
+import networkx as nx
+from pyvis.network import Network
+
+from dependency_graph.graph_generator import DependencyGraphGeneratorType
+from dependency_graph.graph_generator.jedi_generator import JediDependencyGraphGenerator
+from dependency_graph.graph_generator.tree_sitter_generator import (
+    TreeSitterDependencyGraphGenerator,
+)
+from dependency_graph.models import PathLike
+from dependency_graph.models.dependency_graph import DependencyGraph
+from dependency_graph.models.language import Language
+from dependency_graph.models.repository import Repository
+
+
+def construct_dependency_graph(
+    repo: Repository, dependency_graph_generator: DependencyGraphGeneratorType
+) -> DependencyGraph:
+    language = repo.language
+    if dependency_graph_generator == DependencyGraphGeneratorType.JEDI:
+        return JediDependencyGraphGenerator(language).generate(repo)
+    elif dependency_graph_generator == DependencyGraphGeneratorType.TREE_SITTER:
+        return TreeSitterDependencyGraphGenerator(language).generate(repo)
+
+
+def dump_graph_as_edgelist(graph: DependencyGraph) -> list:
+    G = nx.Graph()
+    for u, v, data in graph.graph.edges(data=True):
+        if G.has_edge(u, v):
+            G[str(u)][str(v)]["kind"] += "/" + str(data["kind"])
+        else:
+            G.add_edge(str(u), str(v), kind=str(data["kind"]))
+
+    return list(nx.to_edgelist(G))
+
+
+def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> None:
+    G = nx.Graph()
+    for u, v, data in graph.graph.edges(data=True):
+        if G.has_edge(u, v):
+            G[str(u)][str(v)]["kind"] += "/" + str(data["kind"])
+        else:
+            G.add_edge(str(u), str(v), kind=str(data["kind"]))
+
+    nt = Network()
+    nt.from_nx(G)
+    nt.save_graph(str(filename))
