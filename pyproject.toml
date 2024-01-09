@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "dependency-graph"
+version = "0.0.1"
+description = ""
+authors = ["友恒 <zhengxunjin.zx@antgroup.com>", "明牧 <liangming.liang@antgroup.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[[tool.poetry.source]]
+name = "antgroup-pypi"
+url = "https://artifacts.antgroup-inc.cn/simple"
+priority = "default"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+black = "^23.12.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
