@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import networkx as nx
 from pyvis.network import Network
 
@@ -25,10 +27,11 @@ def construct_dependency_graph(
 def dump_graph_as_edgelist(graph: DependencyGraph) -> list:
     G = nx.Graph()
     for u, v, data in graph.graph.edges(data=True):
-        if G.has_edge(u, v):
-            G[str(u)][str(v)]["kind"] += "/" + str(data["kind"])
+        str_u, str_v = str(u), str(v)
+        if G.has_edge(str_v, str_u):
+            G[str_u][str_v]["label"] += "/" + str(data["kind"])
         else:
-            G.add_edge(str(u), str(v), kind=str(data["kind"]))
+            G.add_edge(str_u, str_v, label=str(data["kind"]))
 
     return list(nx.to_edgelist(G))
 
@@ -36,11 +39,32 @@ def dump_graph_as_edgelist(graph: DependencyGraph) -> list:
 def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> None:
     G = nx.Graph()
     for u, v, data in graph.graph.edges(data=True):
-        if G.has_edge(u, v):
-            G[str(u)][str(v)]["kind"] += "/" + str(data["kind"])
+        str_u, str_v = str(u), str(v)
+        if G.has_edge(str_v, str_u):
+            G[str_u][str_v]["label"] += "/" + str(data["kind"])
         else:
-            G.add_edge(str(u), str(v), kind=str(data["kind"]))
+            G.add_edge(str_u, str_v, label=str(data["kind"]))
 
-    nt = Network()
+    nt = Network(height="1000px", width="100%", notebook=False, select_menu=True)
     nt.from_nx(G)
+    nt.set_options(
+        dedent(
+            """
+            const options = {
+              "edges": {
+                "arrows": {
+                  "to": {
+                    "enabled": true
+                  }
+                },
+                "layout": {
+                  "hierarchical": {
+                    "enabled": true
+                  }
+                }
+              }
+            }
+            """
+        )
+    )
     nt.save_graph(str(filename))
