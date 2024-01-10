@@ -8,7 +8,11 @@ from dependency_graph import (
     dump_graph_as_pyvis_graph,
 )
 from dependency_graph.graph_generator import DependencyGraphGeneratorType
-from dependency_graph.models.repository import Repository, logger
+from dependency_graph.models.repository import Repository
+from dependency_graph.utils.log import setup_logger
+
+# Initialize logging
+logger = setup_logger()
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
