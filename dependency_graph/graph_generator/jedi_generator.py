@@ -10,7 +10,6 @@ from dependency_graph.models.dependency_graph import (
     Edge,
     NodeType,
 )
-from dependency_graph.models.file_node import FileNode
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 
@@ -96,7 +95,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             D.add_node(_from)
             D.add_node(_to)
 
-            # import relation's edge would not have location
+            # parent relation's edge would not have location
             D.add_relational_edge(
                 _from,
                 _to,
@@ -119,7 +118,81 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         all_names: list[Name],
         D: DependencyGraph,
     ):
-        pass
+        """
+        TODO should we add import relation for the following case?
+        def test():
+            import os
+            os.chdir(os.path.dirname(__file__))
+        """
+        for name in all_names:
+            definitions = name.get_signatures() or name.goto(
+                follow_imports=True, follow_builtin_imports=False
+            )
+            if not definitions:
+                continue
+
+            definition = definitions[0]
+
+            # Skip instantiation, this should be dealt with in the instantiate relation
+            if definition.type == "instance":
+                continue
+
+            # Skip definition that are in the same file
+            if definition.module_path == script.path:
+                continue
+
+            from_type = NodeType.MODULE.value
+            from_name = script.path.name
+
+            # a Module doesn't have a location
+            _from = Node(
+                type=from_type,
+                name=from_name,
+                location=Location(
+                    file_path=script.path,
+                ),
+            )
+
+            to_type = NodeType(definition.type).value
+            to_name = definition.name
+
+            # Get into its class definition body and get its location
+            if definition._name.tree_name:
+                (start_line, start_column), (end_line, end_column) = (
+                    definition._name.tree_name.start_pos,
+                    definition._name.tree_name.end_pos,
+                )
+            else:
+                start_line = definition.line
+                start_column = definition.column
+                end_line = None
+                end_column = None
+
+            start_column += 1
+            if end_column:
+                end_column += 1
+            _to = Node(
+                type=to_type,
+                name=to_name,
+                location=Location(
+                    file_path=definition.module_path,
+                    start_line=start_line,
+                    start_column=start_column,
+                    end_line=end_line,
+                    end_column=end_column,
+                ),
+            )
+
+            D.add_node(_from)
+            D.add_node(_to)
+
+            # import relation's edge would not have location
+            D.add_relational_edge(
+                _from,
+                _to,
+                Edge(location=None, relation=EdgeRelation.Imports),
+                Edge(location=None, relation=EdgeRelation.ImportedBy),
+            )
 
     def _extract_call_relation(
         self,
