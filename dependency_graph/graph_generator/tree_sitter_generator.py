@@ -13,4 +13,4 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         super().__init__(language)
 
     def generate(self, repo: Repository) -> DependencyGraph:
-        raise NotImplementedError
+        raise NotImplementedError()

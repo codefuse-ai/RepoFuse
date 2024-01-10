@@ -16,7 +16,7 @@ class DependencyGraphGeneratorType(str, enum.Enum):
 
 
 class BaseDependencyGraphGenerator(ABC):
-    supported_languages: tuple[Language] = []
+    supported_languages: tuple[Language] = ()
 
     def __init__(self, language: Language):
         if language not in self.supported_languages:
