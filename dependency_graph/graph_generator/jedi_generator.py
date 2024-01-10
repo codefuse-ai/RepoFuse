@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import jedi
 from jedi.api.classes import Name
 
@@ -19,6 +21,71 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
     def __init__(self, language: Language = Language.Python):
         super().__init__(language)
+
+    # New helper function for creating nodes
+    def _update_graph(
+        self,
+        D: DependencyGraph,
+        from_type: NodeType,
+        from_name: str,
+        from_path: Path,
+        from_start_pos: tuple[int, int] | None,
+        from_end_pos: tuple[int, int] | None,
+        to_type: NodeType,
+        to_name: str,
+        to_path: Path,
+        to_start_pos: tuple[int, int] | None,
+        to_end_pos: tuple[int, int] | None,
+        edge_relation: EdgeRelation,
+        inverse_edge_relation: EdgeRelation,
+        edge_location: Location,
+    ):
+        from_location_params = {"file_path": from_path}
+        if from_start_pos:
+            from_location_params.update(
+                start_line=from_start_pos[0],
+                start_column=from_start_pos[1] + 1,  # Convert to 1-based indexing
+            )
+
+        if from_end_pos:
+            from_location_params.update(
+                end_line=from_end_pos[0],
+                end_column=from_end_pos[1] + 1,  # Convert to 1-based indexing
+            )
+
+        _from = Node(
+            type=from_type,
+            name=from_name,
+            location=Location(**from_location_params),
+        )
+
+        to_location_params = {"file_path": to_path}
+        if to_start_pos:
+            to_location_params.update(
+                start_line=to_start_pos[0],
+                start_column=to_start_pos[1] + 1,  # Convert to 1-based indexing
+            )
+
+        if to_end_pos:
+            to_location_params.update(
+                end_line=to_end_pos[0],
+                end_column=to_end_pos[1] + 1,  # Convert to 1-based indexing
+            )
+
+        _to = Node(
+            type=to_type,
+            name=to_name,
+            location=Location(**to_location_params),
+        )
+
+        D.add_node(_from)
+        D.add_node(_to)
+        D.add_relational_edge(
+            _from,
+            _to,
+            Edge(relation=edge_relation, location=edge_location),
+            Edge(relation=inverse_edge_relation, location=edge_location),
+        )
 
     def _extract_parent_relation(
         self,
@@ -51,56 +118,46 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     continue
 
             if root_node is None:
+                # a Module doesn't have a location
                 from_type = NodeType.MODULE.value
                 from_name = script.path.name
+                from_path = script.path
+                from_start_pos = None
+                from_end_pos = None
             else:
                 from_type = NodeType.CLASS.value
                 from_name = root_node.name
-
-            # a Module doesn't have a location
-            _from = Node(
-                type=from_type,
-                name=from_name,
-                location=Location(
-                    file_path=script.path,
-                ),
-            )
+                from_path = root_node.module_path
+                from_start_pos = root_node._name.tree_name.parent.start_pos
+                from_end_pos = root_node._name.tree_name.parent.end_pos
 
             to_type = NodeType(name.type).value
             to_name = name.name
+            to_path = name.module_path
             if name.type == "function" and root_node:
                 to_type = NodeType.METHOD.value
                 to_name = f"{root_node.name}.{name.name}"
 
             # Get into its class definition body and get its location
-            (start_line, start_column), (end_line, end_column) = (
-                name._name.tree_name.parent.start_pos,
-                name._name.tree_name.parent.end_pos,
-            )
+            to_start_pos = name._name.tree_name.parent.start_pos
+            to_end_pos = name._name.tree_name.parent.end_pos
 
-            start_column += 1
-            end_column += 1
-            _to = Node(
-                type=to_type,
-                name=to_name,
-                location=Location(
-                    file_path=name.module_path,
-                    start_line=start_line,
-                    start_column=start_column,
-                    end_line=end_line,
-                    end_column=end_column,
-                ),
-            )
-
-            D.add_node(_from)
-            D.add_node(_to)
-
-            # parent relation's edge would not have location
-            D.add_relational_edge(
-                _from,
-                _to,
-                Edge(location=None, relation=EdgeRelation.ParentOf),
-                Edge(location=None, relation=EdgeRelation.ChildOf),
+            # Use the helper function to update the graph
+            self._update_graph(
+                D=D,
+                from_type=from_type,
+                from_name=from_name,
+                from_path=from_path,
+                from_start_pos=from_start_pos,  # Modules do not have a start or end position
+                from_end_pos=from_end_pos,
+                to_type=to_type,
+                to_name=to_name,
+                to_path=to_path,
+                to_start_pos=to_start_pos,
+                to_end_pos=to_end_pos,
+                edge_relation=EdgeRelation.ParentOf,
+                inverse_edge_relation=EdgeRelation.ChildOf,
+                edge_location=None,
             )
 
             # Get method definition in class
@@ -143,55 +200,35 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
             from_type = NodeType.MODULE.value
             from_name = script.path.name
-
-            # a Module doesn't have a location
-            _from = Node(
-                type=from_type,
-                name=from_name,
-                location=Location(
-                    file_path=script.path,
-                ),
-            )
-
+            from_path = script.path
             to_type = NodeType(definition.type).value
             to_name = definition.name
+            to_path = definition.module_path
 
-            # Get into its class definition body and get its location
+            # Determine positions
             if definition._name.tree_name:
-                (start_line, start_column), (end_line, end_column) = (
-                    definition._name.tree_name.start_pos,
-                    definition._name.tree_name.end_pos,
-                )
+                to_start_pos = definition._name.tree_name.start_pos
+                to_end_pos = definition._name.tree_name.end_pos
             else:
-                start_line = definition.line
-                start_column = definition.column
-                end_line = None
-                end_column = None
+                to_start_pos = (definition.line, definition.column)
+                to_end_pos = None
 
-            start_column += 1
-            if end_column:
-                end_column += 1
-            _to = Node(
-                type=to_type,
-                name=to_name,
-                location=Location(
-                    file_path=definition.module_path,
-                    start_line=start_line,
-                    start_column=start_column,
-                    end_line=end_line,
-                    end_column=end_column,
-                ),
-            )
-
-            D.add_node(_from)
-            D.add_node(_to)
-
-            # import relation's edge would not have location
-            D.add_relational_edge(
-                _from,
-                _to,
-                Edge(location=None, relation=EdgeRelation.Imports),
-                Edge(location=None, relation=EdgeRelation.ImportedBy),
+            # Use the helper function to update the graph
+            self._update_graph(
+                D=D,
+                from_type=from_type,
+                from_name=from_name,
+                from_path=from_path,
+                from_start_pos=None,
+                from_end_pos=None,
+                to_type=to_type,
+                to_name=to_name,
+                to_path=to_path,
+                to_start_pos=to_start_pos,
+                to_end_pos=to_end_pos,
+                edge_relation=EdgeRelation.Imports,
+                inverse_edge_relation=EdgeRelation.ImportedBy,
+                edge_location=None,
             )
 
     def _extract_call_relation(

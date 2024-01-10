@@ -126,10 +126,10 @@ class Edge:
     def __hash__(self) -> int:
         return hash(self.__str__())
 
-    location: Optional[Location]
-    """The location of the edge"""
     relation: EdgeRelation
     """The relation between two nodes"""
+    location: Optional[Location] = None
+    """The location of the edge"""
 
 
 class DependencyGraph:
