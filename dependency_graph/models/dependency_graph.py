@@ -5,6 +5,9 @@ from typing import Self, Optional
 
 import networkx
 
+from dependency_graph.models import PathLike
+from dependency_graph.utils.text import slice_text
+
 
 class EdgeRelation(enum.Enum):
     """The relation between two nodes"""
@@ -61,6 +64,11 @@ class Location:
     def __hash__(self) -> int:
         return hash(self.__str__())
 
+    def get_text(self) -> str:
+        # TODO should leverage the FileNode.content
+        content = self.file_path.read_text()
+        return slice_text(content, self.start_line, self.end_line, self.start_column, self.end_column)
+
     file_path: Path
     """The file path"""
     start_line: int
@@ -114,7 +122,7 @@ class Edge:
 
 
 class DependencyGraph:
-    def __init__(self, repo_path) -> None:
+    def __init__(self, repo_path: PathLike) -> None:
         self.graph = networkx.DiGraph()
         self.repo_path = Path(repo_path)
 
