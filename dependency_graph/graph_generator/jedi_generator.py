@@ -22,20 +22,19 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         super().__init__(language)
 
     def _extract_parent_relation(
-        self, script: jedi.Script, project: jedi.Project, D: DependencyGraph
-    ) -> DependencyGraph:
-        pass
-
-    def _extract_import_relation(
-        self, script: jedi.Script, project: jedi.Project, D: DependencyGraph
-    ) -> DependencyGraph:
-        all_scopes_names = script.get_names(
-            all_scopes=True, definitions=False, references=True
-        )
-
-        for name in all_scopes_names:  # type: Name
-            # Skip self
-            if name.name == "self":
+        self,
+        script: jedi.Script,
+        project: jedi.Project,
+        all_names: list[Name],
+        D: DependencyGraph,
+        root_node: Name = None,
+    ):
+        for name in all_names:
+            # TODO missing adding global variable
+            if name.type not in (
+                "class",
+                "function",
+            ):
                 continue
 
             definitions = name.get_signatures() or name.goto(
@@ -45,68 +44,108 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 definition = definitions[0]
 
                 # Skip builtin
-                # Skip definition that are not in the project folder
-                # Skip definition that are in the same file
+                # Skip definition that are not in the same file
                 if (
                     definition.in_builtin_module()
-                    or (
-                        definition.module_path
-                        and definition.module_path.is_relative_to(project.path)
-                    )
-                    or definition.module_path == script.path
+                    or not definition.module_path == script.path
                 ):
                     continue
 
-                # Lines in Jedi are always 1-based and columns are always zero based.
-                ref_node = Node(
-                    # TODO not right
-                    type=NodeType.CLASS,
-                    name=name.name,
-                    location=Location(
-                        file_path=script.path,
-                        start_line=name.line,
-                        start_column=name.column + 1,
-                        end_line=name.line,
-                        end_column=name.column + 1 + len(name.name),
-                    ),
-                )
-                def_node = Node(
-                    # TODO not right
-                    type=NodeType.CLASS,
-                    name=definition.name,
-                    location=Location(
-                        file_path=definition.module_path,
-                        start_line=definition.line,
-                        start_column=definition.column + 1,
-                        end_line=definition.line,
-                        end_column=definition.column + 1 + len(definition.name),
-                    ),
+            if root_node is None:
+                from_type = NodeType.MODULE.value
+                from_name = script.path.name
+            else:
+                from_type = NodeType.CLASS.value
+                from_name = root_node.name
+
+            # a Module doesn't have a location
+            _from = Node(
+                type=from_type,
+                name=from_name,
+                location=Location(
+                    file_path=script.path,
+                ),
+            )
+
+            to_type = NodeType(name.type).value
+            to_name = name.name
+            if name.type == "function" and root_node:
+                to_type = NodeType.METHOD.value
+                to_name = f"{root_node.name}.{name.name}"
+
+            # Get into its class definition body and get its location
+            (start_line, start_column), (end_line, end_column) = (
+                name._name.tree_name.parent.start_pos,
+                name._name.tree_name.parent.end_pos,
+            )
+
+            start_column += 1
+            end_column += 1
+            _to = Node(
+                type=to_type,
+                name=to_name,
+                location=Location(
+                    file_path=name.module_path,
+                    start_line=start_line,
+                    start_column=start_column,
+                    end_line=end_line,
+                    end_column=end_column,
+                ),
+            )
+
+            D.add_node(_from)
+            D.add_node(_to)
+
+            # import relation's edge would not have location
+            D.add_relational_edge(
+                _from,
+                _to,
+                Edge(location=None, relation=EdgeRelation.ParentOf),
+                Edge(location=None, relation=EdgeRelation.ChildOf),
+            )
+
+            # Get method definition in class
+            if name.type == "class":
+                sub_names = name.defined_names()
+                # Recursive call
+                self._extract_parent_relation(
+                    script, project, sub_names, D, root_node=name
                 )
 
-                D.add_node(ref_node)
-                D.add_node(def_node)
-
-                # import relation's edge would not have location
-                D.add_relational_edge(
-                    ref_node,
-                    def_node,
-                    Edge(location=None, relation=EdgeRelation.Imports),
-                    Edge(location=None, relation=EdgeRelation.ImportedBy),
-                )
+    def _extract_import_relation(
+        self,
+        script: jedi.Script,
+        project: jedi.Project,
+        all_names: list[Name],
+        D: DependencyGraph,
+    ):
+        pass
 
     def _extract_call_relation(
-        self, script: jedi.Script, project: jedi.Project, D: DependencyGraph
-    ) -> DependencyGraph:
+        self,
+        script: jedi.Script,
+        project: jedi.Project,
+        all_names: list[Name],
+        D: DependencyGraph,
+    ):
         pass
 
     def _extract_instantiate_relation(
-        self, script: jedi.Script, project: jedi.Project, D: DependencyGraph
-    ) -> DependencyGraph:
+        self,
+        script: jedi.Script,
+        project: jedi.Project,
+        all_names: list[Name],
+        D: DependencyGraph,
+    ):
         pass
 
     def _extract_type_relation(
-        self, script: jedi.Script, project: jedi.Project, D: DependencyGraph
-    ) -> DependencyGraph:
+        self,
+        script: jedi.Script,
+        project: jedi.Project,
+        all_names: list[Name],
+        D: DependencyGraph,
+    ):
         pass
 
     def generate(self, repo: Repository) -> DependencyGraph:
@@ -123,10 +162,13 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 project=project,
             )
 
-            self._extract_parent_relation(script, project, D)
-            self._extract_import_relation(script, project, D)
-            self._extract_call_relation(script, project, D)
-            self._extract_instantiate_relation(script, project, D)
-            self._extract_type_relation(script, project, D)
+            all_def_names = script.get_names(
+                all_scopes=False, definitions=True, references=False
+            )
+            self._extract_parent_relation(script, project, all_def_names, D)
+            self._extract_import_relation(script, project, all_def_names, D)
+            self._extract_call_relation(script, project, all_def_names, D)
+            self._extract_instantiate_relation(script, project, all_def_names, D)
+            self._extract_type_relation(script, project, all_def_names, D)
 
         return D

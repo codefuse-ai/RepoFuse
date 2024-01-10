@@ -6,7 +6,7 @@ authors = ["友恒 <zhengxunjin.zx@antgroup.com>", "明牧 <liangming.liang@antg
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 gitpython = "^3.1.40"
 networkx = "^3.2.1"
 jedi = "^0.19.1"

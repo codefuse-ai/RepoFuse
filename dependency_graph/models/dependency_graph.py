@@ -59,32 +59,43 @@ class EdgeRelation(enum.Enum):
 @dataclass
 class Location:
     def __str__(self) -> str:
-        return f"{self.file_path}:{self.start_line}:{self.start_column}-{self.end_line}:{self.end_column}"
+        signature = f"{self.file_path}"
+        if any([self.start_line, self.start_column, self.end_line, self.end_column]):
+            signature += f":{self.start_line}:{self.start_column}-{self.end_line}:{self.end_column}"
+
+        return signature
 
     def __hash__(self) -> int:
         return hash(self.__str__())
 
-    def get_text(self) -> str:
+    def get_text(self) -> str | None:
         # TODO should leverage the FileNode.content
         content = self.file_path.read_text()
-        return slice_text(content, self.start_line, self.end_line, self.start_column, self.end_column)
+        if any([self.start_line, self.start_column, self.end_line, self.end_column]):
+            return None
+
+        return slice_text(
+            content, self.start_line, self.end_line, self.start_column, self.end_column
+        )
 
     file_path: Path
     """The file path"""
-    start_line: int
+    start_line: Optional[int] = None
     """The start line number, 1-based"""
-    start_column: int
+    start_column: Optional[int] = None
     """The start column number, 1-based"""
-    end_line: int
+    end_line: Optional[int] = None
     """The end line number, 1-based"""
-    end_column: int
+    end_column: Optional[int] = None
     """The end column number, 1-based"""
 
 
 @dataclass
 class NodeType(str, enum.Enum):
+    # TODO should nest a language to mark different type for different language
     MODULE = "module"
     CLASS = "class"
+    FUNCTION = "function"
     METHOD = "method"
 
 

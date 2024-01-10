@@ -1,4 +1,5 @@
 import argparse
+from datetime import datetime
 from pathlib import Path
 
 from dependency_graph import (
@@ -8,6 +9,10 @@ from dependency_graph import (
 )
 from dependency_graph.graph_generator import DependencyGraphGeneratorType
 from dependency_graph.models.repository import Repository
+from dependency_graph.utils.log import setup_logger
+
+# Initialize logging
+logger = setup_logger()
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
@@ -63,7 +68,13 @@ if __name__ == "__main__":
     if output_file is not None and output_file.is_dir():
         raise IsADirectoryError(f"{output_file} is a directory.")
 
+    start_time = datetime.now()
     graph = construct_dependency_graph(repo, dependency_graph_generator)
+    end_time = datetime.now()
+
+    elapsed_time = (end_time - start_time).total_seconds()
+    logger.info(f"Finished constructing the dependency graph in {elapsed_time} sec")
+    logger.info(f"Outputing the dependency graph in {output_file if output_file else 'stdout'}")
 
     # TODO move to another function
     if output_format == "edgelist":
