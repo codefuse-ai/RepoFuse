@@ -52,6 +52,56 @@ def test_parent_relation(jedi_generator):
                 assert child.name == "a"
 
 
+def test_import_relation(jedi_generator):
+    repo_path = repo_suite_path / "import_relation"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = jedi_generator.generate(repository)
+
+    hierarchy = D.get_edges_by_relation(EdgeRelation.Imports)
+    assert hierarchy
+    for i, hierarchy in enumerate(hierarchy):
+        importer, exporter, relations = hierarchy
+        importations = list(
+            filter(
+                lambda relation: relation.relation == EdgeRelation.Imports,
+                relations,
+            )
+        )
+        assert len(importations) > 0
+        importation = importations[0]
+        match i:
+            case 0:
+                assert importer.type == "module"
+                assert importer.name == "main"
+                assert exporter.type == "module"
+                assert exporter.name == "os"
+                assert importation.get_text() == "import os"
+            case 1:
+                assert importer.type == "module"
+                assert importer.name == "main"
+                assert exporter.type == "class"
+                assert exporter.name == "Path"
+                assert importation.get_text() == "from pathlib import Path"
+            case 2:
+                assert importer.type == "module"
+                assert importer.name == "main"
+                assert exporter.type == "module"
+                assert exporter.name == "y"
+                assert importation.get_text() == "import y"
+            case 3:
+                assert importer.type == "module"
+                assert importer.name == "main"
+                assert exporter.type == "variable"
+                assert exporter.name == "VAR_Y"
+                assert importation.get_text() == "y.VAR_Y += 1"
+            case 4:
+                assert importer.type == "module"
+                assert importer.name == "main"
+                assert exporter.type == "function"
+                assert exporter.name == "func_z"
+                assert importation.get_text() == "from z import func_z"
+
+
 def test_call_relation(jedi_generator):
     repo_path = repo_suite_path / "call_relation"
     repository = Repository(repo_path=repo_path, language=Language.Python)

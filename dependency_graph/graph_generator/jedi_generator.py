@@ -164,37 +164,31 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             if definition.module_path == script.path:
                 continue
 
-            from_type = NodeType.MODULE.value
-            from_name = script.path.name
-            from_path = script.path
-            to_type = NodeType(definition.type).value
-            to_name = definition.name
-            to_path = definition.module_path
-
-            # Determine positions
-            if definition._name.tree_name:
-                to_start_pos = definition.get_definition_start_position()
-                to_end_pos = definition.get_definition_end_position()
-            else:
-                to_start_pos = (definition.line, definition.column)
-                to_end_pos = None
-
             # Use the helper function to update the graph
             self._update_graph(
                 D=D,
-                from_type=from_type,
-                from_name=from_name,
-                from_path=from_path,
+                from_type=NodeType.MODULE.value,
+                from_name=script.get_context().name,
+                from_path=script.get_context().module_path,
                 from_start_pos=None,
                 from_end_pos=None,
-                to_type=to_type,
-                to_name=to_name,
-                to_path=to_path,
-                to_start_pos=to_start_pos,
-                to_end_pos=to_end_pos,
+                to_type=NodeType.VARIABLE.value
+                if definition.type == "statement"
+                else NodeType(definition.type).value,
+                to_name=definition.name,
+                to_path=definition.module_path,
+                to_start_pos=definition.get_definition_start_position(),
+                to_end_pos=definition.get_definition_end_position(),
                 edge_relation=EdgeRelation.Imports,
                 inverse_edge_relation=EdgeRelation.ImportedBy,
-                edge_location=None,
+                edge_location=Location(
+                    file_path=name.module_path,
+                    start_line=name.get_definition_start_position()[0],
+                    # Convert to 1-based indexing
+                    start_column=name.get_definition_start_position()[1] + 1,
+                    end_line=name.get_definition_end_position()[0],
+                    end_column=name.get_definition_end_position()[1] + 1,
+                ),
             )
 
     def _extract_call_relation(

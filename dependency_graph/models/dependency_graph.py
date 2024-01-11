@@ -98,6 +98,7 @@ class NodeType(str, enum.Enum):
     MODULE = "module"
     CLASS = "class"
     FUNCTION = "function"
+    VARIABLE = "variable"
 
 
 @dataclass
