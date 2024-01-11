@@ -16,6 +16,42 @@ def jedi_generator():
     return JediDependencyGraphGenerator(Language.Python)
 
 
+def test_parent_relation(jedi_generator):
+    repo_path = repo_suite_path / "parent_relation"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = jedi_generator.generate(repository)
+
+    hierarchy = D.get_edges_by_relation(EdgeRelation.ParentOf)
+    assert hierarchy
+    for i, parent_relationship in enumerate(hierarchy):
+        parent, child, _ = parent_relationship
+        match i:
+            case 0:
+                assert parent.type == "module"
+                assert parent.name == "main"
+
+                assert child.type == "class"
+                assert child.name == "A"
+            case 1:
+                assert parent.type == "module"
+                assert parent.name == "main"
+
+                assert child.type == "function"
+                assert child.name == "func"
+            case 2:
+                assert parent.type == "function"
+                assert parent.name == "func"
+
+                assert child.type == "function"
+                assert child.name == "closure"
+            case 3:
+                assert parent.type == "class"
+                assert parent.name == "A"
+
+                assert child.type == "function"
+                assert child.name == "a"
+
+
 def test_call_relation(jedi_generator):
     repo_path = repo_suite_path / "call_relation"
     repository = Repository(repo_path=repo_path, language=Language.Python)
@@ -25,10 +61,17 @@ def test_call_relation(jedi_generator):
 
     assert call_graph
     for i, call in enumerate(call_graph):
-        caller, callee, call_site_d = call
-        call_site = call_site_d["relation"]
+        caller, callee, relations = call
+        call_sites = list(
+            filter(
+                lambda relation: relation.relation == EdgeRelation.Calls,
+                relations,
+            )
+        )
+        assert len(call_sites) > 0
+        call_site = call_sites[0]
         match i:
-            case 0:
+            case 8:
                 assert caller.type == "function"
                 assert callee.type == "function"
 
@@ -39,7 +82,7 @@ def test_call_relation(jedi_generator):
                 )
                 assert callee.name == "print"
                 assert call_site.get_text() == "print"
-            case 1:
+            case 4:
                 assert caller.type == "function"
                 assert callee.type == "function"
 
@@ -50,7 +93,8 @@ def test_call_relation(jedi_generator):
                 )
                 assert callee.name == "print"
                 assert call_site.get_text() == "print"
-            case 2:
+
+            case 6:
                 assert caller.type == "function"
                 assert callee.type == "function"
 
@@ -62,7 +106,7 @@ def test_call_relation(jedi_generator):
                 )
                 assert callee.name == "print"
                 assert call_site.get_text() == "print"
-            case 3:
+            case 7:
                 assert caller.type == "function"
                 assert callee.type == "function"
 
@@ -78,7 +122,7 @@ def test_call_relation(jedi_generator):
                             print("in A.a()")"""
                 )
                 assert call_site.get_text() == "a"
-            case 4:
+            case 5:
                 assert caller.type == "function"
                 assert callee.type == "function"
 
@@ -94,7 +138,7 @@ def test_call_relation(jedi_generator):
                                 self.a()"""
                 )
                 assert call_site.get_text() == "closure"
-            case 5:
+            case 2:
                 assert caller.type == "function"
                 assert callee.type == "function"
 
@@ -110,7 +154,7 @@ def test_call_relation(jedi_generator):
                             print("in A.a()")"""
                 )
                 assert call_site.get_text() == "a"
-            case 6:
+            case 3:
                 assert caller.type == "function"
                 assert callee.type == "function"
 
@@ -126,7 +170,7 @@ def test_call_relation(jedi_generator):
                         print("in x")"""
                 )
                 assert call_site.get_text() == "func_x"
-            case 7:
+            case 1:
                 assert caller.type == "module"
                 assert callee.type == "function"
 
@@ -137,7 +181,7 @@ def test_call_relation(jedi_generator):
                     == 'def b(self):\n        def closure():\n            print("in A.b()")\n            self.a()\n\n        closure()'
                 )
                 assert call_site.get_text() == "b"
-            case 8:
+            case 0:
                 assert caller.type == "module"
                 assert callee.type == "function"
 

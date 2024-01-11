@@ -141,6 +141,7 @@ class Edge:
 
 class DependencyGraph:
     def __init__(self, repo_path: PathLike) -> None:
+        # Pay attention to https://stackoverflow.com/questions/26691442/how-do-i-add-a-new-attribute-to-an-edge-in-networkx
         self.graph = networkx.DiGraph()
         self.repo_path = Path(repo_path)
 
@@ -150,14 +151,26 @@ class DependencyGraph:
     def add_relational_edge(self, n1: Node, n2: Node, r1: Edge, r2: Edge):
         self.add_node(n1)
         self.add_node(n2)
-        self.graph.add_edge(n1, n2, relation=r1)
-        self.graph.add_edge(n2, n1, relation=r2)
+        if not self.graph.has_edge(n1, n2):
+            self.graph.add_edge(n1, n2, relations=set())
+
+        if not self.graph.has_edge(n2, n1):
+            self.graph.add_edge(n2, n1, relations=set())
+
+        self.graph[n1][n2]["relations"].add(r1)
+        self.graph[n2][n1]["relations"].add(r2)
 
     def get_edges_by_relation(
         self, relation: EdgeRelation
-    ) -> list[tuple[Node, Node, dict[str, Edge]]]:
-        return [
-            edge
+    ) -> list[tuple[Node, Node, set[Edge]]]:
+        edges_list: list[tuple[Node, Node, set[Edge]]] = [
+            (edge[0], edge[1], edge[2]["relations"])
             for edge in self.graph.edges(data=True)
-            if edge[2]["relation"].relation == relation
+            if any(relation == e.relation for e in edge[2]["relations"])
         ]
+        # Sort by from node's location
+        return sorted(edges_list, key=lambda e: e[0].location.__str__())
+
+    def get_related_nodes(self, node: Node, *relation: EdgeRelation) -> list[Node]:
+        """TODO implement it"""
+        pass

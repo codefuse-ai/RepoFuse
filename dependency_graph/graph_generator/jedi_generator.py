@@ -92,7 +92,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         script: jedi.Script,
         all_names: list[Name],
         D: DependencyGraph,
-        root_node: Name = None,
     ):
         for name in all_names:
             # TODO missing adding global variable
@@ -116,55 +115,25 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 ):
                     continue
 
-            if root_node is None:
-                # a Module doesn't have a location
-                from_type = NodeType.MODULE.value
-                from_name = script.path.name
-                from_path = script.path
-                from_start_pos = None
-                from_end_pos = None
-            else:
-                from_type = NodeType.CLASS.value
-                from_name = root_node.name
-                from_path = root_node.module_path
-                # TODO Add a UT to test
-                from_start_pos = root_node.get_definition_start_position()
-                from_end_pos = root_node.get_definition_end_position()
-
-            to_type = NodeType(name.type).value
-            to_name = name.name
-            to_path = name.module_path
-            # name is a method, update its name with the class name
-            if name.type == "function" and (root_node and root_node.type == "class"):
-                to_name = f"{root_node.name}.{name.name}"
-
-            # Get into its class definition body and get its location
-            to_start_pos = name.parent().get_definition_start_position()
-            to_end_pos = name.parent().get_definition_end_position()
-
+            parent = name.parent()
             # Use the helper function to update the graph
             self._update_graph(
                 D=D,
-                from_type=from_type,
-                from_name=from_name,
-                from_path=from_path,
-                from_start_pos=from_start_pos,  # Modules do not have a start or end position
-                from_end_pos=from_end_pos,
-                to_type=to_type,
-                to_name=to_name,
-                to_path=to_path,
-                to_start_pos=to_start_pos,
-                to_end_pos=to_end_pos,
+                from_type=NodeType(parent.type).value,
+                from_name=parent.name,
+                from_path=parent.module_path,
+                from_start_pos=parent.get_definition_start_position(),  # Modules do not have a start or end position
+                from_end_pos=parent.get_definition_end_position(),
+                to_type=NodeType(name.type).value,
+                # TODO the name should be added with is class name if this is a method
+                to_name=name.name,
+                to_path=name.module_path,
+                to_start_pos=name.get_definition_start_position(),
+                to_end_pos=name.get_definition_end_position(),
                 edge_relation=EdgeRelation.ParentOf,
                 inverse_edge_relation=EdgeRelation.ChildOf,
                 edge_location=None,
             )
-
-            # Get method definition in class
-            if name.type == "class":
-                sub_names = name.defined_names()
-                # Recursive call
-                self._extract_parent_relation(script, sub_names, D, root_node=name)
 
     def _extract_import_relation(
         self,
@@ -235,7 +204,11 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         D: DependencyGraph,
     ):
         for name in all_names:
-            callee = name.goto(follow_imports=True, follow_builtin_imports=True)[0]
+            callers = name.goto(follow_imports=True, follow_builtin_imports=True)
+            if not callers:
+                continue
+
+            callee = callers[0]
 
             if not callee or callee.type != "function":
                 continue
@@ -305,7 +278,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             )
 
             all_def_names = script.get_names(
-                all_scopes=False, definitions=True, references=False
+                all_scopes=True, definitions=True, references=False
             )
             self._extract_parent_relation(script, all_def_names, D)
             self._extract_import_relation(script, all_def_names, D)

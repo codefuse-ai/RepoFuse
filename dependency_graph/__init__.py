@@ -29,9 +29,9 @@ def dump_graph_as_edgelist(graph: DependencyGraph) -> list:
     for u, v, data in graph.graph.edges(data=True):
         str_u, str_v = str(u), str(v)
         if G.has_edge(str_v, str_u):
-            G[str_u][str_v]["label"] += "/" + str(data["kind"])
+            G[str_u][str_v]["label"] += "/" + str(data["relations"])
         else:
-            G.add_edge(str_u, str_v, label=str(data["kind"]))
+            G.add_edge(str_u, str_v, label=str(data["relations"]))
 
     return list(nx.to_edgelist(G))
 
@@ -41,9 +41,9 @@ def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> Non
     for u, v, data in graph.graph.edges(data=True):
         str_u, str_v = str(u), str(v)
         if G.has_edge(str_v, str_u):
-            G[str_u][str_v]["label"] += "/" + str(data["kind"])
+            G[str_u][str_v]["label"] += "/" + str(data["relations"])
         else:
-            G.add_edge(str_u, str_v, label=str(data["kind"]))
+            G.add_edge(str_u, str_v, label=str(data["relations"]))
 
     nt = Network(height="1000px", width="100%", notebook=False, select_menu=True)
     nt.from_nx(G)
