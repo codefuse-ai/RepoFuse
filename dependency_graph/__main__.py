@@ -7,12 +7,52 @@ from dependency_graph import (
     dump_graph_as_edgelist,
     dump_graph_as_pyvis_graph,
 )
-from dependency_graph.graph_generator import DependencyGraphGeneratorType
+from dependency_graph.graph_generator import (
+    DependencyGraphGeneratorType,
+    DependencyGraph,
+)
+from dependency_graph.models import PathLike
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
 
 # Initialize logging
 logger = setup_logger()
+
+
+OUTPUT_FORMATS = ["edgelist", "pyvis"]
+
+
+def output_dependency_graph(
+    graph: DependencyGraph, output_format: str, output_file: PathLike = None
+):
+    """
+    Outputs the dependency The graph outputted to a file or stdout.
+
+    :param graph: The dependency graph to output.
+    :param output_format: The format in which to output the graph (e.g., "edgelist" or "pyvis").
+    :param output_file: The file path to write the graph to. If None, outputs to stdout.
+    """
+    logger.info(
+        f"Outputting the dependency graph in {output_file if output_file else 'stdout'} with format {output_format}"
+    )
+
+    match output_format:
+        case "edgelist":
+            output = dump_graph_as_edgelist(graph)
+            if output_file:
+                with open(output_file, "w") as f:
+                    f.write(str(output))
+            else:
+                print(output)
+        case "pyvis":
+            if output_file is None:
+                raise ValueError(
+                    "You must specify an output file for the pyvis format."
+                )
+            dump_graph_as_pyvis_graph(graph, output_file)
+        case _:
+            raise ValueError(f"Unknown output format: {output_format}")
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
@@ -45,6 +85,7 @@ if __name__ == "__main__":
         "--output-format",
         help="The format of the output.",
         default="edgelist",
+        choices=OUTPUT_FORMATS,
         required=False,
     )
 
@@ -63,7 +104,7 @@ if __name__ == "__main__":
     dependency_graph_generator = args.dependency_graph_generator
     repo = Repository(args.repo, lang)
     output_file: Path = args.output_file
-    output_format: Path = args.output_format
+    output_format: str = args.output_format
 
     if output_file is not None and output_file.is_dir():
         raise IsADirectoryError(f"{output_file} is a directory.")
@@ -74,16 +115,5 @@ if __name__ == "__main__":
 
     elapsed_time = (end_time - start_time).total_seconds()
     logger.info(f"Finished constructing the dependency graph in {elapsed_time} sec")
-    logger.info(f"Outputing the dependency graph in {output_file if output_file else 'stdout'}")
 
-    # TODO move to another function
-    if output_format == "edgelist":
-        output = dump_graph_as_edgelist(graph)
-        if output_file:
-            output_file.write_text(str(output))
-        else:
-            print(dump_graph_as_edgelist(graph))
-    elif output_format == "pyvis":
-        dump_graph_as_pyvis_graph(graph, output_file)
-    else:
-        raise ValueError(f"Unknown output format: {output_format}")
+    output_dependency_graph(graph, output_format, output_file)

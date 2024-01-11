@@ -60,7 +60,8 @@ class EdgeRelation(enum.Enum):
 class Location:
     def __str__(self) -> str:
         signature = f"{self.file_path}"
-        if any([self.start_line, self.start_column, self.end_line, self.end_column]):
+        loc = [self.start_line, self.start_column, self.end_line, self.end_column]
+        if any([l is not None for l in loc]):
             signature += f":{self.start_line}:{self.start_column}-{self.end_line}:{self.end_column}"
 
         return signature
@@ -71,11 +72,12 @@ class Location:
     def get_text(self) -> str | None:
         # TODO should leverage the FileNode.content
         content = self.file_path.read_text()
-        if any([self.start_line, self.start_column, self.end_line, self.end_column]):
+        loc = [self.start_line, self.start_column, self.end_line, self.end_column]
+        if any([l is None for l in loc]):
             return None
 
         return slice_text(
-            content, self.start_line, self.end_line, self.start_column, self.end_column
+            content, self.start_line, self.start_column, self.end_line, self.end_column
         )
 
     file_path: Path
@@ -96,7 +98,6 @@ class NodeType(str, enum.Enum):
     MODULE = "module"
     CLASS = "class"
     FUNCTION = "function"
-    METHOD = "method"
 
 
 @dataclass
@@ -106,6 +107,9 @@ class Node:
 
     def __hash__(self) -> int:
         return hash(self.__str__())
+
+    def get_text(self) -> str | None:
+        return self.location.get_text()
 
     type: NodeType
     """The type of the node"""
@@ -126,6 +130,9 @@ class Edge:
     def __hash__(self) -> int:
         return hash(self.__str__())
 
+    def get_text(self) -> str | None:
+        return self.location.get_text()
+
     relation: EdgeRelation
     """The relation between two nodes"""
     location: Optional[Location] = None
@@ -138,17 +145,19 @@ class DependencyGraph:
         self.repo_path = Path(repo_path)
 
     def add_node(self, node: Node):
-        if isinstance(
-            node.location.file_path, Path
-        ) and node.location.file_path.is_relative_to(self.repo_path):
-            node.location.file_path = node.location.file_path.relative_to(
-                self.repo_path.parent
-            )
-
         self.graph.add_node(node)
 
     def add_relational_edge(self, n1: Node, n2: Node, r1: Edge, r2: Edge):
         self.add_node(n1)
         self.add_node(n2)
-        self.graph.add_edge(n1, n2, kind=r1)
-        self.graph.add_edge(n2, n1, kind=r2)
+        self.graph.add_edge(n1, n2, relation=r1)
+        self.graph.add_edge(n2, n1, relation=r2)
+
+    def get_edges_by_relation(
+        self, relation: EdgeRelation
+    ) -> list[tuple[Node, Node, dict[str, Edge]]]:
+        return [
+            edge
+            for edge in self.graph.edges(data=True)
+            if edge[2]["relation"].relation == relation
+        ]

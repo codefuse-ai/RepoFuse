@@ -38,7 +38,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         to_end_pos: tuple[int, int] | None,
         edge_relation: EdgeRelation,
         inverse_edge_relation: EdgeRelation,
-        edge_location: Location,
+        edge_location: Location | None,
     ):
         from_location_params = {"file_path": from_path}
         if from_start_pos:
@@ -90,7 +90,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_parent_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
         root_node: Name = None,
@@ -128,19 +127,20 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 from_type = NodeType.CLASS.value
                 from_name = root_node.name
                 from_path = root_node.module_path
-                from_start_pos = root_node._name.tree_name.parent.start_pos
-                from_end_pos = root_node._name.tree_name.parent.end_pos
+                # TODO Add a UT to test
+                from_start_pos = root_node.get_definition_start_position()
+                from_end_pos = root_node.get_definition_end_position()
 
             to_type = NodeType(name.type).value
             to_name = name.name
             to_path = name.module_path
-            if name.type == "function" and root_node:
-                to_type = NodeType.METHOD.value
+            # name is a method, update its name with the class name
+            if name.type == "function" and (root_node and root_node.type == "class"):
                 to_name = f"{root_node.name}.{name.name}"
 
             # Get into its class definition body and get its location
-            to_start_pos = name._name.tree_name.parent.start_pos
-            to_end_pos = name._name.tree_name.parent.end_pos
+            to_start_pos = name.parent().get_definition_start_position()
+            to_end_pos = name.parent().get_definition_end_position()
 
             # Use the helper function to update the graph
             self._update_graph(
@@ -164,19 +164,16 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             if name.type == "class":
                 sub_names = name.defined_names()
                 # Recursive call
-                self._extract_parent_relation(
-                    script, project, sub_names, D, root_node=name
-                )
+                self._extract_parent_relation(script, sub_names, D, root_node=name)
 
     def _extract_import_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
     ):
         """
-        TODO should we add import relation for the following case?
+        TODO should we add import relation for the following case? In this case, all_scopes should be True
         def test():
             import os
             os.chdir(os.path.dirname(__file__))
@@ -207,8 +204,8 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
             # Determine positions
             if definition._name.tree_name:
-                to_start_pos = definition._name.tree_name.start_pos
-                to_end_pos = definition._name.tree_name.end_pos
+                to_start_pos = definition.get_definition_start_position()
+                to_end_pos = definition.get_definition_end_position()
             else:
                 to_start_pos = (definition.line, definition.column)
                 to_end_pos = None
@@ -234,25 +231,60 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_call_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
     ):
-        pass
+        for name in all_names:
+            callee = name.goto(follow_imports=True, follow_builtin_imports=True)[0]
+
+            if not callee or callee.type != "function":
+                continue
+
+            # Find caller, caller should be a function
+            if name.parent().type not in ("function", "module"):
+                continue
+            caller = name.parent()
+
+            # Use the helper function to update the graph
+            self._update_graph(
+                D=D,
+                from_type=NodeType(caller.type).value,
+                from_name=caller.name,
+                from_path=caller.module_path,
+                # TODO find function position
+                from_start_pos=caller.get_definition_start_position(),
+                from_end_pos=caller.get_definition_end_position(),
+                to_type=NodeType.FUNCTION.value,
+                # TODO the name should be added with is class name if this is a method
+                to_name=callee.name,
+                to_path=callee.module_path,
+                to_start_pos=callee.get_definition_start_position(),
+                to_end_pos=callee.get_definition_end_position(),
+                edge_relation=EdgeRelation.Calls,
+                inverse_edge_relation=EdgeRelation.CalledBy,
+                edge_location=Location(
+                    file_path=name.module_path,
+                    start_line=name.get_definition_start_position()[0],
+                    # Convert to 1-based indexing
+                    start_column=name.get_definition_start_position()[1] + 1,
+                    end_line=name.get_definition_end_position()[0],
+                    end_column=name.get_definition_end_position()[1] + 1,
+                ),
+            )
 
     def _extract_instantiate_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
     ):
-        pass
+        for name in all_names:
+            if name.type not in ("class", "instance"):
+                continue
 
     def _extract_type_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
     ):
@@ -275,10 +307,14 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             all_def_names = script.get_names(
                 all_scopes=False, definitions=True, references=False
             )
-            self._extract_parent_relation(script, project, all_def_names, D)
-            self._extract_import_relation(script, project, all_def_names, D)
-            self._extract_call_relation(script, project, all_def_names, D)
-            self._extract_instantiate_relation(script, project, all_def_names, D)
-            self._extract_type_relation(script, project, all_def_names, D)
+            self._extract_parent_relation(script, all_def_names, D)
+            self._extract_import_relation(script, all_def_names, D)
+
+            all_ref_names = script.get_names(
+                all_scopes=True, definitions=False, references=True
+            )
+            self._extract_call_relation(script, all_ref_names, D)
+            self._extract_instantiate_relation(script, all_def_names, D)
+            self._extract_type_relation(script, all_def_names, D)
 
         return D
