@@ -22,67 +22,59 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def __init__(self, language: Language = Language.Python):
         super().__init__(language)
 
-    # New helper function for creating nodes
+    def _convert_name_pos_to_location(self, name: Name) -> Location | None:
+        """helper function for creating location"""
+        if name is None:
+            return None
+
+        location_params = {"file_path": name.module_path}
+        start_pos = name.get_definition_start_position()
+        end_pos = name.get_definition_end_position()
+        if start_pos:
+            location_params.update(
+                start_line=start_pos[0],
+                start_column=start_pos[1] + 1,  # Convert to 1-based indexing
+            )
+
+        if end_pos:
+            location_params.update(
+                end_line=end_pos[0],
+                end_column=end_pos[1] + 1,  # Convert to 1-based indexing
+            )
+        return Location(**location_params)
+
+    def _convert_name_to_node(self, name: Name, node_type: NodeType) -> Node:
+        """helper function for creating nodes"""
+        location = self._convert_name_pos_to_location(name)
+        return Node(
+            type=node_type,
+            name=name.name,
+            location=location,
+        )
+
     def _update_graph(
         self,
         D: DependencyGraph,
+        from_name: Name,
         from_type: NodeType,
-        from_name: str,
-        from_path: Path,
-        from_start_pos: tuple[int, int] | None,
-        from_end_pos: tuple[int, int] | None,
+        to_name: Name,
         to_type: NodeType,
-        to_name: str,
-        to_path: Path,
-        to_start_pos: tuple[int, int] | None,
-        to_end_pos: tuple[int, int] | None,
+        edge_name: Name
+        | None,  # Edge name can be None as not all relation have a location
         edge_relation: EdgeRelation,
         inverse_edge_relation: EdgeRelation,
-        edge_location: Location | None,
     ):
-        from_location_params = {"file_path": from_path}
-        if from_start_pos:
-            from_location_params.update(
-                start_line=from_start_pos[0],
-                start_column=from_start_pos[1] + 1,  # Convert to 1-based indexing
-            )
+        """helper function for updating the graph"""
+        from_node = self._convert_name_to_node(from_name, from_type)
+        to_node = self._convert_name_to_node(to_name, to_type)
 
-        if from_end_pos:
-            from_location_params.update(
-                end_line=from_end_pos[0],
-                end_column=from_end_pos[1] + 1,  # Convert to 1-based indexing
-            )
+        D.add_node(from_node)
+        D.add_node(to_node)
 
-        _from = Node(
-            type=from_type,
-            name=from_name,
-            location=Location(**from_location_params),
-        )
-
-        to_location_params = {"file_path": to_path}
-        if to_start_pos:
-            to_location_params.update(
-                start_line=to_start_pos[0],
-                start_column=to_start_pos[1] + 1,  # Convert to 1-based indexing
-            )
-
-        if to_end_pos:
-            to_location_params.update(
-                end_line=to_end_pos[0],
-                end_column=to_end_pos[1] + 1,  # Convert to 1-based indexing
-            )
-
-        _to = Node(
-            type=to_type,
-            name=to_name,
-            location=Location(**to_location_params),
-        )
-
-        D.add_node(_from)
-        D.add_node(_to)
+        edge_location = self._convert_name_pos_to_location(edge_name)
         D.add_relational_edge(
-            _from,
-            _to,
+            from_node,
+            to_node,
             Edge(relation=edge_relation, location=edge_location),
             Edge(relation=inverse_edge_relation, location=edge_location),
         )
@@ -116,23 +108,16 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     continue
 
             parent = name.parent()
-            # Use the helper function to update the graph
             self._update_graph(
                 D=D,
+                from_name=parent,
                 from_type=NodeType(parent.type).value,
-                from_name=parent.name,
-                from_path=parent.module_path,
-                from_start_pos=parent.get_definition_start_position(),  # Modules do not have a start or end position
-                from_end_pos=parent.get_definition_end_position(),
-                to_type=NodeType(name.type).value,
                 # TODO the name should be added with is class name if this is a method
-                to_name=name.name,
-                to_path=name.module_path,
-                to_start_pos=name.get_definition_start_position(),
-                to_end_pos=name.get_definition_end_position(),
+                to_name=name,
+                to_type=NodeType(name.type).value,
+                edge_name=None,
                 edge_relation=EdgeRelation.ParentOf,
                 inverse_edge_relation=EdgeRelation.ChildOf,
-                edge_location=None,
             )
 
     def _extract_import_relation(
@@ -161,28 +146,16 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             # Use the helper function to update the graph
             self._update_graph(
                 D=D,
+                from_name=script.get_context(),
                 from_type=NodeType.MODULE.value,
-                from_name=script.get_context().name,
-                from_path=script.get_context().module_path,
-                from_start_pos=None,
-                from_end_pos=None,
+                # TODO the name should be added with is class name if this is a method
+                to_name=definition,
                 to_type=NodeType.VARIABLE.value
                 if definition.type == "statement"
                 else NodeType(definition.type).value,
-                to_name=definition.name,
-                to_path=definition.module_path,
-                to_start_pos=definition.get_definition_start_position(),
-                to_end_pos=definition.get_definition_end_position(),
+                edge_name=name,
                 edge_relation=EdgeRelation.Imports,
                 inverse_edge_relation=EdgeRelation.ImportedBy,
-                edge_location=Location(
-                    file_path=name.module_path,
-                    start_line=name.get_definition_start_position()[0],
-                    # Convert to 1-based indexing
-                    start_column=name.get_definition_start_position()[1] + 1,
-                    end_line=name.get_definition_end_position()[0],
-                    end_column=name.get_definition_end_position()[1] + 1,
-                ),
             )
 
     def _extract_call_relation(
@@ -209,27 +182,14 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             # Use the helper function to update the graph
             self._update_graph(
                 D=D,
+                from_name=caller,
                 from_type=NodeType(caller.type).value,
-                from_name=caller.name,
-                from_path=caller.module_path,
-                from_start_pos=caller.get_definition_start_position(),
-                from_end_pos=caller.get_definition_end_position(),
-                to_type=NodeType.FUNCTION.value,
                 # TODO the name should be added with is class name if this is a method
-                to_name=callee.name,
-                to_path=callee.module_path,
-                to_start_pos=callee.get_definition_start_position(),
-                to_end_pos=callee.get_definition_end_position(),
+                to_name=callee,
+                to_type=NodeType.FUNCTION.value,
+                edge_name=name,
                 edge_relation=EdgeRelation.Calls,
                 inverse_edge_relation=EdgeRelation.CalledBy,
-                edge_location=Location(
-                    file_path=name.module_path,
-                    start_line=name.get_definition_start_position()[0],
-                    # Convert to 1-based indexing
-                    start_column=name.get_definition_start_position()[1] + 1,
-                    end_line=name.get_definition_end_position()[0],
-                    end_column=name.get_definition_end_position()[1] + 1,
-                ),
             )
 
     def _extract_instantiate_relation(
@@ -263,27 +223,14 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             # Use the helper function to update the graph
             self._update_graph(
                 D=D,
+                from_name=instance_owner,
                 from_type=NodeType(instance_owner.type).value,
-                from_name=instance_owner.name,
-                from_path=instance_owner.module_path,
-                from_start_pos=instance_owner.get_definition_start_position(),
-                from_end_pos=instance_owner.get_definition_end_position(),
-                to_type=NodeType.FUNCTION.value,
                 # TODO the name should be added with is class name if this is a method
-                to_name=instance_type.name,
-                to_path=instance_type.module_path,
-                to_start_pos=instance_type.get_definition_start_position(),
-                to_end_pos=instance_type.get_definition_end_position(),
+                to_name=instance_type,
+                to_type=NodeType.FUNCTION.value,
+                edge_name=name,
                 edge_relation=EdgeRelation.Instantiates,
                 inverse_edge_relation=EdgeRelation.InstantiatedBy,
-                edge_location=Location(
-                    file_path=name.module_path,
-                    start_line=name.get_definition_start_position()[0],
-                    # Convert to 1-based indexing
-                    start_column=name.get_definition_start_position()[1] + 1,
-                    end_line=name.get_definition_end_position()[0],
-                    end_column=name.get_definition_end_position()[1] + 1,
-                ),
             )
 
     def _extract_type_relation(

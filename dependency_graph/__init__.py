@@ -37,6 +37,7 @@ def dump_graph_as_edgelist(graph: DependencyGraph) -> list:
 
 
 def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> None:
+    # TODO colorize different relation edges
     G = nx.Graph()
     for u, v, data in graph.graph.edges(data=True):
         str_u, str_v = str(u), str(v)
