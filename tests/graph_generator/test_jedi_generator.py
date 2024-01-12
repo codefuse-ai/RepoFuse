@@ -8,7 +8,7 @@ from dependency_graph.models.dependency_graph import Edge, EdgeRelation
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 
-repo_suite_path = Path(__file__).parent / "code_example" / "python"
+repo_suite_path = Path(__file__).parent.parent / "code_example" / "python"
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def test_parent_relation(jedi_generator):
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 
-    edges = D.get_edges_by_relation(EdgeRelation.ParentOf)
+    edges = D.get_related_edges(EdgeRelation.ParentOf)
     assert edges
     for i, edge in enumerate(edges):
         parent, child, _ = edge
@@ -57,7 +57,7 @@ def test_import_relation(jedi_generator):
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 
-    edges = D.get_edges_by_relation(EdgeRelation.Imports)
+    edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
     for i, edge in enumerate(edges):
         importer, exporter, relations = edge
@@ -107,7 +107,7 @@ def test_instantiate_relation(jedi_generator):
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 
-    edges = D.get_edges_by_relation(EdgeRelation.Instantiates)
+    edges = D.get_related_edges(EdgeRelation.Instantiates)
     assert edges
     for i, edge in enumerate(edges):
         instance_owner, instance_type, relations = edge
@@ -187,7 +187,7 @@ def test_call_relation(jedi_generator):
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 
-    call_graph = D.get_edges_by_relation(EdgeRelation.Calls)
+    call_graph = D.get_related_edges(EdgeRelation.Calls)
 
     assert call_graph
     for i, call in enumerate(call_graph):

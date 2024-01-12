@@ -1,9 +1,9 @@
 import enum
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self, Optional
+from typing import Self, Optional, Iterable
 
-import networkx
+import networkx as nx
 
 from dependency_graph.models import PathLike
 from dependency_graph.utils.text import slice_text
@@ -36,9 +36,6 @@ class EdgeRelation(enum.Enum):
     # 7. Field use relations
     Uses = (7, 0, 0)
     UsedBy = (7, 0, 1)
-    # Type inference
-    Type = (8, 0, 0)
-    # Type = (8, 0, 1)
 
     def __str__(self):
         return self.name
@@ -134,6 +131,12 @@ class Edge:
     def get_text(self) -> str | None:
         return self.location.get_text()
 
+    def get_inverse_edge(self) -> Self:
+        return Edge(
+            relation=self.relation.get_inverse_kind(),
+            location=self.location,
+        )
+
     relation: EdgeRelation
     """The relation between two nodes"""
     location: Optional[Location] = None
@@ -143,11 +146,14 @@ class Edge:
 class DependencyGraph:
     def __init__(self, repo_path: PathLike) -> None:
         # Pay attention to https://stackoverflow.com/questions/26691442/how-do-i-add-a-new-attribute-to-an-edge-in-networkx
-        self.graph = networkx.DiGraph()
+        self.graph = nx.DiGraph()
         self.repo_path = Path(repo_path)
 
     def add_node(self, node: Node):
         self.graph.add_node(node)
+
+    def add_nodes_from(self, nodes: Iterable[Node]):
+        self.graph.add_nodes_from(nodes)
 
     def add_relational_edge(self, n1: Node, n2: Node, r1: Edge, r2: Edge):
         self.add_node(n1)
@@ -161,17 +167,43 @@ class DependencyGraph:
         self.graph[n1][n2]["relations"].add(r1)
         self.graph[n2][n1]["relations"].add(r2)
 
-    def get_edges_by_relation(
-        self, relation: EdgeRelation
+    def add_relational_edges_from(self, edges: Iterable[tuple[Node, Node, Edge, Edge]]):
+        for e in edges:
+            self.add_relational_edge(*e)
+
+    def get_related_edges(
+        self, *relations: EdgeRelation
     ) -> list[tuple[Node, Node, set[Edge]]]:
         edges_list: list[tuple[Node, Node, set[Edge]]] = [
             (edge[0], edge[1], edge[2]["relations"])
             for edge in self.graph.edges(data=True)
-            if any(relation == e.relation for e in edge[2]["relations"])
+            if any(e.relation in relations for e in edge[2]["relations"])
         ]
         # Sort by from node's location
         return sorted(edges_list, key=lambda e: e[0].location.__str__())
 
-    def get_related_nodes(self, node: Node, *relation: EdgeRelation) -> list[Node]:
-        """TODO implement it"""
-        pass
+    def get_related_nodes(
+        self, node: Node, *relations: EdgeRelation
+    ) -> list[Node] | None:
+        if node not in self.graph:
+            return None
+
+        return [
+            n
+            for n, e in self.graph[node].items()
+            if any(e.relation in relations for e in e.get("relations"))
+        ]
+
+    def get_related_subgraph(self, *relations: EdgeRelation) -> Self:
+        edges = self.get_related_edges(*relations)
+
+        sub_edges: list[tuple[Node, Node, Edge, Edge]] = []
+        for edge in edges:
+            u, v, _edges = edge
+            for _e in _edges:  # type: Edge
+                if _e.relation in relations:
+                    sub_edges.append((u, v, _e, _e.get_inverse_edge()))
+
+        sub_graph = DependencyGraph(self.repo_path)
+        sub_graph.add_relational_edges_from(sub_edges)
+        return sub_graph
