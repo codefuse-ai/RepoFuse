@@ -141,12 +141,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         all_names: list[Name],
         D: DependencyGraph,
     ):
-        """
-        TODO should we add import relation for the following case? In this case, all_scopes should be True
-        def test():
-            import os
-            os.chdir(os.path.dirname(__file__))
-        """
         for name in all_names:
             definitions = name.get_signatures() or name.goto(
                 follow_imports=True, follow_builtin_imports=False
@@ -218,7 +212,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 from_type=NodeType(caller.type).value,
                 from_name=caller.name,
                 from_path=caller.module_path,
-                # TODO find function position
                 from_start_pos=caller.get_definition_start_position(),
                 from_end_pos=caller.get_definition_end_position(),
                 to_type=NodeType.FUNCTION.value,
@@ -246,8 +239,52 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         D: DependencyGraph,
     ):
         for name in all_names:
-            if name.type not in ("class", "instance"):
+            if name.type not in ("statement", "param"):
                 continue
+
+            # Skip self
+            if name.name == "self":
+                continue
+
+            # TODO a variable can also have an instance of another
+            if name.parent().type not in ("class", "module", "function"):
+                continue
+
+            instance_types = name.infer()
+            if not instance_types:
+                continue
+
+            instance_type = instance_types[0]
+            # Skip builtin types
+            if instance_type.in_builtin_module():
+                continue
+
+            instance_owner = name.parent()
+            # Use the helper function to update the graph
+            self._update_graph(
+                D=D,
+                from_type=NodeType(instance_owner.type).value,
+                from_name=instance_owner.name,
+                from_path=instance_owner.module_path,
+                from_start_pos=instance_owner.get_definition_start_position(),
+                from_end_pos=instance_owner.get_definition_end_position(),
+                to_type=NodeType.FUNCTION.value,
+                # TODO the name should be added with is class name if this is a method
+                to_name=instance_type.name,
+                to_path=instance_type.module_path,
+                to_start_pos=instance_type.get_definition_start_position(),
+                to_end_pos=instance_type.get_definition_end_position(),
+                edge_relation=EdgeRelation.Instantiates,
+                inverse_edge_relation=EdgeRelation.InstantiatedBy,
+                edge_location=Location(
+                    file_path=name.module_path,
+                    start_line=name.get_definition_start_position()[0],
+                    # Convert to 1-based indexing
+                    start_column=name.get_definition_start_position()[1] + 1,
+                    end_line=name.get_definition_end_position()[0],
+                    end_column=name.get_definition_end_position()[1] + 1,
+                ),
+            )
 
     def _extract_type_relation(
         self,
@@ -281,7 +318,11 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 all_scopes=True, definitions=False, references=True
             )
             self._extract_call_relation(script, all_ref_names, D)
-            self._extract_instantiate_relation(script, all_def_names, D)
+
+            all_def_ref_names = script.get_names(
+                all_scopes=True, definitions=False, references=True
+            )
+            self._extract_instantiate_relation(script, all_def_ref_names, D)
             self._extract_type_relation(script, all_def_names, D)
 
         return D

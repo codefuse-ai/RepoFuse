@@ -21,10 +21,10 @@ def test_parent_relation(jedi_generator):
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 
-    hierarchy = D.get_edges_by_relation(EdgeRelation.ParentOf)
-    assert hierarchy
-    for i, parent_relationship in enumerate(hierarchy):
-        parent, child, _ = parent_relationship
+    edges = D.get_edges_by_relation(EdgeRelation.ParentOf)
+    assert edges
+    for i, edge in enumerate(edges):
+        parent, child, _ = edge
         match i:
             case 0:
                 assert parent.type == "module"
@@ -57,10 +57,10 @@ def test_import_relation(jedi_generator):
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 
-    hierarchy = D.get_edges_by_relation(EdgeRelation.Imports)
-    assert hierarchy
-    for i, hierarchy in enumerate(hierarchy):
-        importer, exporter, relations = hierarchy
+    edges = D.get_edges_by_relation(EdgeRelation.Imports)
+    assert edges
+    for i, edge in enumerate(edges):
+        importer, exporter, relations = edge
         importations = list(
             filter(
                 lambda relation: relation.relation == EdgeRelation.Imports,
@@ -100,6 +100,86 @@ def test_import_relation(jedi_generator):
                 assert exporter.type == "function"
                 assert exporter.name == "func_z"
                 assert importation.get_text() == "from z import func_z"
+
+
+def test_instantiate_relation(jedi_generator):
+    repo_path = repo_suite_path / "instantiate_relation"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = jedi_generator.generate(repository)
+
+    edges = D.get_edges_by_relation(EdgeRelation.Instantiates)
+    assert edges
+    for i, edge in enumerate(edges):
+        instance_owner, instance_type, relations = edge
+        instantiations = list(
+            filter(
+                lambda relation: relation.relation == EdgeRelation.Instantiates,
+                relations,
+            )
+        )
+        assert len(instantiations) > 0
+        instantiation = instantiations[0]
+        match i:
+            case 0:
+                assert instance_owner.type == "module"
+                assert instance_owner.name == "main"
+                assert instance_type.type == "function"
+                assert instance_type.name == "func_2"
+                assert instantiation.get_text() == "func_2"
+            case 1:
+                assert instance_owner.type == "module"
+                assert instance_owner.name == "main"
+                assert instance_type.type == "function"
+                assert instance_type.name == "A"
+                assert instantiation.get_text() == "A"
+            case 2:
+                assert instance_owner.type == "module"
+                assert instance_owner.name == "main"
+                assert instance_type.type == "function"
+                assert instance_type.name == "A"
+                assert instantiation.get_text() == "class_a"
+            case 3:
+                assert instance_owner.type == "module"
+                assert instance_owner.name == "main"
+                assert instance_type.type == "function"
+                assert instance_type.name == "B"
+                assert instantiation.get_text() == "B"
+            case 4:
+                assert instance_owner.type == "function"
+                assert instance_owner.name == "return_A"
+                assert instance_type.type == "function"
+                assert instance_type.name == "A"
+                assert instantiation.get_text() == "A"
+            case 5:
+                assert instance_owner.type == "function"
+                assert instance_owner.name == "return_A"
+                assert instance_type.type == "function"
+                assert instance_type.name == "A"
+                assert instantiation.get_text() == "class_a"
+            case 6:
+                assert instance_owner.type == "function"
+                assert instance_owner.name == "func_1"
+                assert instance_type.type == "function"
+                assert instance_type.name == "A"
+                assert instantiation.get_text() == "A"
+            case 7:
+                assert instance_owner.type == "function"
+                assert instance_owner.name == "func_1"
+                assert instance_type.type == "function"
+                assert instance_type.name == "A"
+                assert instantiation.get_text() == "class_a"
+            case 8:
+                assert instance_owner.type == "function"
+                assert instance_owner.name == "func_2"
+                assert instance_type.type == "function"
+                assert instance_type.name == "A"
+                assert instantiation.get_text() == "class_a"
+            case 9:
+                assert instance_owner.type == "function"
+                assert instance_owner.name == "func_2"
+                assert instance_type.type == "function"
+                assert instance_type.name == "B"
+                assert instantiation.get_text() == "B"
 
 
 def test_call_relation(jedi_generator):
