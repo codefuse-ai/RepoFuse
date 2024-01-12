@@ -1,4 +1,5 @@
 import argparse
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -39,11 +40,12 @@ def output_dependency_graph(
     match output_format:
         case "edgelist":
             output = dump_graph_as_edgelist(graph)
+            data = json.dumps(output)
             if output_file:
-                with open(output_file, "w") as f:
-                    f.write(str(output))
+                output_file = Path(output_file)
+                output_file.write_text(data)
             else:
-                print(output)
+                print(data)
         case "pyvis":
             if output_file is None:
                 raise ValueError(
