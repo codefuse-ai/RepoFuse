@@ -18,6 +18,16 @@ from dependency_graph.models.repository import Repository
 repo_suite_path = Path(__file__).parent.parent / "code_example" / "python"
 
 
+def test_get_related_edges():
+    repository = Repository(repo_path=repo_suite_path, language=Language.Python)
+    graph = construct_dependency_graph(repository, DependencyGraphGeneratorType.JEDI)
+    edges = graph.get_related_edges(
+        EdgeRelation.Calls,
+    )
+    assert isinstance(edges, list)
+    assert len(edges) > 0
+
+
 def test_get_related_nodes():
     repository = Repository(repo_path=repo_suite_path, language=Language.Python)
     graph = construct_dependency_graph(repository, DependencyGraphGeneratorType.JEDI)

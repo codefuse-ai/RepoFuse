@@ -145,8 +145,9 @@ class Edge:
 
 class DependencyGraph:
     def __init__(self, repo_path: PathLike) -> None:
-        # Pay attention to https://stackoverflow.com/questions/26691442/how-do-i-add-a-new-attribute-to-an-edge-in-networkx
-        self.graph = nx.DiGraph()
+        # See https://networkx.org/documentation/stable/reference/classes/multidigraph.html
+        # See also https://stackoverflow.com/questions/26691442/how-do-i-add-a-new-attribute-to-an-edge-in-networkx
+        self.graph = nx.MultiDiGraph()
         self.repo_path = Path(repo_path)
 
     def add_node(self, node: Node):
@@ -155,55 +156,56 @@ class DependencyGraph:
     def add_nodes_from(self, nodes: Iterable[Node]):
         self.graph.add_nodes_from(nodes)
 
-    def add_relational_edge(self, n1: Node, n2: Node, r1: Edge, r2: Edge):
+    def add_relational_edge(self, n1: Node, n2: Node, r1: Edge, r2: Edge | None = None):
+        """Add a relational edge between two nodes.
+        r2 can be None to indicate this is a unidirectional edge."""
         self.add_node(n1)
         self.add_node(n2)
-        if not self.graph.has_edge(n1, n2):
-            self.graph.add_edge(n1, n2, relations=set())
+        self.graph.add_edge(n1, n2, relation=r1)
+        if r2 is not None:
+            self.graph.add_edge(n2, n1, relation=r2)
 
-        if not self.graph.has_edge(n2, n1):
-            self.graph.add_edge(n2, n1, relations=set())
-
-        self.graph[n1][n2]["relations"].add(r1)
-        self.graph[n2][n1]["relations"].add(r2)
-
-    def add_relational_edges_from(self, edges: Iterable[tuple[Node, Node, Edge, Edge]]):
+    def add_relational_edges_from(
+        self, edges: Iterable[tuple[Node, Node, Edge, Edge | None]]
+    ):
+        """Add relational edges.
+        r2 can be None to indicate this is a unidirectional edge."""
         for e in edges:
+            assert len(e) in (3, 4), f"Invalid edges length: {e}, should be 3 or 4"
             self.add_relational_edge(*e)
 
     def get_related_edges(
         self, *relations: EdgeRelation
-    ) -> list[tuple[Node, Node, set[Edge]]]:
-        edges_list: list[tuple[Node, Node, set[Edge]]] = [
-            (edge[0], edge[1], edge[2]["relations"])
-            for edge in self.graph.edges(data=True)
-            if any(e.relation in relations for e in edge[2]["relations"])
-        ]
-        # Sort by from node's location
-        return sorted(edges_list, key=lambda e: e[0].location.__str__())
+    ) -> list[tuple[Node, Node, Edge]]:
+        # self.graph.edges(data="relation") is something like:
+        # [(1, 2, Edge(...), (1, 2, Edge(...)), (3, 4, Edge(...)]
+        filtered_edges = list(
+            filter(
+                lambda edge: edge and edge[2].relation in relations,
+                self.graph.edges(data="relation"),
+            )
+        )
+        # Sort by edge's location
+        return sorted(filtered_edges, key=lambda e: e[2].location.__str__())
 
     def get_related_nodes(
         self, node: Node, *relations: EdgeRelation
     ) -> list[Node] | None:
+        """Get the related nodes of the given node by the given relations.
+        If the given node is not in the graph, return None."""
         if node not in self.graph:
             return None
 
         return [
-            n
-            for n, e in self.graph[node].items()
-            if any(e.relation in relations for e in e.get("relations"))
+            edge[1]
+            for edge in self.graph.edges(node, data="relation")
+            if edge[2].relation in relations
         ]
 
     def get_related_subgraph(self, *relations: EdgeRelation) -> Self:
+        """Get a subgraph that contains all the nodes and edges that are related to the given relations.
+        This subgraph is a new sub-copy of the original graph."""
         edges = self.get_related_edges(*relations)
-
-        sub_edges: list[tuple[Node, Node, Edge, Edge]] = []
-        for edge in edges:
-            u, v, _edges = edge
-            for _e in _edges:  # type: Edge
-                if _e.relation in relations:
-                    sub_edges.append((u, v, _e, _e.get_inverse_edge()))
-
         sub_graph = DependencyGraph(self.repo_path)
-        sub_graph.add_relational_edges_from(sub_edges)
+        sub_graph.add_relational_edges_from(edges)
         return sub_graph
