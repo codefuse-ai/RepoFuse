@@ -9,7 +9,7 @@ from dependency_graph.graph_generator.tree_sitter_generator import (
     TreeSitterDependencyGraphGenerator,
 )
 from dependency_graph.models import PathLike
-from dependency_graph.models.dependency_graph import DependencyGraph
+from dependency_graph.models.dependency_graph import DependencyGraph, EdgeRelation
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 
@@ -24,29 +24,52 @@ def construct_dependency_graph(
         return TreeSitterDependencyGraphGenerator(language).generate(repo)
 
 
-def dump_graph_as_edgelist(graph: DependencyGraph) -> list:
+def stringify_graph(graph: DependencyGraph) -> nx.Graph:
     G = nx.Graph()
-    for u, v, data in graph.graph.edges(data=True):
+    for u, v, edge in graph.graph.edges(data="relation"):
         str_u, str_v = str(u), str(v)
+        # Ignore the edge location when stringify the graph
+        str_edge = str(edge.relation)
         if G.has_edge(str_v, str_u):
-            G[str_u][str_v]["label"] += "/" + str(data["kind"])
+            G[str_u][str_v]["label"] += "/" + str_edge
         else:
-            G.add_edge(str_u, str_v, label=str(data["kind"]))
+            G.add_edge(str_u, str_v, label=str_edge)
+    return G
 
+
+def dump_graph_as_edgelist(graph: DependencyGraph) -> list:
+    G = stringify_graph(graph)
     return list(nx.to_edgelist(G))
 
 
 def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> None:
-    G = nx.Graph()
-    for u, v, data in graph.graph.edges(data=True):
-        str_u, str_v = str(u), str(v)
-        if G.has_edge(str_v, str_u):
-            G[str_u][str_v]["label"] += "/" + str(data["kind"])
-        else:
-            G.add_edge(str_u, str_v, label=str(data["kind"]))
-
     nt = Network(height="1000px", width="100%", notebook=False, select_menu=True)
-    nt.from_nx(G)
+    colors = (
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "orange",
+        "purple",
+        "pink",
+        "brown",
+        "black",
+        "white",
+        "gray",
+        "cyan",
+        "magenta",
+        "teal",
+        "maroon",
+    )
+
+    for i, relation in enumerate(EdgeRelation):
+        if relation.value[2] == 1:
+            continue
+        sub_graph = graph.get_related_subgraph(relation, relation.get_inverse_kind())
+        G = stringify_graph(sub_graph)
+        nx.set_edge_attributes(G, colors[i], "color")
+        nt.from_nx(G)
+
     nt.set_options(
         dedent(
             """

@@ -3,7 +3,10 @@ from pathlib import Path
 import jedi
 from jedi.api.classes import Name
 
-from dependency_graph.graph_generator import BaseDependencyGraphGenerator
+from dependency_graph.graph_generator import (
+    BaseDependencyGraphGenerator,
+    DependencyGraphGeneratorType,
+)
 from dependency_graph.models.dependency_graph import (
     DependencyGraph,
     Location,
@@ -14,6 +17,10 @@ from dependency_graph.models.dependency_graph import (
 )
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
+from dependency_graph.utils.log import setup_logger
+
+# Initialize logging
+logger = setup_logger()
 
 
 class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
@@ -22,67 +29,56 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def __init__(self, language: Language = Language.Python):
         super().__init__(language)
 
-    # New helper function for creating nodes
+    def _convert_name_pos_to_location(self, name: Name) -> Location | None:
+        """helper function for creating location"""
+        if name is None:
+            return None
+
+        location_params = {"file_path": name.module_path}
+        start_pos = name.get_definition_start_position()
+        end_pos = name.get_definition_end_position()
+        if start_pos:
+            location_params.update(
+                start_line=start_pos[0],
+                start_column=start_pos[1] + 1,  # Convert to 1-based indexing
+            )
+
+        if end_pos:
+            location_params.update(
+                end_line=end_pos[0],
+                end_column=end_pos[1] + 1,  # Convert to 1-based indexing
+            )
+        return Location(**location_params)
+
+    def _convert_name_to_node(self, name: Name, node_type: NodeType) -> Node:
+        """helper function for creating nodes"""
+        location = self._convert_name_pos_to_location(name)
+        return Node(
+            type=node_type,
+            name=name.name,
+            location=location,
+        )
+
     def _update_graph(
         self,
         D: DependencyGraph,
+        from_name: Name,
         from_type: NodeType,
-        from_name: str,
-        from_path: Path,
-        from_start_pos: tuple[int, int] | None,
-        from_end_pos: tuple[int, int] | None,
+        to_name: Name,
         to_type: NodeType,
-        to_name: str,
-        to_path: Path,
-        to_start_pos: tuple[int, int] | None,
-        to_end_pos: tuple[int, int] | None,
+        edge_name: Name
+        | None,  # Edge name can be None as not all relation have a location
         edge_relation: EdgeRelation,
         inverse_edge_relation: EdgeRelation,
-        edge_location: Location,
     ):
-        from_location_params = {"file_path": from_path}
-        if from_start_pos:
-            from_location_params.update(
-                start_line=from_start_pos[0],
-                start_column=from_start_pos[1] + 1,  # Convert to 1-based indexing
-            )
+        """helper function for updating the graph"""
+        from_node = self._convert_name_to_node(from_name, from_type)
+        to_node = self._convert_name_to_node(to_name, to_type)
 
-        if from_end_pos:
-            from_location_params.update(
-                end_line=from_end_pos[0],
-                end_column=from_end_pos[1] + 1,  # Convert to 1-based indexing
-            )
-
-        _from = Node(
-            type=from_type,
-            name=from_name,
-            location=Location(**from_location_params),
-        )
-
-        to_location_params = {"file_path": to_path}
-        if to_start_pos:
-            to_location_params.update(
-                start_line=to_start_pos[0],
-                start_column=to_start_pos[1] + 1,  # Convert to 1-based indexing
-            )
-
-        if to_end_pos:
-            to_location_params.update(
-                end_line=to_end_pos[0],
-                end_column=to_end_pos[1] + 1,  # Convert to 1-based indexing
-            )
-
-        _to = Node(
-            type=to_type,
-            name=to_name,
-            location=Location(**to_location_params),
-        )
-
-        D.add_node(_from)
-        D.add_node(_to)
+        edge_location = self._convert_name_pos_to_location(edge_name)
         D.add_relational_edge(
-            _from,
-            _to,
+            from_node,
+            to_node,
             Edge(relation=edge_relation, location=edge_location),
             Edge(relation=inverse_edge_relation, location=edge_location),
         )
@@ -90,10 +86,8 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_parent_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
-        root_node: Name = None,
     ):
         for name in all_names:
             # TODO missing adding global variable
@@ -117,70 +111,25 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 ):
                     continue
 
-            if root_node is None:
-                # a Module doesn't have a location
-                from_type = NodeType.MODULE.value
-                from_name = script.path.name
-                from_path = script.path
-                from_start_pos = None
-                from_end_pos = None
-            else:
-                from_type = NodeType.CLASS.value
-                from_name = root_node.name
-                from_path = root_node.module_path
-                from_start_pos = root_node._name.tree_name.parent.start_pos
-                from_end_pos = root_node._name.tree_name.parent.end_pos
-
-            to_type = NodeType(name.type).value
-            to_name = name.name
-            to_path = name.module_path
-            if name.type == "function" and root_node:
-                to_type = NodeType.METHOD.value
-                to_name = f"{root_node.name}.{name.name}"
-
-            # Get into its class definition body and get its location
-            to_start_pos = name._name.tree_name.parent.start_pos
-            to_end_pos = name._name.tree_name.parent.end_pos
-
-            # Use the helper function to update the graph
+            parent = name.parent()
             self._update_graph(
                 D=D,
-                from_type=from_type,
-                from_name=from_name,
-                from_path=from_path,
-                from_start_pos=from_start_pos,  # Modules do not have a start or end position
-                from_end_pos=from_end_pos,
-                to_type=to_type,
-                to_name=to_name,
-                to_path=to_path,
-                to_start_pos=to_start_pos,
-                to_end_pos=to_end_pos,
+                from_name=parent,
+                from_type=NodeType(parent.type).value,
+                # TODO the name should be added with is class name if this is a method
+                to_name=name,
+                to_type=NodeType(name.type).value,
+                edge_name=None,
                 edge_relation=EdgeRelation.ParentOf,
                 inverse_edge_relation=EdgeRelation.ChildOf,
-                edge_location=None,
             )
-
-            # Get method definition in class
-            if name.type == "class":
-                sub_names = name.defined_names()
-                # Recursive call
-                self._extract_parent_relation(
-                    script, project, sub_names, D, root_node=name
-                )
 
     def _extract_import_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
     ):
-        """
-        TODO should we add import relation for the following case?
-        def test():
-            import os
-            os.chdir(os.path.dirname(__file__))
-        """
         for name in all_names:
             definitions = name.get_signatures() or name.goto(
                 follow_imports=True, follow_builtin_imports=False
@@ -198,61 +147,99 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             if definition.module_path == script.path:
                 continue
 
-            from_type = NodeType.MODULE.value
-            from_name = script.path.name
-            from_path = script.path
-            to_type = NodeType(definition.type).value
-            to_name = definition.name
-            to_path = definition.module_path
-
-            # Determine positions
-            if definition._name.tree_name:
-                to_start_pos = definition._name.tree_name.start_pos
-                to_end_pos = definition._name.tree_name.end_pos
-            else:
-                to_start_pos = (definition.line, definition.column)
-                to_end_pos = None
-
             # Use the helper function to update the graph
             self._update_graph(
                 D=D,
-                from_type=from_type,
-                from_name=from_name,
-                from_path=from_path,
-                from_start_pos=None,
-                from_end_pos=None,
-                to_type=to_type,
-                to_name=to_name,
-                to_path=to_path,
-                to_start_pos=to_start_pos,
-                to_end_pos=to_end_pos,
+                from_name=script.get_context(),
+                from_type=NodeType.MODULE.value,
+                # TODO the name should be added with is class name if this is a method
+                to_name=definition,
+                to_type=NodeType.VARIABLE.value
+                if definition.type == "statement"
+                else NodeType(definition.type).value,
+                edge_name=name,
                 edge_relation=EdgeRelation.Imports,
                 inverse_edge_relation=EdgeRelation.ImportedBy,
-                edge_location=None,
             )
 
     def _extract_call_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
     ):
-        pass
+        for name in all_names:
+            callers = name.goto(follow_imports=True, follow_builtin_imports=True)
+            if not callers:
+                continue
+
+            callee = callers[0]
+
+            if not callee or callee.type != "function":
+                continue
+
+            # Find caller, caller should be a function
+            if name.parent().type not in ("function", "module"):
+                continue
+            caller = name.parent()
+
+            # Use the helper function to update the graph
+            self._update_graph(
+                D=D,
+                from_name=caller,
+                from_type=NodeType(caller.type).value,
+                # TODO the name should be added with is class name if this is a method
+                to_name=callee,
+                to_type=NodeType.FUNCTION.value,
+                edge_name=name,
+                edge_relation=EdgeRelation.Calls,
+                inverse_edge_relation=EdgeRelation.CalledBy,
+            )
 
     def _extract_instantiate_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
     ):
-        pass
+        for name in all_names:
+            if name.type not in ("statement", "param"):
+                continue
+
+            # Skip self
+            if name.name == "self":
+                continue
+
+            # TODO a variable can also have an instance of another
+            if name.parent().type not in ("class", "module", "function"):
+                continue
+
+            instance_types = name.infer()
+            if not instance_types:
+                continue
+
+            instance_type = instance_types[0]
+            # Skip builtin types
+            if instance_type.in_builtin_module():
+                continue
+
+            instance_owner = name.parent()
+            # Use the helper function to update the graph
+            self._update_graph(
+                D=D,
+                from_name=instance_owner,
+                from_type=NodeType(instance_owner.type).value,
+                # TODO the name should be added with is class name if this is a method
+                to_name=instance_type,
+                to_type=NodeType.FUNCTION.value,
+                edge_name=name,
+                edge_relation=EdgeRelation.Instantiates,
+                inverse_edge_relation=EdgeRelation.InstantiatedBy,
+            )
 
     def _extract_type_relation(
         self,
         script: jedi.Script,
-        project: jedi.Project,
         all_names: list[Name],
         D: DependencyGraph,
     ):
@@ -266,19 +253,32 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             if not file.content.strip():
                 continue
 
-            script = jedi.Script(
-                file.content,
-                path=file.file_path,
-                project=project,
-            )
+            try:
+                script = jedi.Script(
+                    file.content,
+                    path=file.file_path,
+                    project=project,
+                )
 
-            all_def_names = script.get_names(
-                all_scopes=False, definitions=True, references=False
-            )
-            self._extract_parent_relation(script, project, all_def_names, D)
-            self._extract_import_relation(script, project, all_def_names, D)
-            self._extract_call_relation(script, project, all_def_names, D)
-            self._extract_instantiate_relation(script, project, all_def_names, D)
-            self._extract_type_relation(script, project, all_def_names, D)
+                all_def_names = script.get_names(
+                    all_scopes=True, definitions=True, references=False
+                )
+                self._extract_parent_relation(script, all_def_names, D)
+                self._extract_import_relation(script, all_def_names, D)
+
+                all_ref_names = script.get_names(
+                    all_scopes=True, definitions=False, references=True
+                )
+                self._extract_call_relation(script, all_ref_names, D)
+
+                all_def_ref_names = script.get_names(
+                    all_scopes=True, definitions=False, references=True
+                )
+                self._extract_instantiate_relation(script, all_def_ref_names, D)
+                self._extract_type_relation(script, all_def_names, D)
+            except Exception as e:
+                logger.warn(
+                    f"Error while generating graph of type {DependencyGraphGeneratorType.JEDI.value} for {file.file_path}, will ignore it. Error: {e}"
+                )
 
         return D

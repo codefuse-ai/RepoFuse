@@ -1,9 +1,9 @@
 import enum
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self, Optional
+from typing import Self, Optional, Iterable
 
-import networkx
+import networkx as nx
 
 from dependency_graph.models import PathLike
 from dependency_graph.utils.text import slice_text
@@ -36,9 +36,6 @@ class EdgeRelation(enum.Enum):
     # 7. Field use relations
     Uses = (7, 0, 0)
     UsedBy = (7, 0, 1)
-    # Type inference
-    Type = (8, 0, 0)
-    # Type = (8, 0, 1)
 
     def __str__(self):
         return self.name
@@ -60,7 +57,8 @@ class EdgeRelation(enum.Enum):
 class Location:
     def __str__(self) -> str:
         signature = f"{self.file_path}"
-        if any([self.start_line, self.start_column, self.end_line, self.end_column]):
+        loc = [self.start_line, self.start_column, self.end_line, self.end_column]
+        if any([l is not None for l in loc]):
             signature += f":{self.start_line}:{self.start_column}-{self.end_line}:{self.end_column}"
 
         return signature
@@ -71,11 +69,12 @@ class Location:
     def get_text(self) -> str | None:
         # TODO should leverage the FileNode.content
         content = self.file_path.read_text()
-        if any([self.start_line, self.start_column, self.end_line, self.end_column]):
+        loc = [self.start_line, self.start_column, self.end_line, self.end_column]
+        if any([l is None for l in loc]):
             return None
 
         return slice_text(
-            content, self.start_line, self.end_line, self.start_column, self.end_column
+            content, self.start_line, self.start_column, self.end_line, self.end_column
         )
 
     file_path: Path
@@ -96,7 +95,7 @@ class NodeType(str, enum.Enum):
     MODULE = "module"
     CLASS = "class"
     FUNCTION = "function"
-    METHOD = "method"
+    VARIABLE = "variable"
 
 
 @dataclass
@@ -106,6 +105,9 @@ class Node:
 
     def __hash__(self) -> int:
         return hash(self.__str__())
+
+    def get_text(self) -> str | None:
+        return self.location.get_text()
 
     type: NodeType
     """The type of the node"""
@@ -126,6 +128,15 @@ class Edge:
     def __hash__(self) -> int:
         return hash(self.__str__())
 
+    def get_text(self) -> str | None:
+        return self.location.get_text()
+
+    def get_inverse_edge(self) -> Self:
+        return Edge(
+            relation=self.relation.get_inverse_kind(),
+            location=self.location,
+        )
+
     relation: EdgeRelation
     """The relation between two nodes"""
     location: Optional[Location] = None
@@ -134,21 +145,67 @@ class Edge:
 
 class DependencyGraph:
     def __init__(self, repo_path: PathLike) -> None:
-        self.graph = networkx.DiGraph()
+        # See https://networkx.org/documentation/stable/reference/classes/multidigraph.html
+        # See also https://stackoverflow.com/questions/26691442/how-do-i-add-a-new-attribute-to-an-edge-in-networkx
+        self.graph = nx.MultiDiGraph()
         self.repo_path = Path(repo_path)
 
     def add_node(self, node: Node):
-        if isinstance(
-            node.location.file_path, Path
-        ) and node.location.file_path.is_relative_to(self.repo_path):
-            node.location.file_path = node.location.file_path.relative_to(
-                self.repo_path.parent
-            )
-
         self.graph.add_node(node)
 
-    def add_relational_edge(self, n1: Node, n2: Node, r1: Edge, r2: Edge):
+    def add_nodes_from(self, nodes: Iterable[Node]):
+        self.graph.add_nodes_from(nodes)
+
+    def add_relational_edge(self, n1: Node, n2: Node, r1: Edge, r2: Edge | None = None):
+        """Add a relational edge between two nodes.
+        r2 can be None to indicate this is a unidirectional edge."""
         self.add_node(n1)
         self.add_node(n2)
-        self.graph.add_edge(n1, n2, kind=r1)
-        self.graph.add_edge(n2, n1, kind=r2)
+        self.graph.add_edge(n1, n2, relation=r1)
+        if r2 is not None:
+            self.graph.add_edge(n2, n1, relation=r2)
+
+    def add_relational_edges_from(
+        self, edges: Iterable[tuple[Node, Node, Edge, Edge | None]]
+    ):
+        """Add relational edges.
+        r2 can be None to indicate this is a unidirectional edge."""
+        for e in edges:
+            assert len(e) in (3, 4), f"Invalid edges length: {e}, should be 3 or 4"
+            self.add_relational_edge(*e)
+
+    def get_related_edges(
+        self, *relations: EdgeRelation
+    ) -> list[tuple[Node, Node, Edge]]:
+        # self.graph.edges(data="relation") is something like:
+        # [(1, 2, Edge(...), (1, 2, Edge(...)), (3, 4, Edge(...)]
+        filtered_edges = list(
+            filter(
+                lambda edge: edge and edge[2].relation in relations,
+                self.graph.edges(data="relation"),
+            )
+        )
+        # Sort by edge's location
+        return sorted(filtered_edges, key=lambda e: e[2].location.__str__())
+
+    def get_related_nodes(
+        self, node: Node, *relations: EdgeRelation
+    ) -> list[Node] | None:
+        """Get the related nodes of the given node by the given relations.
+        If the given node is not in the graph, return None."""
+        if node not in self.graph:
+            return None
+
+        return [
+            edge[1]
+            for edge in self.graph.edges(node, data="relation")
+            if edge[2].relation in relations
+        ]
+
+    def get_related_subgraph(self, *relations: EdgeRelation) -> Self:
+        """Get a subgraph that contains all the nodes and edges that are related to the given relations.
+        This subgraph is a new sub-copy of the original graph."""
+        edges = self.get_related_edges(*relations)
+        sub_graph = DependencyGraph(self.repo_path)
+        sub_graph.add_relational_edges_from(edges)
+        return sub_graph
