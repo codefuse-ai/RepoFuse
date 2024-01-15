@@ -1,11 +1,9 @@
 import argparse
-import json
 from datetime import datetime
 from pathlib import Path
 
 from dependency_graph import (
     construct_dependency_graph,
-    dump_graph_as_edgelist,
     dump_graph_as_pyvis_graph,
 )
 from dependency_graph.graph_generator import (
@@ -39,8 +37,7 @@ def output_dependency_graph(
 
     match output_format:
         case "edgelist":
-            output = dump_graph_as_edgelist(graph)
-            data = json.dumps(output)
+            data = graph.to_json()
             if output_file:
                 output_file = Path(output_file)
                 output_file.write_text(data)

@@ -277,7 +277,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 self._extract_instantiate_relation(script, all_def_ref_names, D)
                 self._extract_type_relation(script, all_def_names, D)
             except Exception as e:
-                logger.warn(
+                logger.error(
                     f"Error while generating graph of type {DependencyGraphGeneratorType.JEDI.value} for {file.file_path}, will ignore it. Error: {e}"
                 )
 

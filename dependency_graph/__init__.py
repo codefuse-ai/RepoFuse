@@ -28,18 +28,12 @@ def stringify_graph(graph: DependencyGraph) -> nx.Graph:
     G = nx.Graph()
     for u, v, edge in graph.graph.edges(data="relation"):
         str_u, str_v = str(u), str(v)
-        # Ignore the edge location when stringify the graph
-        str_edge = str(edge.relation)
+        str_edge = str(edge)
         if G.has_edge(str_v, str_u):
             G[str_u][str_v]["label"] += "/" + str_edge
         else:
             G.add_edge(str_u, str_v, label=str_edge)
     return G
-
-
-def dump_graph_as_edgelist(graph: DependencyGraph) -> list:
-    G = stringify_graph(graph)
-    return list(nx.to_edgelist(G))
 
 
 def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> None:

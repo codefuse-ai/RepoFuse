@@ -1,9 +1,11 @@
 import enum
-from dataclasses import dataclass
+import json
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Self, Optional, Iterable
 
 import networkx as nx
+from dataclasses_json import dataclass_json, config
 
 from dependency_graph.models import PathLike
 from dependency_graph.utils.text import slice_text
@@ -40,6 +42,10 @@ class EdgeRelation(enum.Enum):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def __getitem__(cls, name):
+        return cls[name]
+
     def get_inverse_kind(self) -> Self:
         new_value = [*self.value]
         new_value[2] = 1 - new_value[2]
@@ -53,6 +59,7 @@ class EdgeRelation(enum.Enum):
         )
 
 
+@dataclass_json
 @dataclass
 class Location:
     def __str__(self) -> str:
@@ -77,7 +84,9 @@ class Location:
             content, self.start_line, self.start_column, self.end_line, self.end_column
         )
 
-    file_path: Path
+    file_path: Path = field(
+        metadata=config(encoder=lambda v: str(v), decoder=lambda v: Path(v))
+    )
     """The file path"""
     start_line: Optional[int] = None
     """The start line number, 1-based"""
@@ -98,6 +107,7 @@ class NodeType(str, enum.Enum):
     VARIABLE = "variable"
 
 
+@dataclass_json
 @dataclass
 class Node:
     def __str__(self) -> str:
@@ -109,7 +119,9 @@ class Node:
     def get_text(self) -> str | None:
         return self.location.get_text()
 
-    type: NodeType
+    type: NodeType = field(
+        metadata=config(encoder=lambda v: NodeType(v).value, decoder=lambda v: NodeType(v))
+    )
     """The type of the node"""
     name: str
     """The name of the node"""
@@ -117,6 +129,7 @@ class Node:
     """The location of the node"""
 
 
+@dataclass_json
 @dataclass
 class Edge:
     def __str__(self) -> str:
@@ -137,7 +150,9 @@ class Edge:
             location=self.location,
         )
 
-    relation: EdgeRelation
+    relation: EdgeRelation = field(
+        metadata=config(encoder=lambda v: str(v), decoder=lambda v: EdgeRelation[v])
+    )
     """The relation between two nodes"""
     location: Optional[Location] = None
     """The location of the edge"""
@@ -209,3 +224,32 @@ class DependencyGraph:
         sub_graph = DependencyGraph(self.repo_path)
         sub_graph.add_relational_edges_from(edges)
         return sub_graph
+
+    def to_dict(self) -> dict:
+        edgelist = self.graph.edges(data="relation")
+
+        return {
+            "repo_path": str(self.repo_path),
+            "edges": [
+                (edge[0].to_dict(), edge[1].to_dict(), edge[2].to_dict())
+                for edge in edgelist
+            ],
+        }
+
+    def to_json(self) -> str:
+        return json.dumps(self.to_dict())
+
+    @staticmethod
+    def from_dict(obj_dict: dict) -> "DependencyGraph":
+        edges = [
+            (Node.from_dict(edge[0]), Node.from_dict(edge[1]), Edge.from_dict(edge[2]))
+            for edge in obj_dict["edges"]
+        ]
+        graph = DependencyGraph(obj_dict["repo_path"])
+        graph.add_relational_edges_from(edges)
+        return graph
+
+    @staticmethod
+    def from_json(json_str: str) -> "DependencyGraph":
+        obj_dict = json.loads(json_str)
+        return DependencyGraph.from_dict(obj_dict)
