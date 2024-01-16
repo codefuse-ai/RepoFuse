@@ -14,7 +14,7 @@ class FileNode:
     @cached_property
     def content(self) -> str:
         # TODO Compare file timestamp to detect file changes made by others
-        self._content = self.file_path.read_text()
+        self._content = self.file_path.resolve().read_text()
         return self._content
 
     def write_content(self, content: str) -> None:

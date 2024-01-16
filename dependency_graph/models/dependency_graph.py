@@ -2,7 +2,7 @@ import enum
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Self, Optional, Iterable
+from typing import Self, Optional, Iterable, Callable
 
 import networkx as nx
 from dataclasses_json import dataclass_json, config
@@ -120,7 +120,9 @@ class Node:
         return self.location.get_text()
 
     type: NodeType = field(
-        metadata=config(encoder=lambda v: NodeType(v).value, decoder=lambda v: NodeType(v))
+        metadata=config(
+            encoder=lambda v: NodeType(v).value, decoder=lambda v: NodeType(v)
+        )
     )
     """The type of the node"""
     name: str
@@ -192,13 +194,8 @@ class DependencyGraph:
     def get_related_edges(
         self, *relations: EdgeRelation
     ) -> list[tuple[Node, Node, Edge]]:
-        # self.graph.edges(data="relation") is something like:
-        # [(1, 2, Edge(...), (1, 2, Edge(...)), (3, 4, Edge(...)]
-        filtered_edges = list(
-            filter(
-                lambda edge: edge and edge[2].relation in relations,
-                self.graph.edges(data="relation"),
-            )
+        filtered_edges = self.filter_edges(
+            edge_filter=lambda edge: edge.relation in relations
         )
         # Sort by edge's location
         return sorted(filtered_edges, key=lambda e: e[2].location.__str__())
@@ -225,9 +222,24 @@ class DependencyGraph:
         sub_graph.add_relational_edges_from(edges)
         return sub_graph
 
-    def to_dict(self) -> dict:
-        edgelist = self.graph.edges(data="relation")
+    def filter_edges(
+        self,
+        in_node_filter: Callable[[Node], bool] = lambda _: True,
+        out_node_filter: Callable[[Node], bool] = lambda _: True,
+        edge_filter: Callable[[Edge], bool] = lambda _: True,
+    ) -> list[tuple[Node, Node, Edge]]:
+        # self.graph.edges(data="relation") is something like:
+        # [(1, 2, Edge(...), (1, 2, Edge(...)), (3, 4, Edge(...)]
+        return [
+            edge
+            for edge in self.graph.edges(data="relation")
+            if in_node_filter(edge[0])
+            and out_node_filter(edge[1])
+            and edge_filter(edge[2])
+        ]
 
+    def to_dict(self) -> dict:
+        edgelist = self.filter_edges()
         return {
             "repo_path": str(self.repo_path),
             "edges": [
