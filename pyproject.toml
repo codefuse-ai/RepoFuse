@@ -12,6 +12,7 @@ networkx = "^3.2.1"
 jedi = "^0.19.1"
 pyvis = "^0.3.2"
 dataclasses-json = "^0.6.3"
+mypy = "^1.8.0"
 
 [[tool.poetry.source]]
 name = "antgroup-pypi"
