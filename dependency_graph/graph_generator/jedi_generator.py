@@ -139,6 +139,10 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
             definition = definitions[0]
 
+            # If the definition's parent is not a module, it means it is not importable
+            if definition.parent() and definition.parent().type != "module":
+                continue
+
             # Skip instantiation, this should be dealt with in the instantiate relation
             if definition.type == "instance":
                 continue
