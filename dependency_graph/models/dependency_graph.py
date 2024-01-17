@@ -84,8 +84,9 @@ class Location:
             content, self.start_line, self.start_column, self.end_line, self.end_column
         )
 
-    file_path: Path = field(
-        metadata=config(encoder=lambda v: str(v), decoder=lambda v: Path(v))
+    file_path: Optional[Path] = field(
+        default=None,
+        metadata=config(encoder=lambda v: str(v), decoder=lambda v: Path(v)),
     )
     """The file path"""
     start_line: Optional[int] = None
@@ -194,8 +195,8 @@ class DependencyGraph:
     def get_related_edges(
         self, *relations: EdgeRelation
     ) -> list[tuple[Node, Node, Edge]]:
-        filtered_edges = self.filter_edges(
-            edge_filter=lambda edge: edge.relation in relations
+        filtered_edges = self.get_edges(
+            edge_filter=lambda in_node, out_node, edge: edge.relation in relations
         )
         # Sort by edge's location
         return sorted(filtered_edges, key=lambda e: e[2].location.__str__())
@@ -222,24 +223,21 @@ class DependencyGraph:
         sub_graph.add_relational_edges_from(edges)
         return sub_graph
 
-    def filter_edges(
+    def get_edges(
         self,
-        in_node_filter: Callable[[Node], bool] = lambda _: True,
-        out_node_filter: Callable[[Node], bool] = lambda _: True,
-        edge_filter: Callable[[Edge], bool] = lambda _: True,
+        edge_filter: Callable[[Node, Node, Edge], bool] = None,
     ) -> list[tuple[Node, Node, Edge]]:
         # self.graph.edges(data="relation") is something like:
         # [(1, 2, Edge(...), (1, 2, Edge(...)), (3, 4, Edge(...)]
+        if edge_filter is None:
+            return list(self.graph.edges(data="relation"))
+
         return [
-            edge
-            for edge in self.graph.edges(data="relation")
-            if in_node_filter(edge[0])
-            and out_node_filter(edge[1])
-            and edge_filter(edge[2])
+            edge for edge in self.graph.edges(data="relation") if edge_filter(*edge)
         ]
 
     def to_dict(self) -> dict:
-        edgelist = self.filter_edges()
+        edgelist = self.get_edges()
         return {
             "repo_path": str(self.repo_path),
             "edges": [
