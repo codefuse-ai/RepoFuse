@@ -2,7 +2,7 @@ import enum
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Self, Optional, Iterable, Callable
+from typing import Optional, Iterable, Callable
 
 import networkx as nx
 from dataclasses_json import dataclass_json, config
@@ -46,7 +46,7 @@ class EdgeRelation(enum.Enum):
     def __getitem__(cls, name):
         return cls[name]
 
-    def get_inverse_kind(self) -> Self:
+    def get_inverse_kind(self) -> "EdgeRelation":
         new_value = [*self.value]
         new_value[2] = 1 - new_value[2]
         return EdgeRelation(tuple(new_value))
@@ -147,7 +147,7 @@ class Edge:
     def get_text(self) -> str | None:
         return self.location.get_text()
 
-    def get_inverse_edge(self) -> Self:
+    def get_inverse_edge(self) -> 'Edge':
         return Edge(
             relation=self.relation.get_inverse_kind(),
             location=self.location,
@@ -215,7 +215,7 @@ class DependencyGraph:
             if edge[2].relation in relations
         ]
 
-    def get_related_subgraph(self, *relations: EdgeRelation) -> Self:
+    def get_related_subgraph(self, *relations: EdgeRelation) -> 'DependencyGraph':
         """Get a subgraph that contains all the nodes and edges that are related to the given relations.
         This subgraph is a new sub-copy of the original graph."""
         edges = self.get_related_edges(*relations)
