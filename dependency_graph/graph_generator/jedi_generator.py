@@ -18,6 +18,7 @@ from dependency_graph.models.dependency_graph import (
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
+from parso.python.tree import Name as ParsoTreeName
 
 # Initialize logging
 logger = setup_logger()
@@ -256,15 +257,18 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         continue
 
                     # e.g. resolve 'instance A' to 'class A'
+                    if tmp_name._name.tree_name is None:
+                        continue
                     tree_def = tmp_name._name.tree_name.get_definition()
+                    if tree_def is None or not hasattr(tree_def, "name"):
+                        continue
+
+                    other_script = jedi.Script(path=tmp_name.module_path)
                     instantiate_name = name
-                    try:
-                        instance_type = BaseName(
-                            tmp_name._inference_state,
-                            script._get_module_context().create_name(tree_def.name),
-                        )
-                    except Exception:
-                        pass
+                    instance_type = BaseName(
+                        other_script._inference_state,
+                        other_script._get_module_context().create_name(tree_def.name),
+                    )
 
             # We only accept class type as an instance for now
             if instance_type.type not in ("class",):
@@ -277,12 +281,13 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     "expr_stmt"
                 )
                 if expr_stmt_node and len(expr_stmt_node.children) > 0:
-                    instance_owner = BaseName(
-                        instance_type._inference_state,
-                        script._get_module_context().create_name(
-                            expr_stmt_node.children[0]
-                        ),
-                    )
+                    if isinstance(expr_stmt_node.children[0], ParsoTreeName):
+                        instance_owner = BaseName(
+                            instance_type._inference_state,
+                            script._get_module_context().create_name(
+                                expr_stmt_node.children[0]
+                            ),
+                        )
 
             # Use the helper function to update the graph
             self._update_graph(
@@ -338,8 +343,11 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             self._extract_instantiate_relation(script, all_def_ref_names, D)
             self._extract_type_relation(script, all_def_names, D)
         except Exception as e:
+            import traceback
+
+            tb_str = "\n".join(traceback.format_tb(e.__traceback__))
             logger.error(
-                f"Error while generating graph of type {DependencyGraphGeneratorType.JEDI.value} for {file_path}, will ignore it. Error: {e}"
+                f"Error while generating graph of type {DependencyGraphGeneratorType.JEDI.value} for {file_path}, will ignore it. Error {e} occurred at:\n{tb_str}"
             )
 
     def generate_file(
