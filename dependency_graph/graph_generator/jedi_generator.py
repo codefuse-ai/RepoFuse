@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import jedi
 from jedi.api.classes import Name
 
@@ -7,6 +5,7 @@ from dependency_graph.graph_generator import (
     BaseDependencyGraphGenerator,
     DependencyGraphGeneratorType,
 )
+from dependency_graph.models import PathLike
 from dependency_graph.models.dependency_graph import (
     DependencyGraph,
     Location,
@@ -21,6 +20,20 @@ from dependency_graph.utils.log import setup_logger
 
 # Initialize logging
 logger = setup_logger()
+
+# Mapping from jedi api type to node type
+_JEDI_API_TYPES_dict: dict[str, NodeType | None] = {
+    "module": NodeType.MODULE,
+    "class": NodeType.CLASS,
+    "instance": None,
+    "function": NodeType.FUNCTION,
+    "param": None,
+    "path": NodeType.MODULE,
+    "keyword": None,
+    "property": None,
+    "statement": None,
+    "namespace": NodeType.MODULE,
+}
 
 
 class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
@@ -115,10 +128,10 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             self._update_graph(
                 D=D,
                 from_name=parent,
-                from_type=NodeType(parent.type).value,
+                from_type=_JEDI_API_TYPES_dict[parent.type],
                 # TODO the name should be added with is class name if this is a method
                 to_name=name,
-                to_type=NodeType(name.type).value,
+                to_type=_JEDI_API_TYPES_dict[name.type],
                 edge_name=None,
                 edge_relation=EdgeRelation.ParentOf,
                 inverse_edge_relation=EdgeRelation.ChildOf,
@@ -140,7 +153,10 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             definition = definitions[0]
 
             # If the definition's parent is not a module, it means it is not importable
-            if definition.parent() and definition.parent().type != "module":
+            if definition.parent() and definition.parent().type not in (
+                "module",
+                "namespace",
+            ):
                 continue
 
             # Skip instantiation, this should be dealt with in the instantiate relation
@@ -155,12 +171,12 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             self._update_graph(
                 D=D,
                 from_name=script.get_context(),
-                from_type=NodeType.MODULE.value,
+                from_type=NodeType.MODULE,
                 # TODO the name should be added with is class name if this is a method
                 to_name=definition,
-                to_type=NodeType.VARIABLE.value
+                to_type=NodeType.VARIABLE
                 if definition.type == "statement"
-                else NodeType(definition.type).value,
+                else _JEDI_API_TYPES_dict[definition.type],
                 edge_name=name,
                 edge_relation=EdgeRelation.Imports,
                 inverse_edge_relation=EdgeRelation.ImportedBy,
@@ -182,8 +198,8 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             if not callee or callee.type != "function":
                 continue
 
-            # Find caller, caller should be a function
-            if name.parent().type not in ("function", "module"):
+            # Find caller, caller should be a function, or a module (call under `if __name__ == "__main__"`)
+            if name.parent().type not in ("function", "module", "namespace"):
                 continue
             caller = name.parent()
 
@@ -191,10 +207,10 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             self._update_graph(
                 D=D,
                 from_name=caller,
-                from_type=NodeType(caller.type).value,
+                from_type=_JEDI_API_TYPES_dict[caller.type],
                 # TODO the name should be added with is class name if this is a method
                 to_name=callee,
-                to_type=NodeType.FUNCTION.value,
+                to_type=NodeType.FUNCTION,
                 edge_name=name,
                 edge_relation=EdgeRelation.Calls,
                 inverse_edge_relation=EdgeRelation.CalledBy,
@@ -215,7 +231,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 continue
 
             # TODO a variable can also have an instance of another
-            if name.parent().type not in ("class", "module", "function"):
+            if name.parent().type not in ("class", "module", "function", "namespace"):
                 continue
 
             instance_types = name.infer()
@@ -232,10 +248,10 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             self._update_graph(
                 D=D,
                 from_name=instance_owner,
-                from_type=NodeType(instance_owner.type).value,
+                from_type=_JEDI_API_TYPES_dict[instance_owner.type],
                 # TODO the name should be added with is class name if this is a method
                 to_name=instance_type,
-                to_type=NodeType.FUNCTION.value,
+                to_type=NodeType.FUNCTION,
                 edge_name=name,
                 edge_relation=EdgeRelation.Instantiates,
                 inverse_edge_relation=EdgeRelation.InstantiatedBy,
@@ -249,6 +265,55 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     ):
         pass
 
+    def _generate_file(
+        self,
+        code: str,
+        file_path: PathLike,
+        D: DependencyGraph,
+        project: jedi.Project = None,
+    ):
+        try:
+            script = jedi.Script(
+                code,
+                path=file_path,
+                project=project,
+            )
+
+            all_def_names = script.get_names(
+                all_scopes=True, definitions=True, references=False
+            )
+            self._extract_parent_relation(script, all_def_names, D)
+            self._extract_import_relation(script, all_def_names, D)
+
+            all_ref_names = script.get_names(
+                all_scopes=True, definitions=False, references=True
+            )
+            self._extract_call_relation(script, all_ref_names, D)
+
+            all_def_ref_names = script.get_names(
+                all_scopes=True, definitions=False, references=True
+            )
+            self._extract_instantiate_relation(script, all_def_ref_names, D)
+            self._extract_type_relation(script, all_def_names, D)
+        except Exception as e:
+            logger.error(
+                f"Error while generating graph of type {DependencyGraphGeneratorType.JEDI.value} for {file_path}, will ignore it. Error: {e}"
+            )
+
+    def generate_file(
+        self, code: str = None, file_path: PathLike = None, repo: Repository = None
+    ) -> DependencyGraph:
+        if code is None and file_path is None:
+            raise ValueError("Must provide at least one of code or file_path")
+
+        project = None
+        if repo:
+            project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
+
+        D = DependencyGraph(repo.repo_path)
+        self._generate_file(code, file_path, D, project)
+        return D
+
     def generate(self, repo: Repository) -> DependencyGraph:
         project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
 
@@ -256,33 +321,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         for file in repo.files:
             if not file.content.strip():
                 continue
-
-            try:
-                script = jedi.Script(
-                    file.content,
-                    path=file.file_path,
-                    project=project,
-                )
-
-                all_def_names = script.get_names(
-                    all_scopes=True, definitions=True, references=False
-                )
-                self._extract_parent_relation(script, all_def_names, D)
-                self._extract_import_relation(script, all_def_names, D)
-
-                all_ref_names = script.get_names(
-                    all_scopes=True, definitions=False, references=True
-                )
-                self._extract_call_relation(script, all_ref_names, D)
-
-                all_def_ref_names = script.get_names(
-                    all_scopes=True, definitions=False, references=True
-                )
-                self._extract_instantiate_relation(script, all_def_ref_names, D)
-                self._extract_type_relation(script, all_def_names, D)
-            except Exception as e:
-                logger.error(
-                    f"Error while generating graph of type {DependencyGraphGeneratorType.JEDI.value} for {file.file_path}, will ignore it. Error: {e}"
-                )
+            self._generate_file(file.content, file.file_path, D, project)
 
         return D

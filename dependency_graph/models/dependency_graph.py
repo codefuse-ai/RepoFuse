@@ -112,7 +112,7 @@ class NodeType(str, enum.Enum):
 @dataclass
 class Node:
     def __str__(self) -> str:
-        return f"{self.name}:{self.type}@{self.location}"
+        return f"{self.name}:{self.type.value}@{self.location}"
 
     def __hash__(self) -> int:
         return hash(self.__str__())
@@ -147,7 +147,7 @@ class Edge:
     def get_text(self) -> str | None:
         return self.location.get_text()
 
-    def get_inverse_edge(self) -> 'Edge':
+    def get_inverse_edge(self) -> "Edge":
         return Edge(
             relation=self.relation.get_inverse_kind(),
             location=self.location,
@@ -215,7 +215,7 @@ class DependencyGraph:
             if edge[2].relation in relations
         ]
 
-    def get_related_subgraph(self, *relations: EdgeRelation) -> 'DependencyGraph':
+    def get_related_subgraph(self, *relations: EdgeRelation) -> "DependencyGraph":
         """Get a subgraph that contains all the nodes and edges that are related to the given relations.
         This subgraph is a new sub-copy of the original graph."""
         edges = self.get_related_edges(*relations)
