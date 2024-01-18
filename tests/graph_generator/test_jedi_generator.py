@@ -63,25 +63,28 @@ def test_instantiate_relation(jedi_generator):
 
     edges = D.get_related_edges(EdgeRelation.Instantiates)
     assert edges
-    assert len(edges) == 12
+    assert len(edges) == 8
 
     instantiations = [
-        (edge[0].name, edge[1].name, edge[2].get_text()) for edge in edges
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[2].location.start_line,
+        )
+        for edge in edges
     ]
 
     assert instantiations == [
-        ("return_A", "A", "A"),
-        ("return_A", "A", "class_a"),
-        ("func_1", "A", "A"),
-        ("func_1", "A", "class_a"),
-        ("main", "A", "A"),
-        ("func_2", "A", "class_a"),
-        ("func_2", "B", "B"),
-        ("func_2", "B", "B"),
-        ("func_2", "A", "class_a"),
-        ("main", "func_2", "func_2"),
-        ("main", "A", "class_a"),
-        ("main", "B", "B"),
+        ("function", "return_A", "class", "A", 11),
+        ("function", "func_1", "class", "A", 16),
+        ("variable", "global_class_a", "class", "A", 20),
+        ("function", "func_2", "class", "A", 24),
+        ("function", "func_2", "class", "B", 25),
+        ("function", "func_2", "class", "B", 26),
+        ("module", "main", "class", "B", 32),
+        ("variable", "class_x", "class", "X", 37),
     ]
 
 
