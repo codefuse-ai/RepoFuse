@@ -43,7 +43,6 @@ if __name__ == "__main__":
         help=f"The code agent type to use. Should be one of the {[g.value for g in DependencyGraphGeneratorType]}. Defaults to {DependencyGraphGeneratorType.JEDI.value}.",
     )
 
-    # TODO add more output format
     parser.add_argument(
         "-f",
         "--output-format",

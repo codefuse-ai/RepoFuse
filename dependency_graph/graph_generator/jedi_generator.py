@@ -242,7 +242,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 if name.name == "self":
                     continue
 
-                # TODO a variable can also have an instance of another
                 if name.parent().type not in (
                     "class",
                     "module",
