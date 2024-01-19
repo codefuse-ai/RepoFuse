@@ -15,6 +15,7 @@ def test_mypy_stub():
                 pass
 
             def a(self, b):
+                """method a"""
                 print('hello world')
 
             def b(self):
@@ -28,15 +29,51 @@ def test_mypy_stub():
     )
 
     actual = generate_python_stub(code)
-    expected = dedent(
+    expected = (
+        "class A:\n"
+        "    def __init__(self) -> None: ...\n"
+        "    def a(self, b) -> None: ...\n"
+        "    def b(self) -> None: ...\n"
+        "\n"
+        "def test(a): ...\n"
+    )
+    assert actual == expected
+
+
+def test_mypy_stub_can_include_docstrings():
+    code = dedent(
         '''
         class A:
             """test"""
-            def __init__(self) -> None: ...
-            def a(self, b) -> None: ...
-            def b(self) -> None: ...
-            
-        def test(a): ...
+            def __init__(self):
+                self.a = 1
+
+            def _private_method(self):
+                pass
+
+            def a(self, b):
+                """method a"""
+                print('hello world')
+
+            def b(self):
+                def closure():
+                    self.a()
+                closure()
+
+        def test(a):
+            return A().a()
         '''
-    ).lstrip()
+    )
+
+    actual = generate_python_stub(code, include_docstrings=True)
+    expected = (
+        "class A:\n"
+        '    """test"""\n'
+        "    def __init__(self) -> None: ...\n"
+        "    def a(self, b) -> None:\n"
+        '        """method a"""\n'
+        "    def b(self) -> None: ...\n"
+        "\n"
+        "def test(a): ...\n"
+    )
     assert actual == expected

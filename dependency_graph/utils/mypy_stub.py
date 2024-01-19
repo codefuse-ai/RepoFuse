@@ -9,40 +9,53 @@ from mypy.stubgen import (
     Options,
 )
 
+from dependency_graph import setup_logger
 
-def generate_python_stub(code: str):
-    options = Options(
-        pyversion=sys.version_info[:2],
-        no_import=True,
-        inspect=False,
-        doc_dir="",
-        search_path=[],
-        interpreter=sys.executable,
-        ignore_errors=True,
-        parse_only=True,
-        include_private=False,
-        output_dir="/tmp/out",
-        modules=[],
-        packages=[],
-        files=["/tmp/mock.py"],
-        verbose=False,
-        quiet=True,
-        export_less=True,
-        include_docstrings=True,
-    )
-    mypy_opts = mypy_options(options)
+# Initialize logging
+logger = setup_logger()
 
-    stub_source = StubSource("test", None)
-    stub_source.source = BuildSource(None, None, text=code)
-    generate_asts_for_modules([stub_source], False, mypy_opts, False)
 
-    gen = ASTStubGenerator(
-        stub_source.runtime_all,
-        include_private=False,
-        analyzed=True,
-        export_less=False,
-        include_docstrings=True,
-    )
-    stub_source.ast.accept(gen)
-    output = gen.output()
+def generate_python_stub(code: str, include_docstrings: bool = False) -> str:
+    """
+    Generate a python stub from a python code string. This is a wrapper around mypy's stubgen
+    If an error occurs, the original code is returned
+    """
+    try:
+        options = Options(
+            pyversion=sys.version_info[:2],
+            no_import=True,
+            inspect=False,
+            doc_dir="",
+            search_path=[],
+            interpreter=sys.executable,
+            ignore_errors=True,
+            parse_only=True,
+            include_private=False,
+            output_dir="/tmp/out",
+            modules=[],
+            packages=[],
+            files=["/tmp/mock.py"],
+            verbose=False,
+            quiet=True,
+            export_less=True,
+            include_docstrings=include_docstrings,
+        )
+        mypy_opts = mypy_options(options)
+
+        stub_source = StubSource("test", None)
+        stub_source.source = BuildSource(None, None, text=code)
+        generate_asts_for_modules([stub_source], False, mypy_opts, False)
+
+        gen = ASTStubGenerator(
+            stub_source.runtime_all,
+            include_private=False,
+            analyzed=True,
+            export_less=False,
+            include_docstrings=include_docstrings,
+        )
+        stub_source.ast.accept(gen)
+        output = gen.output()
+    except Exception as e:
+        logger.error(f"Error generating stub: {e}")
+        output = code
     return output
