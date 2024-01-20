@@ -1,5 +1,8 @@
+import traceback
+
 import jedi
 from jedi.api.classes import Name, BaseName
+from parso.python.tree import Name as ParsoTreeName
 from parso.tree import BaseNode
 
 from dependency_graph.graph_generator import (
@@ -18,7 +21,6 @@ from dependency_graph.models.dependency_graph import (
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
-from parso.python.tree import Name as ParsoTreeName
 
 # Initialize logging
 logger = setup_logger()
@@ -134,13 +136,17 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     from_type=_JEDI_API_TYPES_dict[parent.type],
                     # TODO the name should be added with is class name if this is a method
                     to_name=name,
+                    # TODO what if _JEDI_API_TYPES_dict doesn't have the key ?
                     to_type=_JEDI_API_TYPES_dict[name.type],
                     edge_name=None,
                     edge_relation=EdgeRelation.ParentOf,
                     inverse_edge_relation=EdgeRelation.ChildOf,
                 )
             except Exception as e:
-                logger.error(f"Error while extracting parent relation: {e}")
+                tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                logger.error(
+                    f"Error while extracting parent relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
+                )
 
     def _extract_import_relation(
         self,
@@ -188,7 +194,10 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     inverse_edge_relation=EdgeRelation.ImportedBy,
                 )
             except Exception as e:
-                logger.error(f"Error while extracting import relation: {e}")
+                tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                logger.error(
+                    f"Error while extracting import relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
+                )
 
     def _extract_call_relation(
         self,
@@ -225,7 +234,10 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     inverse_edge_relation=EdgeRelation.CalledBy,
                 )
             except Exception as e:
-                logger.error(f"Error while extracting call relation: {e}")
+                tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                logger.error(
+                    f"Error while extracting call relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
+                )
 
     def _extract_instantiate_relation(
         self,
@@ -320,7 +332,10 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     inverse_edge_relation=EdgeRelation.InstantiatedBy,
                 )
             except Exception as e:
-                logger.error(f"Error while extracting instantiate relation: {e}")
+                tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                logger.error(
+                    f"Error while extracting instantiate relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
+                )
 
     def _generate_file(
         self,
@@ -352,8 +367,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             )
             self._extract_instantiate_relation(script, all_def_ref_names, D)
         except Exception as e:
-            import traceback
-
             tb_str = "\n".join(traceback.format_tb(e.__traceback__))
             logger.error(
                 f"Error while generating graph of type {DependencyGraphGeneratorType.JEDI.value} for {file_path}, will ignore it. Error {e} occurred at:\n{tb_str}"
