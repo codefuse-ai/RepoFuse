@@ -156,7 +156,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     ):
         for name in all_names:
             try:
-                definitions = name.get_signatures() or name.goto(
+                definitions = name.goto(
                     follow_imports=True, follow_builtin_imports=False
                 )
                 if not definitions:
