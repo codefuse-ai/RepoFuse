@@ -55,7 +55,8 @@ def generate_python_stub(code: str, include_docstrings: bool = False) -> str:
         )
         stub_source.ast.accept(gen)
         output = gen.output()
-    except Exception as e:
-        logger.error(f"Error generating stub: {e}")
+    except (SystemExit, Exception) as e:
+        # mypy may raise SystemExit for `Critical error during semantic analysis`
+        logger.error(f"Error generating stub: {e}, will return the original code")
         output = code
     return output

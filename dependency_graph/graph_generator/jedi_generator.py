@@ -288,6 +288,8 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         tree_def = tmp_name._name.tree_name.get_definition()
                         if tree_def is None or not hasattr(tree_def, "name"):
                             continue
+                        if not tmp_name.module_path:
+                            continue
 
                         other_script = jedi.Script(path=tmp_name.module_path)
                         instantiate_name = name

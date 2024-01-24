@@ -77,3 +77,19 @@ def test_mypy_stub_can_include_docstrings():
         "def test(a): ...\n"
     )
     assert actual == expected
+
+
+def test_mypy_stub_critical_error():
+    code = dedent(
+        """
+        print "hello world"
+        """
+    )
+
+    actual = generate_python_stub(code)
+    expected = dedent(
+        """
+        print "hello world"
+        """
+    )
+    assert actual == expected
