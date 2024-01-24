@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import networkx as nx
-
 from dependency_graph import (
     construct_dependency_graph,
     DependencyGraphGeneratorType,
@@ -11,6 +9,7 @@ from dependency_graph.models.dependency_graph import (
     Location,
     EdgeRelation,
     DependencyGraph,
+    NodeType,
 )
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
@@ -33,7 +32,7 @@ def test_get_related_nodes():
     graph = construct_dependency_graph(repository, DependencyGraphGeneratorType.JEDI)
     nodes = graph.get_related_nodes(
         Node(
-            type="module",
+            type=NodeType.MODULE,
             name="main",
             location=Location(
                 file_path=repo_suite_path / "parent_relation" / "main.py"

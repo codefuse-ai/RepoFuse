@@ -17,16 +17,21 @@ def func_1():
     return class_a
 
 
-class_a = A(2)
+global_class_a = A(2)
 
 
 def func_2(class_a):
     class_a.a += 1
     B(2)
-    B(3).return_A()
-    return class_a
+    A_in_func_2 = B(3).return_A()
+    return A_in_func_2
 
 
-func_2(class_a)
+func_2(global_class_a)
 
 B(3).return_A()
+
+
+from x import X
+
+class_x = X()

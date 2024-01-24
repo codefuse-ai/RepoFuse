@@ -17,3 +17,8 @@ def test_import():
     from z import func_z
 
     func_z()
+
+
+class_x = X()
+# Should be ignored
+class_x.settings.var_x += 1
