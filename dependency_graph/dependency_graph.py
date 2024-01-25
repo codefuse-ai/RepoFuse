@@ -1,4 +1,5 @@
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, Callable
 
@@ -14,15 +15,29 @@ class DependencyGraph:
         # See also https://stackoverflow.com/questions/26691442/how-do-i-add-a-new-attribute-to-an-edge-in-networkx
         self.graph = nx.MultiDiGraph()
         self.repo_path = Path(repo_path)
+        self._update_callbacks: set[Callable] = set()
+        self._context_retriever: DependencyGraphContextRetriever | None = None
 
     def as_retriever(self) -> "DependencyGraphContextRetriever":
-        return DependencyGraphContextRetriever(graph=self)
+        if self._context_retriever is None:
+            self._context_retriever = DependencyGraphContextRetriever(graph=self)
+        return self._context_retriever
+
+    def register_update_callback(self, callback):
+        if callback not in self._update_callbacks:
+            self._update_callbacks.add(callback)
+
+    def _notify_update(self):
+        for callback in self._update_callbacks:
+            callback()
 
     def add_node(self, node: Node):
         self.graph.add_node(node)
+        self._notify_update()
 
     def add_nodes_from(self, nodes: Iterable[Node]):
         self.graph.add_nodes_from(nodes)
+        self._notify_update()
 
     def add_relational_edge(self, n1: Node, n2: Node, r1: Edge, r2: Edge | None = None):
         """Add a relational edge between two nodes.
@@ -124,6 +139,10 @@ class DependencyGraphContextRetriever:
 
     def __init__(self, graph: DependencyGraph):
         self.graph = graph
+        self.graph.register_update_callback(self.clear_cache)
+
+    def clear_cache(self):
+        self.get_cross_file_context.cache_clear()
 
     def _cross_file_filter(
         self, file_path: Path, in_node: Node, out_node: Node, edge: Edge
@@ -144,7 +163,40 @@ class DependencyGraphContextRetriever:
             and out_node.location.file_path == file_path
         )
 
+    @lru_cache(maxsize=128)
     def get_cross_file_context(
+        self,
+        file_path: PathLike,
+    ) -> list[tuple[Node, Node, Edge]]:
+        """
+        Construct the cross-file context of a file
+        """
+        file_path = Path(file_path)
+
+        edge_list: list[tuple[Node, Node, Edge]] = self.graph.get_edges(
+            edge_filter=lambda in_node, out_node, edge: self._cross_file_filter(
+                file_path, in_node, out_node, edge
+            )
+        )
+
+        return edge_list
+
+    def get_cross_file_context_by_filter(
+        self,
+        file_path: PathLike,
+        edge_filter: Callable[[Node, Node, Edge], bool],
+    ) -> list[tuple[Node, Node, Edge]]:
+        """
+        Construct the cross-file context of a file by edge filter
+        """
+        edge_list = self.get_cross_file_context(file_path)
+
+        if edge_filter is not None:
+            return [edge for edge in edge_list if edge_filter(*edge)]
+
+        return edge_list
+
+    def get_cross_file_context_by_line(
         self,
         file_path: PathLike,
         start_line: int,
@@ -152,15 +204,13 @@ class DependencyGraphContextRetriever:
         """
         Construct the cross-file context of a file
         """
-        file_path = Path(file_path)
-
-        line_specific_edge_list: list[tuple[Node, Node, Edge]] = self.graph.get_edges(
+        line_specific_edge_list: list[
+            tuple[Node, Node, Edge]
+        ] = self.get_cross_file_context_by_filter(
+            file_path,
             # The out node should be in the same file and located around the start line number
             # The edge should be in the same file and located before the start line
             edge_filter=lambda in_node, out_node, edge: (
-                self._cross_file_filter(file_path, in_node, out_node, edge)
-            )
-            and (
                 out_node.location.start_line
                 and out_node.location.end_line
                 and out_node.location.start_line
@@ -177,12 +227,12 @@ class DependencyGraphContextRetriever:
             and edge.relation in (EdgeRelation.CalledBy, EdgeRelation.InstantiatedBy),
         )
 
-        importation_edge_list: list[tuple[Node, Node, Edge]] = self.graph.get_edges(
-            edge_filter=lambda in_node, out_node, edge: (
-                self._cross_file_filter(file_path, in_node, out_node, edge)
-                and in_node.location.start_line
-                and in_node.location.start_line < start_line
-            )
+        importation_edge_list: list[
+            tuple[Node, Node, Edge]
+        ] = self.get_cross_file_context_by_filter(
+            file_path,
+            edge_filter=lambda in_node, out_node, edge: in_node.location.start_line
+            and in_node.location.start_line < start_line
             and edge.relation in (EdgeRelation.ImportedBy,),
         )
 
