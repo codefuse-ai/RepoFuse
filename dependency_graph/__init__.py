@@ -4,19 +4,21 @@ from textwrap import dedent
 import networkx as nx
 from pyvis.network import Network
 
+from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import DependencyGraphGeneratorType
 from dependency_graph.graph_generator.jedi_generator import JediDependencyGraphGenerator
 from dependency_graph.graph_generator.tree_sitter_generator import (
     TreeSitterDependencyGraphGenerator,
 )
 from dependency_graph.models import PathLike
-from dependency_graph.models.dependency_graph import DependencyGraph, EdgeRelation
+from dependency_graph.models.dependency_graph import EdgeRelation
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
 
 # Initialize logging
 logger = setup_logger()
+
 
 def construct_dependency_graph(
     repo: Repository, dependency_graph_generator: DependencyGraphGeneratorType

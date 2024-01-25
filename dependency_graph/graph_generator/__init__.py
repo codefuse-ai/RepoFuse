@@ -1,8 +1,8 @@
 import enum
 from abc import ABC, abstractmethod
 
+from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.models import PathLike
-from dependency_graph.models.dependency_graph import DependencyGraph
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 

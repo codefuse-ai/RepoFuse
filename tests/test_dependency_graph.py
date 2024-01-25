@@ -4,17 +4,17 @@ from dependency_graph import (
     construct_dependency_graph,
     DependencyGraphGeneratorType,
 )
+from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.models.dependency_graph import (
     Node,
     Location,
     EdgeRelation,
-    DependencyGraph,
     NodeType,
 )
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 
-repo_suite_path = Path(__file__).parent.parent / "code_example" / "python"
+repo_suite_path = Path(__file__).parent / "code_example" / "python"
 
 
 def test_get_related_edges():

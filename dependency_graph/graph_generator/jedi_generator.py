@@ -5,13 +5,13 @@ from jedi.api.classes import Name, BaseName
 from parso.python.tree import Name as ParsoTreeName
 from parso.tree import BaseNode
 
+from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import (
     BaseDependencyGraphGenerator,
     DependencyGraphGeneratorType,
 )
 from dependency_graph.models import PathLike
 from dependency_graph.models.dependency_graph import (
-    DependencyGraph,
     Location,
     Node,
     EdgeRelation,
