@@ -15,8 +15,8 @@ class DependencyGraph:
         self.graph = nx.MultiDiGraph()
         self.repo_path = Path(repo_path)
 
-    def as_retriever(self, **kwargs: Any) -> "DependencyGraphRetriever":
-        return DependencyGraphRetriever(graph=self, **kwargs)
+    def as_retriever(self) -> "DependencyGraphContextRetriever":
+        return DependencyGraphContextRetriever(graph=self)
 
     def add_node(self, node: Node):
         self.graph.add_node(node)
@@ -115,11 +115,71 @@ class DependencyGraph:
         return DependencyGraph.from_dict(obj_dict)
 
 
-# TODO implement
-class DependencyGraphRetriever:
+class DependencyGraphContextRetriever:
     """
     DependencyGraphRetriever provides a class to retrieve code snippets from a dependency graph in context level.
+    The difference between this and the DependencyGraph is that this retrieves the context of a code, it is not dealing
+    with a graph problem, while the DependencyGraph is.
     """
 
     def __init__(self, graph: DependencyGraph):
         self.graph = graph
+
+    def get_cross_file_context(
+        self,
+        file_path: PathLike,
+        start_line: int,
+    ) -> list[tuple[Node, Node, Edge]]:
+        """
+        Construct the cross-file context of a file
+        """
+        file_path = Path(file_path)
+        repo_path = self.graph.repo_path
+
+        line_specific_edge_list: list[tuple[Node, Node, Edge]] = self.graph.get_edges(
+            # In node should be located in the repo and be cross-file
+            # The out node should be in the same file and located around the start line number
+            # The edge should be in the same file and located before the start line
+            edge_filter=lambda in_node, out_node, edge: (
+                in_node.location
+                and in_node.location.file_path
+                and in_node.location.file_path != file_path
+                and in_node.location.file_path.is_relative_to(repo_path)
+            )
+            and (
+                out_node.location
+                and out_node.location.file_path
+                and out_node.location.file_path == file_path
+                and out_node.location.start_line
+                and out_node.location.end_line
+                and out_node.location.start_line
+                <= start_line
+                <= out_node.location.end_line
+            )
+            and (
+                edge.location
+                and edge.location.file_path
+                and edge.location.file_path == file_path
+                and edge.location.start_line
+                and edge.location.start_line < start_line
+            )
+            and edge.relation in (EdgeRelation.CalledBy, EdgeRelation.InstantiatedBy),
+        )
+
+        importation_edge_list: list[tuple[Node, Node, Edge]] = self.graph.get_edges(
+            edge_filter=lambda in_node, out_node, edge: (
+                in_node.location
+                and in_node.location.file_path
+                and in_node.location.file_path != file_path
+                and in_node.location.file_path.is_relative_to(repo_path)
+                and in_node.location.start_line
+                and in_node.location.start_line < start_line
+            )
+            and out_node.location.file_path == file_path
+            and edge.relation in (EdgeRelation.ImportedBy,),
+        )
+
+        edge_list: list[tuple[Node, Node, Edge]] = (
+            line_specific_edge_list + importation_edge_list
+        )
+        return edge_list
