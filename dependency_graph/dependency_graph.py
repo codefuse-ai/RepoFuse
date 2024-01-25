@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Iterable, Callable
+from typing import Iterable, Callable
 
 import networkx as nx
 
@@ -125,6 +125,25 @@ class DependencyGraphContextRetriever:
     def __init__(self, graph: DependencyGraph):
         self.graph = graph
 
+    def _cross_file_filter(
+        self, file_path: Path, in_node: Node, out_node: Node, edge: Edge
+    ) -> bool:
+        """
+        A filter to get the cross-file edge list
+        - The in node should be located in the repo and be cross-file
+        - The out node should be in the same file
+        """
+        return (
+            in_node.location
+            and in_node.location.file_path
+            and in_node.location.file_path != file_path
+            and in_node.location.file_path.is_relative_to(self.graph.repo_path)
+        ) and (
+            out_node.location
+            and out_node.location.file_path
+            and out_node.location.file_path == file_path
+        )
+
     def get_cross_file_context(
         self,
         file_path: PathLike,
@@ -134,23 +153,15 @@ class DependencyGraphContextRetriever:
         Construct the cross-file context of a file
         """
         file_path = Path(file_path)
-        repo_path = self.graph.repo_path
 
         line_specific_edge_list: list[tuple[Node, Node, Edge]] = self.graph.get_edges(
-            # In node should be located in the repo and be cross-file
             # The out node should be in the same file and located around the start line number
             # The edge should be in the same file and located before the start line
             edge_filter=lambda in_node, out_node, edge: (
-                in_node.location
-                and in_node.location.file_path
-                and in_node.location.file_path != file_path
-                and in_node.location.file_path.is_relative_to(repo_path)
+                self._cross_file_filter(file_path, in_node, out_node, edge)
             )
             and (
-                out_node.location
-                and out_node.location.file_path
-                and out_node.location.file_path == file_path
-                and out_node.location.start_line
+                out_node.location.start_line
                 and out_node.location.end_line
                 and out_node.location.start_line
                 <= start_line
@@ -168,14 +179,10 @@ class DependencyGraphContextRetriever:
 
         importation_edge_list: list[tuple[Node, Node, Edge]] = self.graph.get_edges(
             edge_filter=lambda in_node, out_node, edge: (
-                in_node.location
-                and in_node.location.file_path
-                and in_node.location.file_path != file_path
-                and in_node.location.file_path.is_relative_to(repo_path)
+                self._cross_file_filter(file_path, in_node, out_node, edge)
                 and in_node.location.start_line
                 and in_node.location.start_line < start_line
             )
-            and out_node.location.file_path == file_path
             and edge.relation in (EdgeRelation.ImportedBy,),
         )
 
