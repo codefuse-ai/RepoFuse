@@ -11,7 +11,7 @@ from dependency_graph.graph_generator import (
     DependencyGraphGeneratorType,
 )
 from dependency_graph.models import PathLike
-from dependency_graph.models.dependency_graph import (
+from dependency_graph.models.graph_data import (
     Location,
     Node,
     EdgeRelation,

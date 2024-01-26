@@ -11,7 +11,7 @@ from dependency_graph.graph_generator.tree_sitter_generator import (
     TreeSitterDependencyGraphGenerator,
 )
 from dependency_graph.models import PathLike
-from dependency_graph.models.dependency_graph import EdgeRelation
+from dependency_graph.models.graph_data import EdgeRelation
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
@@ -21,8 +21,15 @@ logger = setup_logger()
 
 
 def construct_dependency_graph(
-    repo: Repository, dependency_graph_generator: DependencyGraphGeneratorType
+    repo: Repository | PathLike,
+    dependency_graph_generator: DependencyGraphGeneratorType,
+    language: Language | None = None,
 ) -> DependencyGraph:
+    if isinstance(repo, PathLike):
+        if language is None:
+            raise ValueError("language is required when repo is a PathLike")
+        repo = Repository(repo, language)
+
     language = repo.language
     if dependency_graph_generator == DependencyGraphGeneratorType.JEDI:
         return JediDependencyGraphGenerator(language).generate(repo)

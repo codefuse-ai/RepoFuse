@@ -1,10 +1,9 @@
 from pathlib import Path
-from textwrap import dedent
 
 import pytest
 
 from dependency_graph.graph_generator.jedi_generator import JediDependencyGraphGenerator
-from dependency_graph.models.dependency_graph import Edge, EdgeRelation
+from dependency_graph.models.graph_data import EdgeRelation
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 

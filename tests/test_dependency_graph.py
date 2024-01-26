@@ -5,7 +5,7 @@ from dependency_graph import (
     DependencyGraphGeneratorType,
 )
 from dependency_graph.dependency_graph import DependencyGraph
-from dependency_graph.models.dependency_graph import (
+from dependency_graph.models.graph_data import (
     Node,
     Location,
     EdgeRelation,
