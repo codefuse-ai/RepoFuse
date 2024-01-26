@@ -271,34 +271,47 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 # Instance_type is the type of the instance
                 instance_type = instance_types[0]
 
+                # Resolve the instance_type if it is an import statement
+                if (
+                    instance_type._name
+                    and instance_type._name.tree_name
+                    and instance_type._name.tree_name.parent
+                    and instance_type._name.tree_name.parent.type
+                    in ("import_from", "import_name", "import_as_names")
+                ):
+                    tmp_names = instance_type.goto()
+                    if not tmp_names:
+                        continue
+                    instance_type = tmp_names[0]
+
                 # Skip builtin types
                 if instance_type.in_builtin_module():
                     continue
 
                 if instance_type.type == "param":
                     tmp_names = instance_type.infer()
-                    if tmp_names:
-                        tmp_name = tmp_names[0]
-                        if tmp_name.in_builtin_module():
-                            continue
+                    if not tmp_names:
+                        continue
 
-                        # e.g. resolve 'instance A' to 'class A'
-                        if tmp_name._name.tree_name is None:
-                            continue
-                        tree_def = tmp_name._name.tree_name.get_definition()
-                        if tree_def is None or not hasattr(tree_def, "name"):
-                            continue
-                        if not tmp_name.module_path:
-                            continue
+                    tmp_name = tmp_names[0]
+                    if tmp_name.in_builtin_module():
+                        continue
 
-                        other_script = jedi.Script(path=tmp_name.module_path)
-                        instantiate_name = name
-                        instance_type = BaseName(
-                            other_script._inference_state,
-                            other_script._get_module_context().create_name(
-                                tree_def.name
-                            ),
-                        )
+                    # e.g. resolve 'instance A' to 'class A'
+                    if tmp_name._name.tree_name is None:
+                        continue
+                    tree_def = tmp_name._name.tree_name.get_definition()
+                    if tree_def is None or not hasattr(tree_def, "name"):
+                        continue
+                    if not tmp_name.module_path:
+                        continue
+
+                    other_script = jedi.Script(path=tmp_name.module_path)
+                    instantiate_name = name
+                    instance_type = BaseName(
+                        other_script._inference_state,
+                        other_script._get_module_context().create_name(tree_def.name),
+                    )
 
                 # We only accept class type as an instance for now
                 if instance_type.type not in ("class",):

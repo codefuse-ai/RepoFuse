@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from dependency_graph.graph_generator.jedi_generator import JediDependencyGraphGenerator
@@ -7,16 +5,14 @@ from dependency_graph.models.graph_data import EdgeRelation
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 
-repo_suite_path = Path(__file__).parent.parent / "code_example" / "python"
-
 
 @pytest.fixture
 def jedi_generator():
     return JediDependencyGraphGenerator(Language.Python)
 
 
-def test_parent_relation(jedi_generator):
-    repo_path = repo_suite_path / "parent_relation"
+def test_parent_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "parent_relation"
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 
@@ -34,8 +30,8 @@ def test_parent_relation(jedi_generator):
     ]
 
 
-def test_import_relation(jedi_generator):
-    repo_path = repo_suite_path / "import_relation"
+def test_import_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "import_relation"
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 
@@ -43,26 +39,33 @@ def test_import_relation(jedi_generator):
     assert edges
     assert len(edges) == 5
     relations = [
-        (edge[0].type, edge[0].name, edge[1].type, edge[1].name, edge[2].get_text())
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
         for edge in edges
     ]
     assert relations == [
-        ("module", "main", "variable", "VAR_Y", "y.VAR_Y += 1"),
-        ("module", "main", "function", "func_z", "from z import func_z"),
-        ("module", "main", "module", "os", "import os"),
-        ("module", "main", "class", "Path", "from pathlib import Path"),
-        ("module", "main", "module", "y", "import y"),
+        ("module", "main", "variable", "VAR_Y", "y.py", "y.VAR_Y += 1"),
+        ("module", "main", "function", "func_z", "z.py", "from z import func_z"),
+        ("module", "main", "module", "os", "os.py", "import os"),
+        ("module", "main", "class", "Path", "pathlib.py", "from pathlib import Path"),
+        ("module", "main", "module", "y", "y.py", "import y"),
     ]
 
 
-def test_instantiate_relation(jedi_generator):
-    repo_path = repo_suite_path / "instantiate_relation"
+def test_instantiate_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "instantiate_relation"
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 
     edges = D.get_related_edges(EdgeRelation.Instantiates)
     assert edges
-    assert len(edges) == 8
+    assert len(edges) == 10
 
     instantiations = [
         (
@@ -70,25 +73,28 @@ def test_instantiate_relation(jedi_generator):
             edge[0].name,
             edge[1].type.value,
             edge[1].name,
+            edge[1].location.file_path.name,
             edge[2].location.start_line,
         )
         for edge in edges
     ]
 
     assert instantiations == [
-        ("function", "return_A", "class", "A", 11),
-        ("function", "func_1", "class", "A", 16),
-        ("variable", "global_class_a", "class", "A", 20),
-        ("function", "func_2", "class", "A", 24),
-        ("function", "func_2", "class", "B", 25),
-        ("function", "func_2", "class", "B", 26),
-        ("module", "main", "class", "B", 32),
-        ("variable", "class_x", "class", "X", 37),
+        ("function", "return_A", "class", "A", "main.py", 14),
+        ("function", "return_A", "class", "X", "x.py", 15),
+        ("function", "func_1", "class", "A", "main.py", 20),
+        ("function", "func_1", "class", "X", "x.py", 21),
+        ("variable", "global_class_a", "class", "A", "main.py", 25),
+        ("function", "func_2", "class", "A", "main.py", 29),
+        ("function", "func_2", "class", "B", "main.py", 30),
+        ("function", "func_2", "class", "B", "main.py", 31),
+        ("module", "main", "class", "B", "main.py", 37),
+        ("variable", "class_x", "class", "X", "x.py", 42),
     ]
 
 
-def test_call_relation(jedi_generator):
-    repo_path = repo_suite_path / "call_relation"
+def test_call_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "call_relation"
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = jedi_generator.generate(repository)
 

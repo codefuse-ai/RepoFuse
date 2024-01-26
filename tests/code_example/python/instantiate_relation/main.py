@@ -1,3 +1,6 @@
+from x import X
+
+
 class A:
     def __init__(self, a):
         self.a = a
@@ -9,11 +12,13 @@ class B:
 
     def return_A(self):
         class_a = A(self.b)
+        x = X()
         return class_a
 
 
 def func_1():
     class_a = A(1)
+    x = X()
     return class_a
 
 
