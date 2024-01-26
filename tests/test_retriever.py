@@ -184,7 +184,14 @@ def test_get_cross_file_usage_by_line(sample_retriever, python_repo_suite_path):
                 "call",
             ),
             ("variable", "foo = Foo()", "usage.py", "Instantiates", "Foo", "Foo"),
-            ("module", None, "usage.py", "Calls", "call", "call"),
+            (
+                "module",
+                "from main import Foo, test, global_var_in_main\n\n\ndef use_Foo_in_main():\n    foo = Foo()\n    foo.call()\n\n\ndef use_test_in_main():\n    test()\n\n\ndef use_global_var_in_main():\n    print(global_var_in_main)\n\n\nclass Usage:\n    def __init__(self):\n        self.foo = Foo()\n\n    def use_foo(self):\n        self.foo.call()\n\n    def use_test(self):\n        test()\n\n    def use_global_var_in_main(self):\n        print(global_var_in_main)\n\n\nfoo = Foo()\nfoo.call()\ntest()\n\n\nuse_Foo_in_main()\nuse_test_in_main()\nuse_global_var_in_main()\n\nusage = Usage()\nusage.use_foo()\nusage.use_test()\nusage.use_global_var_in_main()\n",
+                "usage.py",
+                "Calls",
+                "call",
+                "call",
+            ),
             (
                 "function",
                 "def use_Foo_in_main():\n    foo = Foo()\n    foo.call()",
@@ -238,6 +245,13 @@ def test_get_cross_file_usage_by_line(sample_retriever, python_repo_suite_path):
                 "test",
                 "test",
             ),
-            ("module", None, "usage.py", "Calls", "test", "test"),
+            (
+                "module",
+                "from main import Foo, test, global_var_in_main\n\n\ndef use_Foo_in_main():\n    foo = Foo()\n    foo.call()\n\n\ndef use_test_in_main():\n    test()\n\n\ndef use_global_var_in_main():\n    print(global_var_in_main)\n\n\nclass Usage:\n    def __init__(self):\n        self.foo = Foo()\n\n    def use_foo(self):\n        self.foo.call()\n\n    def use_test(self):\n        test()\n\n    def use_global_var_in_main(self):\n        print(global_var_in_main)\n\n\nfoo = Foo()\nfoo.call()\ntest()\n\n\nuse_Foo_in_main()\nuse_test_in_main()\nuse_global_var_in_main()\n\nusage = Usage()\nusage.use_foo()\nusage.use_test()\nusage.use_global_var_in_main()\n",
+                "usage.py",
+                "Calls",
+                "test",
+                "test",
+            ),
         ]
     )

@@ -135,17 +135,25 @@ def test_call_relation(jedi_generator, python_repo_suite_path):
             "func_x",
         ),
         (
-            None,
+            'from x import func_x\n\n\nclass A:\n    def a(self):\n        print("in A.a()")\n\n    def b(self):\n        def closure():\n            print("in A.b()")\n            self.a()\n\n        closure()\n\n\ndef func():\n    A().a()\n    func_x()\n\n\nglobal_var_1 = A().b()\nglobal_var_2 = func()\n\nif __name__ == "__main__":\n    A().b()\n    func()\n',
             'def b(self):\n        def closure():\n            print("in A.b()")\n            self.a()\n\n        closure()',
             "b",
         ),
-        (None, "def func():\n    A().a()\n    func_x()", "func"),
         (
-            None,
+            'from x import func_x\n\n\nclass A:\n    def a(self):\n        print("in A.a()")\n\n    def b(self):\n        def closure():\n            print("in A.b()")\n            self.a()\n\n        closure()\n\n\ndef func():\n    A().a()\n    func_x()\n\n\nglobal_var_1 = A().b()\nglobal_var_2 = func()\n\nif __name__ == "__main__":\n    A().b()\n    func()\n',
+            "def func():\n    A().a()\n    func_x()",
+            "func",
+        ),
+        (
+            'from x import func_x\n\n\nclass A:\n    def a(self):\n        print("in A.a()")\n\n    def b(self):\n        def closure():\n            print("in A.b()")\n            self.a()\n\n        closure()\n\n\ndef func():\n    A().a()\n    func_x()\n\n\nglobal_var_1 = A().b()\nglobal_var_2 = func()\n\nif __name__ == "__main__":\n    A().b()\n    func()\n',
             'def b(self):\n        def closure():\n            print("in A.b()")\n            self.a()\n\n        closure()',
             "b",
         ),
-        (None, "def func():\n    A().a()\n    func_x()", "func"),
+        (
+            'from x import func_x\n\n\nclass A:\n    def a(self):\n        print("in A.a()")\n\n    def b(self):\n        def closure():\n            print("in A.b()")\n            self.a()\n\n        closure()\n\n\ndef func():\n    A().a()\n    func_x()\n\n\nglobal_var_1 = A().b()\nglobal_var_2 = func()\n\nif __name__ == "__main__":\n    A().b()\n    func()\n',
+            "def func():\n    A().a()\n    func_x()",
+            "func",
+        ),
         (
             'def a(self):\n        print("in A.a()")',
             "def print(\n    *values: object,\n    sep: Optional[str] = ...,\n    end: Optional[str] = ...,\n    file: Optional[SupportsWrite[str]] = ...,\n    flush: bool = ...,\n) -> None: ...",

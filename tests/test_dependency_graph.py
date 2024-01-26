@@ -35,7 +35,11 @@ def test_get_related_nodes():
             type=NodeType.MODULE,
             name="main",
             location=Location(
-                file_path=repo_suite_path / "parent_relation" / "main.py"
+                file_path=repo_suite_path / "parent_relation" / "main.py",
+                start_line=1,
+                start_column=1,
+                end_line=26,
+                end_column=1,
             ),
         ),
         EdgeRelation.ParentOf,

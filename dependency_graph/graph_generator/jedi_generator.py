@@ -46,14 +46,22 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def __init__(self, language: Language = Language.Python):
         super().__init__(language)
 
-    def _convert_name_pos_to_location(self, name: Name) -> Location | None:
+    def _convert_name_pos_to_location(
+        self, name: Name, node_type: NodeType | None = None
+    ) -> Location | None:
         """helper function for creating location"""
         if name is None:
             return None
 
         location_params = {"file_path": name.module_path}
-        start_pos = name.get_definition_start_position()
-        end_pos = name.get_definition_end_position()
+
+        if node_type and node_type is NodeType.MODULE:
+            start_pos = name._name.get_root_context()._value.tree_node.start_pos
+            end_pos = name._name.get_root_context()._value.tree_node.end_pos
+        else:
+            start_pos = name.get_definition_start_position()
+            end_pos = name.get_definition_end_position()
+
         if start_pos:
             location_params.update(
                 start_line=start_pos[0],
@@ -69,7 +77,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
     def _convert_name_to_node(self, name: Name, node_type: NodeType) -> Node:
         """helper function for creating nodes"""
-        location = self._convert_name_pos_to_location(name)
+        location = self._convert_name_pos_to_location(name, node_type)
         return Node(
             type=node_type,
             name=name.name,
@@ -228,7 +236,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     from_type=_JEDI_API_TYPES_dict[caller.type],
                     # TODO the name should be added with is class name if this is a method
                     to_name=callee,
-                    to_type=NodeType.FUNCTION,
+                    to_type=_JEDI_API_TYPES_dict[callee.type],
                     edge_name=name,
                     edge_relation=EdgeRelation.Calls,
                     inverse_edge_relation=EdgeRelation.CalledBy,
@@ -272,13 +280,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 instance_type = instance_types[0]
 
                 # Resolve the instance_type if it is an import statement
-                if (
-                    instance_type._name
-                    and instance_type._name.tree_name
-                    and instance_type._name.tree_name.parent
-                    and instance_type._name.tree_name.parent.type
-                    in ("import_from", "import_name", "import_as_names")
-                ):
+                if instance_type._name and instance_type._name.is_import():
                     tmp_names = instance_type.goto()
                     if not tmp_names:
                         continue
