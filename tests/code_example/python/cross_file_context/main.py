@@ -13,12 +13,26 @@ class Foo:
         bar_instance = Bar()
         bar()
         foo()
-        print("--get_cross_file_context_by_line from here should not include the context below--")
+        print(
+            "--get_cross_file_context_by_line from here should not include the context below--"
+        )
         from c import Baz, baz
+
         Baz()
         baz()
 
 
+def test():
+    bar_instance = Bar()
+    bar()
+    foo()
+    print(
+        "--get_cross_file_context_by_line from here should not include the context below--"
+    )
+    from c import Baz, baz
+
+    Baz()
+    baz()
 
 
 if __name__ == "__main__":

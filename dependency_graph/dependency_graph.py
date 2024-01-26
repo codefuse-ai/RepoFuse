@@ -177,8 +177,8 @@ class DependencyGraphContextRetriever:
         if edge_filter is not None:
             return [edge for edge in edge_list if edge_filter(*edge)]
 
-        # Sort by in node's location
-        return sorted(edge_list, key=lambda e: e[0].location.__str__())
+        # Sort by edge's location
+        return sorted(edge_list, key=lambda e: e[2].location.__str__())
 
     def get_cross_file_context_by_line(
         self,
@@ -235,8 +235,8 @@ class DependencyGraphContextRetriever:
         )
 
         edge_list = line_specific_edge_list + importation_edge_list
-        # Sort by in node's location
-        return sorted(edge_list, key=lambda e: e[0].location.__str__())
+        # Sort by edge's location
+        return sorted(edge_list, key=lambda e: e[2].location.__str__())
 
     def get_cross_file_usage_by_line(
         self,
@@ -281,4 +281,5 @@ class DependencyGraphContextRetriever:
         )
 
         edge_list = line_specific_edge_list + importation_edge_list
-        return edge_list
+        # Sort by edge's location
+        return sorted(edge_list, key=lambda e: e[2].location.__str__())

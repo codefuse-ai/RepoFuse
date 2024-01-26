@@ -24,7 +24,7 @@ def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
         python_repo_suite_path / "cross_file_context" / "main.py"
     )
 
-    assert len(cross_file_edge_list) == 9
+    assert len(cross_file_edge_list) == 15
     context = [
         (
             edge[0].type.value,
@@ -37,15 +37,21 @@ def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
     ]
 
     assert context == [
-        ("function", "bar", "b.py", "ImportedBy", "main"),
-        ("function", "bar", "b.py", "CalledBy", "call"),
-        ("class", "Bar", "b.py", "ImportedBy", "main"),
         ("class", "Bar", "b.py", "InstantiatedBy", "call"),
-        ("class", "Bar", "b.py", "InstantiatedBy", "bar_instance_in_module"),
-        ("function", "baz", "c.py", "ImportedBy", "main"),
-        ("function", "baz", "c.py", "CalledBy", "call"),
+        ("function", "bar", "b.py", "CalledBy", "call"),
         ("class", "Baz", "c.py", "ImportedBy", "main"),
+        ("function", "baz", "c.py", "ImportedBy", "main"),
+        ("class", "Bar", "b.py", "ImportedBy", "main"),
+        ("function", "bar", "b.py", "ImportedBy", "main"),
         ("class", "Baz", "c.py", "InstantiatedBy", "call"),
+        ("function", "baz", "c.py", "CalledBy", "call"),
+        ("class", "Bar", "b.py", "InstantiatedBy", "test"),
+        ("function", "bar", "b.py", "CalledBy", "test"),
+        ("class", "Baz", "c.py", "ImportedBy", "main"),
+        ("function", "baz", "c.py", "ImportedBy", "main"),
+        ("class", "Baz", "c.py", "InstantiatedBy", "test"),
+        ("function", "baz", "c.py", "CalledBy", "test"),
+        ("class", "Bar", "b.py", "InstantiatedBy", "bar_instance_in_module"),
     ]
 
 
@@ -67,8 +73,58 @@ def test_get_cross_file_context_by_line(sample_retriever, python_repo_suite_path
     ]
 
     assert context == [
-        ("function", "bar", "b.py", "CalledBy", "call"),
-        ("function", "bar", "b.py", "ImportedBy", "main"),
         ("class", "Bar", "b.py", "InstantiatedBy", "call"),
+        ("function", "bar", "b.py", "CalledBy", "call"),
         ("class", "Bar", "b.py", "ImportedBy", "main"),
+        ("function", "bar", "b.py", "ImportedBy", "main"),
+    ]
+
+    cross_file_edge_list = sample_retriever.get_cross_file_context_by_line(
+        python_repo_suite_path / "cross_file_context" / "main.py", 29
+    )
+
+    assert len(cross_file_edge_list) == 6
+    context = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[0].location.file_path.name,
+            edge[2].relation.name,
+            edge[1].name,
+        )
+        for edge in cross_file_edge_list
+    ]
+
+    assert context == [
+        ("class", "Baz", "c.py", "ImportedBy", "main"),
+        ("function", "baz", "c.py", "ImportedBy", "main"),
+        ("class", "Bar", "b.py", "ImportedBy", "main"),
+        ("function", "bar", "b.py", "ImportedBy", "main"),
+        ("class", "Bar", "b.py", "InstantiatedBy", "test"),
+        ("function", "bar", "b.py", "CalledBy", "test"),
+    ]
+
+    cross_file_edge_list = sample_retriever.get_cross_file_context_by_line(
+        python_repo_suite_path / "cross_file_context" / "main.py", 41
+    )
+
+    assert len(cross_file_edge_list) == 6
+    context = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[0].location.file_path.name,
+            edge[2].relation.name,
+            edge[1].name,
+        )
+        for edge in cross_file_edge_list
+    ]
+
+    assert context == [
+        ("class", "Baz", "c.py", "ImportedBy", "main"),
+        ("function", "baz", "c.py", "ImportedBy", "main"),
+        ("class", "Bar", "b.py", "ImportedBy", "main"),
+        ("function", "bar", "b.py", "ImportedBy", "main"),
+        ("class", "Baz", "c.py", "ImportedBy", "main"),
+        ("function", "baz", "c.py", "ImportedBy", "main"),
     ]
