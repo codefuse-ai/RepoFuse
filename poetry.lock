@@ -770,6 +770,25 @@ url = "https://artifacts.antgroup-inc.cn/simple"
 reference = "antgroup-pypi"
 
 [[package]]
+name = "pytest-unordered"
+version = "0.5.2"
+description = "Test equality of unordered collections in pytest"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytest-unordered-0.5.2.tar.gz", hash = "sha256:8187e6d68a7d54e5447e88c229cbeafa38205e55baf7da7ae57cc965c1ecdbb3"},
+    {file = "pytest_unordered-0.5.2-py3-none-any.whl", hash = "sha256:b01bb0e8ba80db6dd8c840fe24ad1804c8672919303dc9302688221390a7dc29"},
+]
+
+[package.dependencies]
+pytest = ">=6.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://artifacts.antgroup-inc.cn/simple"
+reference = "antgroup-pypi"
+
+[[package]]
 name = "pyvis"
 version = "0.3.2"
 description = "A Python network graph visualization library"
@@ -937,4 +956,4 @@ reference = "antgroup-pypi"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9154bf57d41a787f1ff4664999d860567597cbab5f44d7606e74cf9f7c57482e"
+content-hash = "296081b1722cadef27d3134bdb1722752190c1e1f71e963d977525aa25721ba7"

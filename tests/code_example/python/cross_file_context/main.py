@@ -1,5 +1,7 @@
 from b import Bar, bar
 
+global_var_in_main = 1
+
 
 def foo():
     print("Function foo in a")
