@@ -251,7 +251,7 @@ class DependencyGraphContextRetriever:
         # Sort by edge's location
         return sorted(edge_list, key=lambda e: e[2].location.__str__())
 
-    def get_cross_file_usage_by_line(
+    def get_cross_file_reference_by_line(
         self,
         file_path: PathLike,
         start_line: int,

@@ -148,8 +148,8 @@ def test_get_cross_file_definition_by_line(sample_retriever, python_repo_suite_p
     )
 
 
-def test_get_cross_file_usage_by_line(sample_retriever, python_repo_suite_path):
-    cross_file_edge_list = sample_retriever.get_cross_file_usage_by_line(
+def test_get_cross_file_reference_by_line(sample_retriever, python_repo_suite_path):
+    cross_file_edge_list = sample_retriever.get_cross_file_reference_by_line(
         python_repo_suite_path / "cross_file_context" / "main.py", 18
     )
 
@@ -211,7 +211,7 @@ def test_get_cross_file_usage_by_line(sample_retriever, python_repo_suite_path):
         ]
     )
 
-    cross_file_edge_list = sample_retriever.get_cross_file_usage_by_line(
+    cross_file_edge_list = sample_retriever.get_cross_file_reference_by_line(
         python_repo_suite_path / "cross_file_context" / "main.py", 36
     )
 
