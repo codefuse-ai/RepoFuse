@@ -27,10 +27,10 @@ def test_get_related_edges():
     assert len(edges) > 0
 
 
-def test_get_related_nodes():
+def test_get_related_edges_by_node():
     repository = Repository(repo_path=repo_suite_path, language=Language.Python)
     graph = construct_dependency_graph(repository, DependencyGraphGeneratorType.JEDI)
-    nodes = graph.get_related_nodes(
+    edge_list = graph.get_related_edges_by_node(
         Node(
             type=NodeType.MODULE,
             name="main",
@@ -44,8 +44,10 @@ def test_get_related_nodes():
         ),
         EdgeRelation.ParentOf,
     )
-    assert isinstance(nodes, list)
-    assert len(nodes) > 0
+    assert isinstance(edge_list, list)
+    assert len(edge_list) > 0
+    assert isinstance(edge_list[0], tuple)
+    assert isinstance(edge_list[0][0], Node)
 
 
 def test_get_related_subgraph():

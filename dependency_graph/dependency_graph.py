@@ -6,7 +6,7 @@ from typing import Iterable, Callable
 import networkx as nx
 
 from dependency_graph.models import PathLike
-from dependency_graph.models.graph_data import Node, Edge, EdgeRelation
+from dependency_graph.models.graph_data import Node, Edge, EdgeRelation, NodeType
 from dependency_graph.utils.intervals import find_innermost_interval
 
 
@@ -67,16 +67,16 @@ class DependencyGraph:
         # Sort by edge's location
         return sorted(filtered_edges, key=lambda e: e[2].location.__str__())
 
-    def get_related_nodes(
+    def get_related_edges_by_node(
         self, node: Node, *relations: EdgeRelation
-    ) -> list[Node] | None:
-        """Get the related nodes of the given node by the given relations.
+    ) -> list[tuple[Node, Node, Edge]] | None:
+        """Get the related edges of the given node by the given relations.
         If the given node is not in the graph, return None."""
         if node not in self.graph:
             return None
 
         return [
-            edge[1]
+            edge
             for edge in self.graph.edges(node, data="relation")
             if edge[2].relation in relations
         ]
@@ -172,18 +172,18 @@ class DependencyGraphContextRetriever:
         innermost_interval = find_innermost_interval(intervals, start_line)
         return innermost_interval[2] if innermost_interval else None
 
-    def get_innermost_related_nodes_by_line(
+    def get_related_edges_by_innermost_node_between_line(
         self,
         file_path: PathLike,
         start_line: int,
         *relations: EdgeRelation,
-    ) -> tuple[Node, list[Node]] | None:
+    ) -> list[tuple[Node, Node, Edge]] | None:
         node = self._get_innermost_node_by_line(file_path, start_line)
-        related_nodes = self.graph.get_related_nodes(
+        related_edge_list = self.graph.get_related_edges_by_node(
             node,
             *relations,
         )
-        return node, related_nodes
+        return related_edge_list
 
     def is_node_from_cross_file(self, node: Node, file_path: PathLike) -> bool:
         file_path = Path(file_path)
@@ -235,58 +235,49 @@ class DependencyGraphContextRetriever:
     ) -> list[tuple[Node, Node, Edge]] | None:
         """
         Construct the cross-file definition of a file by line.
-        It will return the cross-file definition of the innermost scope(func/class) located around the start_line.
-        Usually it is the in-node we are interested in.
+        It will return the cross-file definition of the innermost scope(func/class) located between the start_line.
+        Usually it is the out-node we are interested in.
         """
-
-        # TODO is it the innermost scope?
-        def _cross_file_filter_by_line(in_node, out_node, edge) -> bool:
-            return (
-                (
-                    out_node.location.start_line is not None
-                    and out_node.location.end_line is not None
-                    and out_node.location.start_line
-                    <= start_line
-                    <= out_node.location.end_line
-                )
-                and (
-                    edge.location is not None
-                    and edge.location.file_path is not None
-                    and edge.location.file_path == file_path
-                    and edge.location.start_line is not None
-                    and edge.location.start_line < start_line
-                )
-                and edge.relation
-                in (
-                    EdgeRelation.ConstructedBy,
-                    EdgeRelation.DerivedClassOf,
-                    EdgeRelation.OverriddenBy,
-                    EdgeRelation.CalledBy,
-                    EdgeRelation.InstantiatedBy,
-                    EdgeRelation.UsedBy,
-                )
-            )
-
-        line_specific_edge_list = self.get_cross_file_context(
+        related_edge_list = self.get_related_edges_by_innermost_node_between_line(
             file_path,
-            # The out node should be in the same file and located around the start line number
-            # The edge should be in the same file and located before the start line
-            edge_filter=_cross_file_filter_by_line,
+            start_line,
+            EdgeRelation.Construct,
+            EdgeRelation.BaseClassOf,
+            EdgeRelation.Overrides,
+            EdgeRelation.Calls,
+            EdgeRelation.Instantiates,
+            EdgeRelation.Uses,
         )
 
-        importation_edge_list = self.get_cross_file_context(
-            file_path,
-            edge_filter=lambda in_node, out_node, edge: (
-                edge.location is not None
-                and edge.location.start_line is not None
-                and edge.location.start_line < start_line
-            )
-            and edge.relation in (EdgeRelation.ImportedBy,),
+        # Find the module node that is related to the file
+        module_node = self.graph.get_nodes(
+            node_filter=lambda n: n.location
+            and n.location.file_path
+            and n.location.file_path == file_path
+            and n.type is NodeType.MODULE
+        )
+        assert (
+            len(module_node) == 1
+        ), f"There should be exactly one module node related to the file: {file_path}"
+
+        # Find the importation edges
+        importation_edge_list = self.graph.get_related_edges_by_node(
+            module_node[0],
+            EdgeRelation.Imports,
         )
 
-        edge_list = line_specific_edge_list + importation_edge_list
+        # Filter the cross-file related edges, the edge location start_line should be less than the start_line
+        cross_file_related_edge_list = [
+            edge
+            for edge in related_edge_list + importation_edge_list
+            if self.is_node_from_cross_file(edge[1], file_path)
+            and edge[2].location.start_line < start_line
+        ]
+
         # Sort by edge's location
-        return sorted(edge_list, key=lambda e: e[2].location.__str__())
+        return sorted(
+            cross_file_related_edge_list, key=lambda e: e[2].location.__str__()
+        )
 
     def get_cross_file_reference_by_line(
         self,
@@ -295,10 +286,10 @@ class DependencyGraphContextRetriever:
     ) -> list[tuple[Node, Node, Edge]] | None:
         """
         Construct the cross-file usage of a file by line
-        It will return the cross-file usage of the innermost scope(func/class) located around the start_line.
-        Usually it is the in-node we are interested in.
+        It will return the cross-file usage of the innermost scope(func/class) located between the start_line.
+        Usually it is the out-node we are interested in.
         """
-        node, related_nodes = self.get_innermost_related_nodes_by_line(
+        related_edge_list = self.get_related_edges_by_innermost_node_between_line(
             file_path,
             start_line,
             EdgeRelation.ConstructedBy,
@@ -307,21 +298,16 @@ class DependencyGraphContextRetriever:
             EdgeRelation.CalledBy,
             EdgeRelation.InstantiatedBy,
             EdgeRelation.UsedBy,
+            EdgeRelation.ImportedBy,
         )
 
-        cross_file_nodes = [
-            node
-            for node in related_nodes
-            if self.is_node_from_cross_file(node, file_path)
+        cross_file_related_edge_list = [
+            edge
+            for edge in related_edge_list
+            if self.is_node_from_cross_file(edge[1], file_path)
         ]
 
-        edge_list: list[tuple[Node, Node, Edge]] = []
-        for in_node in cross_file_nodes:
-            edges = self.graph.get_edge(in_node, node)
-            if edges is None:
-                continue
-            for edge in edges:
-                edge_list.append((in_node, node, edge))
-
         # Sort by edge's location
-        return sorted(edge_list, key=lambda e: e[2].location.__str__())
+        return sorted(
+            cross_file_related_edge_list, key=lambda e: e[2].location.__str__()
+        )

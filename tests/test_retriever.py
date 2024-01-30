@@ -75,21 +75,21 @@ def test_get_cross_file_definition_by_line(sample_retriever, python_repo_suite_p
     assert len(cross_file_edge_list) == 4
     context = [
         (
-            edge[0].type.value,
             edge[0].name,
-            edge[0].location.file_path.name,
             edge[2].relation.name,
+            edge[1].type.value,
             edge[1].name,
+            edge[1].location.file_path.name,
         )
         for edge in cross_file_edge_list
     ]
 
     assert context == unordered(
         [
-            ("class", "Bar", "b.py", "InstantiatedBy", "call"),
-            ("function", "bar", "b.py", "CalledBy", "call"),
-            ("class", "Bar", "b.py", "ImportedBy", "main"),
-            ("function", "bar", "b.py", "ImportedBy", "main"),
+            ("call", "Instantiates", "class", "Bar", "b.py"),
+            ("call", "Calls", "function", "bar", "b.py"),
+            ("main", "Imports", "class", "Bar", "b.py"),
+            ("main", "Imports", "function", "bar", "b.py"),
         ]
     )
 
@@ -100,23 +100,23 @@ def test_get_cross_file_definition_by_line(sample_retriever, python_repo_suite_p
     assert len(cross_file_edge_list) == 6
     context = [
         (
-            edge[0].type.value,
             edge[0].name,
-            edge[0].location.file_path.name,
             edge[2].relation.name,
+            edge[1].type.value,
             edge[1].name,
+            edge[1].location.file_path.name,
         )
         for edge in cross_file_edge_list
     ]
 
     assert context == unordered(
         [
-            ("class", "Bar", "b.py", "ImportedBy", "main"),
-            ("function", "bar", "b.py", "ImportedBy", "main"),
-            ("function", "baz", "c.py", "ImportedBy", "main"),
-            ("class", "Baz", "c.py", "ImportedBy", "main"),
-            ("class", "Bar", "b.py", "InstantiatedBy", "test"),
-            ("function", "bar", "b.py", "CalledBy", "test"),
+            ("main", "Imports", "class", "Bar", "b.py"),
+            ("main", "Imports", "function", "bar", "b.py"),
+            ("main", "Imports", "class", "Baz", "c.py"),
+            ("main", "Imports", "function", "baz", "c.py"),
+            ("test", "Instantiates", "class", "Bar", "b.py"),
+            ("test", "Calls", "function", "bar", "b.py"),
         ]
     )
 
@@ -138,12 +138,12 @@ def test_get_cross_file_definition_by_line(sample_retriever, python_repo_suite_p
 
     assert context == unordered(
         [
-            ("class", "Baz", "c.py", "ImportedBy", "main"),
-            ("function", "baz", "c.py", "ImportedBy", "main"),
-            ("class", "Bar", "b.py", "ImportedBy", "main"),
-            ("function", "bar", "b.py", "ImportedBy", "main"),
-            ("class", "Baz", "c.py", "ImportedBy", "main"),
-            ("function", "baz", "c.py", "ImportedBy", "main"),
+            ("module", "main", "main.py", "Imports", "Bar"),
+            ("module", "main", "main.py", "Imports", "bar"),
+            ("module", "main", "main.py", "Imports", "Baz"),
+            ("module", "main", "main.py", "Imports", "baz"),
+            ("module", "main", "main.py", "Imports", "Baz"),
+            ("module", "main", "main.py", "Imports", "baz"),
         ]
     )
 
@@ -156,11 +156,11 @@ def test_get_cross_file_reference_by_line(sample_retriever, python_repo_suite_pa
     assert len(cross_file_edge_list) == 3
     context = [
         (
-            edge[0].type.value,
-            edge[0].get_text(),
-            edge[0].location.file_path.name,
+            edge[0].name,
             edge[2].relation.name,
-            edge[1].name,
+            edge[1].type.value,
+            edge[1].get_text(),
+            edge[1].location.file_path.name,
             edge[2].get_text(),
         )
         for edge in cross_file_edge_list
@@ -168,27 +168,27 @@ def test_get_cross_file_reference_by_line(sample_retriever, python_repo_suite_pa
     assert context == unordered(
         [
             (
+                "call",
+                "CalledBy",
                 "function",
                 "def use_foo(self):\n        self.foo.call()",
                 "usage.py",
-                "Calls",
-                "call",
                 "call",
             ),
             (
+                "call",
+                "CalledBy",
                 "module",
                 "from main import Foo, test, global_var_in_main\n\n\ndef use_Foo_in_main():\n    foo = Foo()\n    foo.call()\n\n\ndef use_test_in_main():\n    test()\n\n\ndef use_global_var_in_main():\n    print(global_var_in_main)\n\n\nclass Usage:\n    def __init__(self):\n        self.foo = Foo()\n\n    def use_foo(self):\n        self.foo.call()\n\n    def use_test(self):\n        test()\n\n    def use_global_var_in_main(self):\n        print(global_var_in_main)\n\n\nfoo = Foo()\nfoo.call()\ntest()\n\n\nuse_Foo_in_main()\nuse_test_in_main()\nuse_global_var_in_main()\n\nusage = Usage()\nusage.use_foo()\nusage.use_test()\nusage.use_global_var_in_main()\n",
                 "usage.py",
-                "Calls",
-                "call",
                 "call",
             ),
             (
+                "call",
+                "CalledBy",
                 "function",
                 "def use_Foo_in_main():\n    foo = Foo()\n    foo.call()",
                 "usage.py",
-                "Calls",
-                "call",
                 "call",
             ),
         ]
@@ -201,11 +201,11 @@ def test_get_cross_file_reference_by_line(sample_retriever, python_repo_suite_pa
     assert len(cross_file_edge_list) == 4
     context = [
         (
-            edge[0].type.value,
-            edge[0].get_text(),
-            edge[0].location.file_path.name,
+            edge[0].name,
             edge[2].relation.name,
-            edge[1].name,
+            edge[1].type.value,
+            edge[1].get_text(),
+            edge[1].location.file_path.name,
             edge[2].get_text(),
         )
         for edge in cross_file_edge_list
@@ -213,35 +213,35 @@ def test_get_cross_file_reference_by_line(sample_retriever, python_repo_suite_pa
     assert context == unordered(
         [
             (
+                "test",
+                "CalledBy",
                 "function",
                 "def use_test_in_main():\n    test()",
                 "usage.py",
-                "Calls",
-                "test",
                 "test",
             ),
             (
+                "test",
+                "ImportedBy",
                 "module",
                 "from main import Foo, test, global_var_in_main\n\n\ndef use_Foo_in_main():\n    foo = Foo()\n    foo.call()\n\n\ndef use_test_in_main():\n    test()\n\n\ndef use_global_var_in_main():\n    print(global_var_in_main)\n\n\nclass Usage:\n    def __init__(self):\n        self.foo = Foo()\n\n    def use_foo(self):\n        self.foo.call()\n\n    def use_test(self):\n        test()\n\n    def use_global_var_in_main(self):\n        print(global_var_in_main)\n\n\nfoo = Foo()\nfoo.call()\ntest()\n\n\nuse_Foo_in_main()\nuse_test_in_main()\nuse_global_var_in_main()\n\nusage = Usage()\nusage.use_foo()\nusage.use_test()\nusage.use_global_var_in_main()\n",
                 "usage.py",
-                "Imports",
-                "test",
                 "from main import Foo, test, global_var_in_main",
             ),
             (
+                "test",
+                "CalledBy",
                 "function",
                 "def use_test(self):\n        test()",
                 "usage.py",
-                "Calls",
-                "test",
                 "test",
             ),
             (
+                "test",
+                "CalledBy",
                 "module",
                 "from main import Foo, test, global_var_in_main\n\n\ndef use_Foo_in_main():\n    foo = Foo()\n    foo.call()\n\n\ndef use_test_in_main():\n    test()\n\n\ndef use_global_var_in_main():\n    print(global_var_in_main)\n\n\nclass Usage:\n    def __init__(self):\n        self.foo = Foo()\n\n    def use_foo(self):\n        self.foo.call()\n\n    def use_test(self):\n        test()\n\n    def use_global_var_in_main(self):\n        print(global_var_in_main)\n\n\nfoo = Foo()\nfoo.call()\ntest()\n\n\nuse_Foo_in_main()\nuse_test_in_main()\nuse_global_var_in_main()\n\nusage = Usage()\nusage.use_foo()\nusage.use_test()\nusage.use_global_var_in_main()\n",
                 "usage.py",
-                "Calls",
-                "test",
                 "test",
             ),
         ]
