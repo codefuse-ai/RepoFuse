@@ -7,6 +7,7 @@ import networkx as nx
 
 from dependency_graph.models import PathLike
 from dependency_graph.models.graph_data import Node, Edge, EdgeRelation
+from dependency_graph.utils.intervals import find_innermost_interval
 
 
 class DependencyGraph:
@@ -106,13 +107,17 @@ class DependencyGraph:
     @lru_cache(maxsize=128)
     def get_nodes(
         self,
-        # the edge_filter parameter should also be hashable
+        # the node_filter parameter should also be hashable
         node_filter: Callable[[Node], bool] = None,
     ) -> list[Node]:
         if node_filter is None:
             return list(self.graph.nodes())
 
         return list(filter(node_filter, self.graph.nodes()))
+
+    def get_edge(self, n1: Node, n2: Node) -> list[Edge] | None:
+        if n1 in self.graph and n2 in self.graph:
+            return [data["relation"] for data in self.graph[n1][n2].values()]
 
     def to_dict(self) -> dict:
         edgelist = self.get_edges()
@@ -153,6 +158,50 @@ class DependencyGraphContextRetriever:
     def __init__(self, graph: DependencyGraph):
         self.graph = graph
 
+    def _get_innermost_node_by_line(
+        self,
+        file_path: PathLike,
+        start_line: int,
+    ) -> Node | None:
+        nodes = self.graph.get_nodes(
+            node_filter=lambda n: n.location and n.location.file_path == file_path
+        )
+        intervals = [
+            (node.location.start_line, node.location.end_line, node) for node in nodes
+        ]
+        innermost_interval = find_innermost_interval(intervals, start_line)
+        return innermost_interval[2] if innermost_interval else None
+
+    def get_innermost_related_nodes_by_line(
+        self,
+        file_path: PathLike,
+        start_line: int,
+        *relations: EdgeRelation,
+    ) -> tuple[Node, list[Node]] | None:
+        node = self._get_innermost_node_by_line(file_path, start_line)
+        related_nodes = self.graph.get_related_nodes(
+            node,
+            *relations,
+        )
+        return node, related_nodes
+
+    def is_node_from_cross_file(self, node: Node, file_path: PathLike) -> bool:
+        file_path = Path(file_path)
+        return (
+            node.location is not None
+            and node.location.file_path is not None
+            and node.location.file_path != file_path
+            and node.location.file_path.is_relative_to(self.graph.repo_path)
+        )
+
+    def is_node_from_in_file(self, node: Node, file_path: PathLike) -> bool:
+        file_path = Path(file_path)
+        return (
+            node.location is not None
+            and node.location.file_path is not None
+            and node.location.file_path == file_path
+        )
+
     def get_cross_file_context(
         self,
         file_path: PathLike,
@@ -163,24 +212,12 @@ class DependencyGraphContextRetriever:
         - The in node should be located in the repo and be cross-file
         - The out node should be in the same file
         """
-
-        def _cross_file_filter(in_node, out_node, edge) -> bool:
-            return (
-                in_node.location is not None
-                and in_node.location.file_path is not None
-                and in_node.location.file_path != file_path
-                and in_node.location.file_path.is_relative_to(self.graph.repo_path)
-            ) and (
-                out_node.location is not None
-                and out_node.location.file_path is not None
-                and out_node.location.file_path == file_path
-            )
-
-        file_path = Path(file_path)
-
         # Don't feel guilty, self.graph.get_edges is cached!
         edge_list = self.graph.get_edges(
-            edge_filter=_cross_file_filter,
+            edge_filter=lambda in_node, out_node, edge: self.is_node_from_cross_file(
+                in_node, file_path
+            )
+            and self.is_node_from_in_file(out_node, file_path)
         )
 
         # This custom edge_filter is applied after the edge_list is constructed by self.graph.get_edges
@@ -195,14 +232,14 @@ class DependencyGraphContextRetriever:
         self,
         file_path: PathLike,
         start_line: int,
-    ) -> list[tuple[Node, Node, Edge]]:
+    ) -> list[tuple[Node, Node, Edge]] | None:
         """
         Construct the cross-file definition of a file by line.
-        It will return the cross-file definition of the nearest scope(func/class) located around the start_line.
+        It will return the cross-file definition of the innermost scope(func/class) located around the start_line.
         Usually it is the in-node we are interested in.
         """
 
-        # TODO is it the nearest scope?
+        # TODO is it the innermost scope?
         def _cross_file_filter_by_line(in_node, out_node, edge) -> bool:
             return (
                 (
@@ -255,60 +292,36 @@ class DependencyGraphContextRetriever:
         self,
         file_path: PathLike,
         start_line: int,
-    ) -> list[tuple[Node, Node, Edge]]:
+    ) -> list[tuple[Node, Node, Edge]] | None:
         """
         Construct the cross-file usage of a file by line
-        It will return the cross-file usage of the nearest scope(func/class) located around the start_line.
+        It will return the cross-file usage of the innermost scope(func/class) located around the start_line.
         Usually it is the in-node we are interested in.
         """
-
-        # TODO it is NOT the nearest scope!
-        def _cross_file_filter_by_line(in_node, out_node, edge) -> bool:
-            return (
-                (
-                    out_node.location.start_line is not None
-                    and out_node.location.end_line is not None
-                    and out_node.location.start_line
-                    <= start_line
-                    <= out_node.location.end_line
-                )
-                and (
-                    edge.location is not None
-                    and edge.location.file_path is not None
-                    and edge.location.file_path != file_path
-                    and edge.location.file_path.is_relative_to(self.graph.repo_path)
-                )
-                and edge.relation
-                in (
-                    EdgeRelation.Construct,
-                    EdgeRelation.BaseClassOf,
-                    EdgeRelation.Overrides,
-                    EdgeRelation.Calls,
-                    EdgeRelation.Instantiates,
-                    EdgeRelation.Uses,
-                )
-            )
-
-        line_specific_edge_list = self.get_cross_file_context(
+        node, related_nodes = self.get_innermost_related_nodes_by_line(
             file_path,
-            # The out node should be in the same file and located around the start line number
-            # The edge should be in the same file and located before the start line
-            edge_filter=_cross_file_filter_by_line,
+            start_line,
+            EdgeRelation.ConstructedBy,
+            EdgeRelation.DerivedClassOf,
+            EdgeRelation.OverriddenBy,
+            EdgeRelation.CalledBy,
+            EdgeRelation.InstantiatedBy,
+            EdgeRelation.UsedBy,
         )
 
-        # We aren't interested in the importation edge for the usage
-        # importation_edge_list = self.get_cross_file_context(
-        #     file_path,
-        #     edge_filter=lambda in_node, out_node, edge: (
-        #         edge.location is not None
-        #         and edge.location.start_line is not None
-        #         and edge.location.start_line < start_line
-        #     )
-        #     and edge.relation in (EdgeRelation.Imports,),
-        # )
+        cross_file_nodes = [
+            node
+            for node in related_nodes
+            if self.is_node_from_cross_file(node, file_path)
+        ]
 
-        # for
+        edge_list: list[tuple[Node, Node, Edge]] = []
+        for in_node in cross_file_nodes:
+            edges = self.graph.get_edge(in_node, node)
+            if edges is None:
+                continue
+            for edge in edges:
+                edge_list.append((in_node, node, edge))
 
-        edge_list = line_specific_edge_list
         # Sort by edge's location
         return sorted(edge_list, key=lambda e: e[2].location.__str__())
