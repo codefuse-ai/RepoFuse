@@ -5,17 +5,19 @@ from typing import Iterable, Callable
 
 import networkx as nx
 
+from dependency_graph.models.language import Language
 from dependency_graph.models import PathLike
 from dependency_graph.models.graph_data import Node, Edge, EdgeRelation, NodeType
 from dependency_graph.utils.intervals import find_innermost_interval
 
 
 class DependencyGraph:
-    def __init__(self, repo_path: PathLike) -> None:
+    def __init__(self, repo_path: PathLike, language: Language) -> None:
         # See https://networkx.org/documentation/stable/reference/classes/multidigraph.html
         # See also https://stackoverflow.com/questions/26691442/how-do-i-add-a-new-attribute-to-an-edge-in-networkx
         self.graph = nx.MultiDiGraph()
         self.repo_path = Path(repo_path)
+        self.language = language
 
         self._update_callbacks: set[Callable] = set()
         # Clear the cache of self.get_edges when the graph is updated
@@ -85,7 +87,7 @@ class DependencyGraph:
         """Get a subgraph that contains all the nodes and edges that are related to the given relations.
         This subgraph is a new sub-copy of the original graph."""
         edges = self.get_related_edges(*relations)
-        sub_graph = DependencyGraph(self.repo_path)
+        sub_graph = DependencyGraph(self.repo_path, self.language)
         sub_graph.add_relational_edges_from(edges)
         return sub_graph
 
@@ -123,6 +125,7 @@ class DependencyGraph:
         edge_list = self.get_edges()
         return {
             "repo_path": str(self.repo_path),
+            "language": self.language,
             "edges": [
                 (edge[0].to_dict(), edge[1].to_dict(), edge[2].to_dict())
                 for edge in edge_list
@@ -138,7 +141,7 @@ class DependencyGraph:
             (Node.from_dict(edge[0]), Node.from_dict(edge[1]), Edge.from_dict(edge[2]))
             for edge in obj_dict["edges"]
         ]
-        graph = DependencyGraph(obj_dict["repo_path"])
+        graph = DependencyGraph(obj_dict["repo_path"], obj_dict["language"])
         graph.add_relational_edges_from(edges)
         return graph
 

@@ -7,3 +7,6 @@ class Language(str, enum.Enum):
     Java = "java"
     JavaScript = "javascript"
     TypeScript = "typescript"
+
+    def __str__(self):
+        return self.name

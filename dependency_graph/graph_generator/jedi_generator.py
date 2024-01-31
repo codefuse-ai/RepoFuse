@@ -401,14 +401,14 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         if repo:
             project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
 
-        D = DependencyGraph(repo.repo_path)
+        D = DependencyGraph(repo.repo_path, repo.language)
         self._generate_file(code, file_path, D, project)
         return D
 
     def generate(self, repo: Repository) -> DependencyGraph:
         project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
 
-        D = DependencyGraph(repo.repo_path)
+        D = DependencyGraph(repo.repo_path, repo.language)
         for file in repo.files:
             if not file.content.strip():
                 continue

@@ -69,3 +69,4 @@ def test_serialization_and_deserialization(sample_graph):
     graph = DependencyGraph.from_json(json_str)
     assert graphs_equal(sample_graph.graph, graph.graph)
     assert sample_graph.repo_path == graph.repo_path
+    assert sample_graph.language == graph.language
