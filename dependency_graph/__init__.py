@@ -65,7 +65,7 @@ def stringify_graph(graph: DependencyGraph) -> nx.Graph:
         str_u, str_v = str(u), str(v)
 
         if G.has_edge(str_v, str_u):
-            G[str_v][str_u]["label"] += "/" + edge.relation.name
+            # e.g. add ChildOf edge to an existing ParentOf edge, the order is inverse
             G[str_v][str_u]["relations"].append(edge.to_dict())
         else:
             if not G.has_node(str_u):
@@ -73,14 +73,14 @@ def stringify_graph(graph: DependencyGraph) -> nx.Graph:
             if not G.has_node(str_v):
                 G.add_node(str_v, **v.to_dict())
             if not G.has_edge(str_u, str_v):
-                G.add_edge(str_u, str_v, label="", relations=[])
+                G.add_edge(str_u, str_v, relations=[])
 
-            G[str_u][str_v]["label"] += (
-                "/" + edge.relation.name
-                if G[str_u][str_v]["label"]
-                else edge.relation.name
-            )
             G[str_u][str_v]["relations"].append(edge.to_dict())
+
+    for u, v, data in G.edges(data="relations"):
+        relation = {d['relation'] for d in data}
+        G[u][v]["label"] = "/".join(relation)
+
     return G
 
 
@@ -141,15 +141,22 @@ def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> Non
 
 def dump_graph_as_ipysigma_graph(graph, output_file):
     G = stringify_graph(graph)
+    # G = nx.DiGraph()
+    # for i, relation in enumerate(EdgeRelation):
+    #     if relation.value[2] == 1:
+    #         continue
+    #     sub_graph = graph.get_related_subgraph(relation, relation.get_inverse_kind())
+    #     G = nx.compose(G, stringify_graph(sub_graph))
+
     # Displaying the graph with a size mapped on degree and
     # a color mapped on a categorical attribute of the nodes
-    # sigma = Sigma(G, node_size=G.degree, node_color="category")
-    # sigma.to_html(output_file)
     Sigma.write_html(
         graph=G,
         node_size=G.degree,
         node_color="type",
         edge_color="label",
+        clickable_edges=True,
+        default_edge_type="arrow",
         path=output_file,
         fullscreen=True,
     )
