@@ -147,9 +147,14 @@ def dump_graph_as_ipysigma_graph(graph, output_file):
     # a color mapped on a categorical attribute of the nodes
     Sigma.write_html(
         graph=G,
+        start_layout=True,
         node_size=G.degree,
+        node_label_size=G.degree,
+        label_font="cursive",
         node_color="type",
+        node_shape='type',
         edge_color="label",
+        edge_label="label",
         clickable_edges=True,
         default_edge_type="curve",
         path=output_file,
