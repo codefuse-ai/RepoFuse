@@ -254,7 +254,7 @@ class DependencyGraphContextRetriever:
             node_filter=lambda n: n.location
             and n.location.file_path
             and n.location.file_path == file_path
-            and n.type is NodeType.MODULE
+            and n.type == NodeType.MODULE
         )
         assert (
             len(module_node) == 1

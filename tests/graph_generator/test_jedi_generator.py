@@ -20,12 +20,12 @@ def test_parent_relation(jedi_generator, python_repo_suite_path):
     assert edges
     assert len(edges) == 4
     relations = [
-        (edge[0].type, edge[0].name, edge[1].type, edge[1].name) for edge in edges
+        (edge[0].type.value, edge[0].name, edge[1].type.value, edge[1].name) for edge in edges
     ]
     assert relations == [
         ("module", "main", "class", "A"),
         ("module", "main", "function", "func"),
-        ("class", "A", "function", "a"),
+        ("class", "A", "function", "A.a"),
         ("function", "func", "function", "closure"),
     ]
 
@@ -80,8 +80,8 @@ def test_instantiate_relation(jedi_generator, python_repo_suite_path):
     ]
 
     assert instantiations == [
-        ("function", "return_A", "class", "A", "main.py", 14),
-        ("function", "return_A", "class", "X", "x.py", 15),
+        ("function", "B.return_A", "class", "A", "main.py", 14),
+        ("function", "B.return_A", "class", "X", "x.py", 15),
         ("function", "func_1", "class", "A", "main.py", 20),
         ("function", "func_1", "class", "X", "x.py", 21),
         ("variable", "global_class_a", "class", "A", "main.py", 25),

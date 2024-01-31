@@ -36,33 +36,33 @@ def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
 
     assert context == unordered(
         [
-            ("class", "Bar", "b.py", "InstantiatedBy", "call"),
-            ("function", "bar", "b.py", "CalledBy", "call"),
-            ("class", "Bar", "b.py", "ImportedBy", "main"),
+            ("class", "Bar", "b.py", "InstantiatedBy", "Foo.call"),
+            ("function", "bar", "b.py", "CalledBy", "Foo.call"),
             ("function", "bar", "b.py", "ImportedBy", "main"),
-            ("function", "baz", "c.py", "ImportedBy", "main"),
+            ("class", "Bar", "b.py", "ImportedBy", "main"),
             ("class", "Baz", "c.py", "ImportedBy", "main"),
-            ("class", "Baz", "c.py", "InstantiatedBy", "call"),
-            ("function", "baz", "c.py", "CalledBy", "call"),
+            ("function", "baz", "c.py", "ImportedBy", "main"),
+            ("class", "Baz", "c.py", "InstantiatedBy", "Foo.call"),
+            ("function", "baz", "c.py", "CalledBy", "Foo.call"),
             ("class", "Bar", "b.py", "InstantiatedBy", "test"),
             ("function", "bar", "b.py", "CalledBy", "test"),
-            ("function", "baz", "c.py", "ImportedBy", "main"),
             ("class", "Baz", "c.py", "ImportedBy", "main"),
+            ("function", "baz", "c.py", "ImportedBy", "main"),
             ("class", "Baz", "c.py", "InstantiatedBy", "test"),
             ("function", "baz", "c.py", "CalledBy", "test"),
             ("class", "Bar", "b.py", "InstantiatedBy", "bar_instance_in_module"),
             ("function", "use_test_in_main", "usage.py", "Calls", "test"),
-            ("function", "__init__", "usage.py", "Instantiates", "Foo"),
+            ("function", "Usage.__init__", "usage.py", "Instantiates", "Foo"),
             ("module", "usage", "usage.py", "Imports", "Foo"),
             ("module", "usage", "usage.py", "Imports", "test"),
             ("module", "usage", "usage.py", "Imports", "global_var_in_main"),
-            ("function", "use_foo", "usage.py", "Calls", "call"),
-            ("function", "use_test", "usage.py", "Calls", "test"),
+            ("function", "Usage.use_foo", "usage.py", "Calls", "Foo.call"),
+            ("function", "Usage.use_test", "usage.py", "Calls", "test"),
             ("variable", "foo", "usage.py", "Instantiates", "Foo"),
-            ("module", "usage", "usage.py", "Calls", "call"),
+            ("module", "usage", "usage.py", "Calls", "Foo.call"),
             ("module", "usage", "usage.py", "Calls", "test"),
             ("function", "use_Foo_in_main", "usage.py", "Instantiates", "Foo"),
-            ("function", "use_Foo_in_main", "usage.py", "Calls", "call"),
+            ("function", "use_Foo_in_main", "usage.py", "Calls", "Foo.call"),
         ]
     )
 
@@ -86,8 +86,8 @@ def test_get_cross_file_definition_by_line(sample_retriever, python_repo_suite_p
 
     assert context == unordered(
         [
-            ("call", "Instantiates", "class", "Bar", "b.py"),
-            ("call", "Calls", "function", "bar", "b.py"),
+            ("Foo.call", "Instantiates", "class", "Bar", "b.py"),
+            ("Foo.call", "Calls", "function", "bar", "b.py"),
             ("main", "Imports", "class", "Bar", "b.py"),
             ("main", "Imports", "function", "bar", "b.py"),
         ]
@@ -168,7 +168,7 @@ def test_get_cross_file_reference_by_line(sample_retriever, python_repo_suite_pa
     assert context == unordered(
         [
             (
-                "call",
+                "Foo.call",
                 "CalledBy",
                 "function",
                 "def use_foo(self):\n        self.foo.call()",
@@ -176,7 +176,7 @@ def test_get_cross_file_reference_by_line(sample_retriever, python_repo_suite_pa
                 "call",
             ),
             (
-                "call",
+                "Foo.call",
                 "CalledBy",
                 "module",
                 "from main import Foo, test, global_var_in_main\n\n\ndef use_Foo_in_main():\n    foo = Foo()\n    foo.call()\n\n\ndef use_test_in_main():\n    test()\n\n\ndef use_global_var_in_main():\n    print(global_var_in_main)\n\n\nclass Usage:\n    def __init__(self):\n        self.foo = Foo()\n\n    def use_foo(self):\n        self.foo.call()\n\n    def use_test(self):\n        test()\n\n    def use_global_var_in_main(self):\n        print(global_var_in_main)\n\n\nfoo = Foo()\nfoo.call()\ntest()\n\n\nuse_Foo_in_main()\nuse_test_in_main()\nuse_global_var_in_main()\n\nusage = Usage()\nusage.use_foo()\nusage.use_test()\nusage.use_global_var_in_main()\n",
@@ -184,7 +184,7 @@ def test_get_cross_file_reference_by_line(sample_retriever, python_repo_suite_pa
                 "call",
             ),
             (
-                "call",
+                "Foo.call",
                 "CalledBy",
                 "function",
                 "def use_Foo_in_main():\n    foo = Foo()\n    foo.call()",

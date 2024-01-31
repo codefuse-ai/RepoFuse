@@ -96,13 +96,15 @@ class Location:
     """The end column number, 1-based"""
 
 
-@dataclass
 class NodeType(str, enum.Enum):
     # TODO should nest a language to mark different type for different language
     MODULE = "module"
     CLASS = "class"
     FUNCTION = "function"
     VARIABLE = "variable"
+
+    def __str__(self):
+        return self.value
 
 
 @dataclass_json
@@ -117,11 +119,7 @@ class Node:
     def get_text(self) -> str | None:
         return self.location.get_text()
 
-    type: NodeType = field(
-        metadata=config(
-            encoder=lambda v: NodeType(v).value, decoder=lambda v: NodeType(v)
-        )
-    )
+    type: NodeType = field(metadata=config(decoder=lambda v: NodeType(v)))
     """The type of the node"""
     name: str
     """The name of the node"""
@@ -150,9 +148,7 @@ class Edge:
             location=self.location,
         )
 
-    relation: EdgeRelation = field(
-        metadata=config(encoder=lambda v: str(v), decoder=lambda v: EdgeRelation[v])
-    )
+    relation: EdgeRelation = field(metadata=config(decoder=lambda v: EdgeRelation[v]))
     """The relation between two nodes"""
     location: Optional[Location] = None
     """The location of the edge"""

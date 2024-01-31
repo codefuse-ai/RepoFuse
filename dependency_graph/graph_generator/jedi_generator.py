@@ -55,7 +55,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
         location_params = {"file_path": name.module_path}
 
-        if node_type and node_type is NodeType.MODULE:
+        if node_type and node_type == NodeType.MODULE:
             start_pos = name._name.get_root_context()._value.tree_node.start_pos
             end_pos = name._name.get_root_context()._value.tree_node.end_pos
         else:
@@ -78,9 +78,15 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _convert_name_to_node(self, name: Name, node_type: NodeType) -> Node:
         """helper function for creating nodes"""
         location = self._convert_name_pos_to_location(name, node_type)
+
+        node_name = name.name
+        # Add class name to the method's node name
+        if name.type == "function" and name.parent() and name.parent().type == "class":
+            node_name = f"{name.parent().name}.{name.name}"
+
         return Node(
             type=node_type,
-            name=name.name,
+            name=node_name,
             location=location,
         )
 
@@ -142,7 +148,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     D=D,
                     from_name=parent,
                     from_type=_JEDI_API_TYPES_dict[parent.type],
-                    # TODO the name should be added with is class name if this is a method
                     to_name=name,
                     # TODO what if _JEDI_API_TYPES_dict doesn't have the key ?
                     to_type=_JEDI_API_TYPES_dict[name.type],
@@ -192,7 +197,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     D=D,
                     from_name=script.get_context(),
                     from_type=NodeType.MODULE,
-                    # TODO the name should be added with is class name if this is a method
                     to_name=definition,
                     to_type=NodeType.VARIABLE
                     if definition.type == "statement"
@@ -234,7 +238,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     D=D,
                     from_name=caller,
                     from_type=_JEDI_API_TYPES_dict[caller.type],
-                    # TODO the name should be added with is class name if this is a method
                     to_name=callee,
                     to_type=_JEDI_API_TYPES_dict[callee.type],
                     edge_name=name,
@@ -341,7 +344,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     from_type=NodeType.VARIABLE
                     if instance_owner.type == "statement"
                     else _JEDI_API_TYPES_dict[instance_owner.type],
-                    # TODO the name should be added with is class name if this is a method
                     to_name=instance_type,
                     to_type=_JEDI_API_TYPES_dict[instance_type.type],
                     edge_name=instantiate_name,
