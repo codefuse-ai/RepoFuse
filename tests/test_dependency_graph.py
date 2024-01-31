@@ -1,5 +1,8 @@
 from pathlib import Path
 
+import pytest
+from networkx.utils import graphs_equal
+
 from dependency_graph import (
     construct_dependency_graph,
     DependencyGraphGeneratorType,
@@ -17,20 +20,25 @@ from dependency_graph.models.repository import Repository
 repo_suite_path = Path(__file__).parent / "code_example" / "python"
 
 
-def test_get_related_edges():
-    repository = Repository(repo_path=repo_suite_path, language=Language.Python)
-    graph = construct_dependency_graph(repository, DependencyGraphGeneratorType.JEDI)
-    edges = graph.get_related_edges(
+@pytest.fixture
+def sample_graph(python_repo_suite_path):
+    return construct_dependency_graph(
+        python_repo_suite_path,
+        DependencyGraphGeneratorType.JEDI,
+        Language.Python,
+    )
+
+
+def test_get_related_edges(sample_graph):
+    edges = sample_graph.get_related_edges(
         EdgeRelation.Calls,
     )
     assert isinstance(edges, list)
     assert len(edges) > 0
 
 
-def test_get_related_edges_by_node():
-    repository = Repository(repo_path=repo_suite_path, language=Language.Python)
-    graph = construct_dependency_graph(repository, DependencyGraphGeneratorType.JEDI)
-    edge_list = graph.get_related_edges_by_node(
+def test_get_related_edges_by_node(sample_graph):
+    edge_list = sample_graph.get_related_edges_by_node(
         Node(
             type=NodeType.MODULE,
             name="main",
@@ -50,9 +58,14 @@ def test_get_related_edges_by_node():
     assert isinstance(edge_list[0][0], Node)
 
 
-def test_get_related_subgraph():
-    repository = Repository(repo_path=repo_suite_path, language=Language.Python)
-    graph = construct_dependency_graph(repository, DependencyGraphGeneratorType.JEDI)
-    subgraph = graph.get_related_subgraph(EdgeRelation.Calls)
+def test_get_related_subgraph(sample_graph):
+    subgraph = sample_graph.get_related_subgraph(EdgeRelation.Calls)
     assert isinstance(subgraph, DependencyGraph)
     assert len(subgraph.graph) > 0
+
+
+def test_serialization_and_deserialization(sample_graph):
+    json_str = sample_graph.to_json()
+    graph = DependencyGraph.from_json(json_str)
+    assert graphs_equal(sample_graph.graph, graph.graph)
+    assert sample_graph.repo_path == graph.repo_path

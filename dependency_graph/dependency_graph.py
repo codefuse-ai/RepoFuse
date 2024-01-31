@@ -120,12 +120,12 @@ class DependencyGraph:
             return [data["relation"] for data in self.graph[n1][n2].values()]
 
     def to_dict(self) -> dict:
-        edgelist = self.get_edges()
+        edge_list = self.get_edges()
         return {
             "repo_path": str(self.repo_path),
             "edges": [
                 (edge[0].to_dict(), edge[1].to_dict(), edge[2].to_dict())
-                for edge in edgelist
+                for edge in edge_list
             ],
         }
 

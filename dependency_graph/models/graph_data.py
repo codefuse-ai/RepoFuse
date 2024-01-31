@@ -119,7 +119,11 @@ class Node:
     def get_text(self) -> str | None:
         return self.location.get_text()
 
-    type: NodeType = field(metadata=config(decoder=lambda v: NodeType(v)))
+    type: NodeType = field(
+        metadata=config(
+            encoder=lambda v: NodeType(v).value, decoder=lambda v: NodeType(v)
+        )
+    )
     """The type of the node"""
     name: str
     """The name of the node"""
@@ -148,7 +152,9 @@ class Edge:
             location=self.location,
         )
 
-    relation: EdgeRelation = field(metadata=config(decoder=lambda v: EdgeRelation[v]))
+    relation: EdgeRelation = field(
+        metadata=config(encoder=lambda v: str(v), decoder=lambda v: EdgeRelation[v])
+    )
     """The relation between two nodes"""
     location: Optional[Location] = None
     """The location of the edge"""
