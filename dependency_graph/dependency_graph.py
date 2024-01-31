@@ -118,7 +118,7 @@ class DependencyGraph:
         return list(filter(node_filter, self.graph.nodes()))
 
     def get_edge(self, n1: Node, n2: Node) -> list[Edge] | None:
-        if n1 in self.graph and n2 in self.graph:
+        if self.graph.has_edge(n1, n2):
             return [data["relation"] for data in self.graph[n1][n2].values()]
 
     def to_dict(self) -> dict:

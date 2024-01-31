@@ -2,6 +2,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import networkx as nx
+from ipysigma import Sigma
 from pyvis.network import Network
 
 from dependency_graph.dependency_graph import DependencyGraph
@@ -38,14 +39,48 @@ def construct_dependency_graph(
 
 
 def stringify_graph(graph: DependencyGraph) -> nx.Graph:
-    G = nx.Graph()
-    for u, v, edge in graph.graph.edges(data="relation"):
+    G = nx.DiGraph()
+    for u, v, edge in graph.get_edges():
+        # TODO Can we do better to relativize the path elsewhere ?
+        if (
+            u.location
+            and u.location.file_path
+            and u.location.file_path.is_relative_to(graph.repo_path)
+        ):
+            u.location.file_path = u.location.file_path.relative_to(graph.repo_path)
+        if (
+            v.location
+            and v.location.file_path
+            and v.location.file_path.is_relative_to(graph.repo_path)
+        ):
+            v.location.file_path = v.location.file_path.relative_to(graph.repo_path)
+        if (
+            edge.location
+            and edge.location.file_path
+            and edge.location.file_path.is_relative_to(graph.repo_path)
+        ):
+            edge.location.file_path = edge.location.file_path.relative_to(
+                graph.repo_path
+            )
         str_u, str_v = str(u), str(v)
-        str_edge = str(edge)
+
         if G.has_edge(str_v, str_u):
-            G[str_u][str_v]["label"] += "/" + str_edge
+            G[str_v][str_u]["label"] += "/" + edge.relation.name
+            G[str_v][str_u]["relations"].append(edge.to_dict())
         else:
-            G.add_edge(str_u, str_v, label=str_edge)
+            if not G.has_node(str_u):
+                G.add_node(str_u, **u.to_dict())
+            if not G.has_node(str_v):
+                G.add_node(str_v, **v.to_dict())
+            if not G.has_edge(str_u, str_v):
+                G.add_edge(str_u, str_v, label="", relations=[])
+
+            G[str_u][str_v]["label"] += (
+                "/" + edge.relation.name
+                if G[str_u][str_v]["label"]
+                else edge.relation.name
+            )
+            G[str_u][str_v]["relations"].append(edge.to_dict())
     return G
 
 
@@ -104,6 +139,22 @@ def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> Non
     nt.save_graph(str(filename))
 
 
+def dump_graph_as_ipysigma_graph(graph, output_file):
+    G = stringify_graph(graph)
+    # Displaying the graph with a size mapped on degree and
+    # a color mapped on a categorical attribute of the nodes
+    # sigma = Sigma(G, node_size=G.degree, node_color="category")
+    # sigma.to_html(output_file)
+    Sigma.write_html(
+        graph=G,
+        node_size=G.degree,
+        node_color="type",
+        edge_color="label",
+        path=output_file,
+        fullscreen=True,
+    )
+
+
 def output_dependency_graph(
     graph: DependencyGraph, output_format: str, output_file: PathLike = None
 ):
@@ -132,5 +183,7 @@ def output_dependency_graph(
                     "You must specify an output file for the pyvis format."
                 )
             dump_graph_as_pyvis_graph(graph, output_file)
+        case "ipysigma":
+            dump_graph_as_ipysigma_graph(graph, output_file)
         case _:
             raise ValueError(f"Unknown output format: {output_format}")

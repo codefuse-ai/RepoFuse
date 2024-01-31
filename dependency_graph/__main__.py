@@ -16,7 +16,7 @@ from dependency_graph.utils.log import setup_logger
 logger = setup_logger()
 
 
-OUTPUT_FORMATS = ["edgelist", "pyvis"]
+OUTPUT_FORMATS = ["edgelist", "pyvis", "ipysigma"]
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
