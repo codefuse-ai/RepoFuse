@@ -39,7 +39,7 @@ def construct_dependency_graph(
 
 
 def stringify_graph(graph: DependencyGraph) -> nx.Graph:
-    G = nx.DiGraph()
+    G = nx.MultiDiGraph()
     for u, v, edge in graph.get_edges():
         # TODO Can we do better to relativize the path elsewhere ?
         if (
@@ -64,22 +64,11 @@ def stringify_graph(graph: DependencyGraph) -> nx.Graph:
             )
         str_u, str_v = str(u), str(v)
 
-        if G.has_edge(str_v, str_u):
-            # e.g. add ChildOf edge to an existing ParentOf edge, the order is inverse
-            G[str_v][str_u]["relations"].append(edge.to_dict())
-        else:
-            if not G.has_node(str_u):
-                G.add_node(str_u, **u.to_dict())
-            if not G.has_node(str_v):
-                G.add_node(str_v, **v.to_dict())
-            if not G.has_edge(str_u, str_v):
-                G.add_edge(str_u, str_v, relations=[])
-
-            G[str_u][str_v]["relations"].append(edge.to_dict())
-
-    for u, v, data in G.edges(data="relations"):
-        relation = {d['relation'] for d in data}
-        G[u][v]["label"] = "/".join(relation)
+        if not G.has_node(str_u):
+            G.add_node(str_u, **u.to_dict())
+        if not G.has_node(str_v):
+            G.add_node(str_v, **v.to_dict())
+        G.add_edge(str_u, str_v, **edge.to_dict())
 
     return G
 
@@ -110,6 +99,9 @@ def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> Non
         sub_graph = graph.get_related_subgraph(relation, relation.get_inverse_kind())
         G = stringify_graph(sub_graph)
         nx.set_edge_attributes(G, colors[i], "color")
+        nx.set_edge_attributes(
+            G, f"{relation.name}/{relation.get_inverse_kind().name}", "label"
+        )
         nt.from_nx(G)
 
     nt.set_options(
@@ -140,13 +132,16 @@ def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> Non
 
 
 def dump_graph_as_ipysigma_graph(graph, output_file):
-    G = stringify_graph(graph)
-    # G = nx.DiGraph()
-    # for i, relation in enumerate(EdgeRelation):
-    #     if relation.value[2] == 1:
-    #         continue
-    #     sub_graph = graph.get_related_subgraph(relation, relation.get_inverse_kind())
-    #     G = nx.compose(G, stringify_graph(sub_graph))
+    G = nx.MultiDiGraph()
+    for i, relation in enumerate(EdgeRelation):
+        if relation.value[2] == 1:
+            continue
+        sub_graph = graph.get_related_subgraph(relation, relation.get_inverse_kind())
+        G_i = stringify_graph(sub_graph)
+        nx.set_edge_attributes(
+            G_i, f"{relation.name}/{relation.get_inverse_kind().name}", "label"
+        )
+        G = nx.compose(G, G_i)
 
     # Displaying the graph with a size mapped on degree and
     # a color mapped on a categorical attribute of the nodes
@@ -156,7 +151,7 @@ def dump_graph_as_ipysigma_graph(graph, output_file):
         node_color="type",
         edge_color="label",
         clickable_edges=True,
-        default_edge_type="arrow",
+        default_edge_type="curve",
         path=output_file,
         fullscreen=True,
     )
