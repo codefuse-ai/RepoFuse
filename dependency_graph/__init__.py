@@ -74,7 +74,13 @@ def stringify_graph(graph: DependencyGraph) -> nx.Graph:
 
 
 def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> None:
-    nt = Network(height="1200px", width="100%", notebook=False, select_menu=True)
+    nt = Network(
+        height="1200px",
+        width="100%",
+        notebook=False,
+        select_menu=True,
+        filter_menu=True,
+    )
     colors = (
         "red",
         "blue",
@@ -102,8 +108,23 @@ def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> Non
         nx.set_edge_attributes(
             G, f"{relation.name}/{relation.get_inverse_kind().name}", "label"
         )
+        # nx.set_node_attributes(G, 50, "value")
+        # nx.set_node_attributes(G, 50, "mass")
+        # nx.set_edge_attributes(G, 100, "spring_length")
+        # nx.set_edge_attributes(G, 100, "mass")
+        # nx.set_edge_attributes(G, 20, "overlap")
+        # nx.set_edge_attributes(G, 50, "value")
         nt.from_nx(G)
 
+    # Can add these properties to beautify the graph
+    # "physics": {
+    #     "barnesHut": {
+    #         "springLength": 500,
+    #         "springConstant": 2,
+    #         "damping": 2,
+    #         "avoidOverlap": 7
+    #     }
+    # }
     nt.set_options(
         dedent(
             """
@@ -152,7 +173,7 @@ def dump_graph_as_ipysigma_graph(graph, output_file):
         node_label_size=G.degree,
         label_font="cursive",
         node_color="type",
-        node_shape='type',
+        node_shape="type",
         edge_color="label",
         edge_label="label",
         clickable_edges=True,

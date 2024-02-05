@@ -35,6 +35,8 @@ class DependencyGraph:
             callback()
 
     def add_node(self, node: Node):
+        if self.graph.has_node(node):
+            return
         self.graph.add_node(node)
         self._notify_update()
 
