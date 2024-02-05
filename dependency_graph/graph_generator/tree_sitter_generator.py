@@ -1,6 +1,6 @@
+from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import BaseDependencyGraphGenerator
 from dependency_graph.models import PathLike
-from dependency_graph.models.dependency_graph import DependencyGraph
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 

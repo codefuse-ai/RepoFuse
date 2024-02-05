@@ -5,13 +5,13 @@ from jedi.api.classes import Name, BaseName
 from parso.python.tree import Name as ParsoTreeName
 from parso.tree import BaseNode
 
+from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import (
     BaseDependencyGraphGenerator,
     DependencyGraphGeneratorType,
 )
 from dependency_graph.models import PathLike
-from dependency_graph.models.dependency_graph import (
-    DependencyGraph,
+from dependency_graph.models.graph_data import (
     Location,
     Node,
     EdgeRelation,
@@ -46,14 +46,22 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def __init__(self, language: Language = Language.Python):
         super().__init__(language)
 
-    def _convert_name_pos_to_location(self, name: Name) -> Location | None:
+    def _convert_name_pos_to_location(
+        self, name: Name, node_type: NodeType | None = None
+    ) -> Location | None:
         """helper function for creating location"""
         if name is None:
             return None
 
         location_params = {"file_path": name.module_path}
-        start_pos = name.get_definition_start_position()
-        end_pos = name.get_definition_end_position()
+
+        if node_type and node_type == NodeType.MODULE:
+            start_pos = name._name.get_root_context()._value.tree_node.start_pos
+            end_pos = name._name.get_root_context()._value.tree_node.end_pos
+        else:
+            start_pos = name.get_definition_start_position()
+            end_pos = name.get_definition_end_position()
+
         if start_pos:
             location_params.update(
                 start_line=start_pos[0],
@@ -69,10 +77,16 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
     def _convert_name_to_node(self, name: Name, node_type: NodeType) -> Node:
         """helper function for creating nodes"""
-        location = self._convert_name_pos_to_location(name)
+        location = self._convert_name_pos_to_location(name, node_type)
+
+        node_name = name.name
+        # Add class name to the method's node name
+        if name.type == "function" and name.parent() and name.parent().type == "class":
+            node_name = f"{name.parent().name}.{name.name}"
+
         return Node(
             type=node_type,
-            name=name.name,
+            name=node_name,
             location=location,
         )
 
@@ -134,7 +148,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     D=D,
                     from_name=parent,
                     from_type=_JEDI_API_TYPES_dict[parent.type],
-                    # TODO the name should be added with is class name if this is a method
                     to_name=name,
                     # TODO what if _JEDI_API_TYPES_dict doesn't have the key ?
                     to_type=_JEDI_API_TYPES_dict[name.type],
@@ -184,7 +197,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     D=D,
                     from_name=script.get_context(),
                     from_type=NodeType.MODULE,
-                    # TODO the name should be added with is class name if this is a method
                     to_name=definition,
                     to_type=NodeType.VARIABLE
                     if definition.type == "statement"
@@ -226,9 +238,8 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     D=D,
                     from_name=caller,
                     from_type=_JEDI_API_TYPES_dict[caller.type],
-                    # TODO the name should be added with is class name if this is a method
                     to_name=callee,
-                    to_type=NodeType.FUNCTION,
+                    to_type=_JEDI_API_TYPES_dict[callee.type],
                     edge_name=name,
                     edge_relation=EdgeRelation.Calls,
                     inverse_edge_relation=EdgeRelation.CalledBy,
@@ -271,34 +282,41 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 # Instance_type is the type of the instance
                 instance_type = instance_types[0]
 
+                # Resolve the instance_type if it is an import statement
+                if instance_type._name and instance_type._name.is_import():
+                    tmp_names = instance_type.goto()
+                    if not tmp_names:
+                        continue
+                    instance_type = tmp_names[0]
+
                 # Skip builtin types
                 if instance_type.in_builtin_module():
                     continue
 
                 if instance_type.type == "param":
                     tmp_names = instance_type.infer()
-                    if tmp_names:
-                        tmp_name = tmp_names[0]
-                        if tmp_name.in_builtin_module():
-                            continue
+                    if not tmp_names:
+                        continue
 
-                        # e.g. resolve 'instance A' to 'class A'
-                        if tmp_name._name.tree_name is None:
-                            continue
-                        tree_def = tmp_name._name.tree_name.get_definition()
-                        if tree_def is None or not hasattr(tree_def, "name"):
-                            continue
-                        if not tmp_name.module_path:
-                            continue
+                    tmp_name = tmp_names[0]
+                    if tmp_name.in_builtin_module():
+                        continue
 
-                        other_script = jedi.Script(path=tmp_name.module_path)
-                        instantiate_name = name
-                        instance_type = BaseName(
-                            other_script._inference_state,
-                            other_script._get_module_context().create_name(
-                                tree_def.name
-                            ),
-                        )
+                    # e.g. resolve 'instance A' to 'class A'
+                    if tmp_name._name.tree_name is None:
+                        continue
+                    tree_def = tmp_name._name.tree_name.get_definition()
+                    if tree_def is None or not hasattr(tree_def, "name"):
+                        continue
+                    if not tmp_name.module_path:
+                        continue
+
+                    other_script = jedi.Script(path=tmp_name.module_path)
+                    instantiate_name = name
+                    instance_type = BaseName(
+                        other_script._inference_state,
+                        other_script._get_module_context().create_name(tree_def.name),
+                    )
 
                 # We only accept class type as an instance for now
                 if instance_type.type not in ("class",):
@@ -326,7 +344,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     from_type=NodeType.VARIABLE
                     if instance_owner.type == "statement"
                     else _JEDI_API_TYPES_dict[instance_owner.type],
-                    # TODO the name should be added with is class name if this is a method
                     to_name=instance_type,
                     to_type=_JEDI_API_TYPES_dict[instance_type.type],
                     edge_name=instantiate_name,
@@ -384,14 +401,14 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         if repo:
             project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
 
-        D = DependencyGraph(repo.repo_path)
+        D = DependencyGraph(repo.repo_path, repo.language)
         self._generate_file(code, file_path, D, project)
         return D
 
     def generate(self, repo: Repository) -> DependencyGraph:
         project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
 
-        D = DependencyGraph(repo.repo_path)
+        D = DependencyGraph(repo.repo_path, repo.language)
         for file in repo.files:
             if not file.content.strip():
                 continue

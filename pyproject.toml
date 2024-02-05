@@ -13,6 +13,7 @@ jedi = "^0.19.1"
 pyvis = "^0.3.2"
 dataclasses-json = "^0.6.3"
 mypy = "^1.8.0"
+ipysigma = "^0.24.2"
 
 [[tool.poetry.source]]
 name = "antgroup-pypi"
@@ -22,6 +23,7 @@ priority = "default"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
 black = "^23.12.1"
+pytest-unordered = "^0.5.2"
 
 [build-system]
 requires = ["poetry-core"]
