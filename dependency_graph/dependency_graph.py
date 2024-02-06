@@ -316,3 +316,16 @@ class DependencyGraphContextRetriever:
         return sorted(
             cross_file_related_edge_list, key=lambda e: e[2].location.__str__()
         )
+
+    def get_related_edges_by_file(
+        self, file_path: PathLike, *relations: EdgeRelation
+    ) -> list[tuple[Node, Node, Edge]]:
+        """
+        Get all related edges of a file and return them
+        """
+        return self.graph.get_edges(
+            edge_filter=lambda in_node, out_node, edge: self.is_node_from_in_file(
+                in_node, file_path
+            )
+            and edge.relation in relations
+        )
