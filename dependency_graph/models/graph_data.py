@@ -5,7 +5,13 @@ from typing import Optional
 
 from dataclasses_json import dataclass_json, config
 
+from dependency_graph.utils.log import setup_logger
+from dependency_graph.models.language import Language
+from dependency_graph.utils.mypy_stub import generate_python_stub
 from dependency_graph.utils.text import slice_text
+
+# Initialize logging
+logger = setup_logger()
 
 
 class EdgeRelation(enum.Enum):
@@ -118,6 +124,14 @@ class Node:
 
     def get_text(self) -> str | None:
         return self.location.get_text()
+
+    def get_stub(self, language: Language) -> str | None:
+        match language:
+            case Language.Python:
+                return generate_python_stub(self.get_text())
+            case _:
+                logger.warning(f"Stub generation is not supported for {language}")
+                return None
 
     type: NodeType = field(
         metadata=config(

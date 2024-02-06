@@ -9,7 +9,7 @@ from mypy.stubgen import (
     Options,
 )
 
-from dependency_graph import setup_logger
+from dependency_graph.utils.log import setup_logger
 
 # Initialize logging
 logger = setup_logger()
