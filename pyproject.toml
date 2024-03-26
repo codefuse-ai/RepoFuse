@@ -14,6 +14,7 @@ pyvis = "^0.3.2"
 dataclasses-json = "^0.6.3"
 mypy = "^1.8.0"
 ipysigma = "^0.24.2"
+tree-sitter = "^0.21.2"
 
 [[tool.poetry.source]]
 name = "antgroup-pypi"

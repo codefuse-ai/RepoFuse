@@ -988,6 +988,56 @@ url = "https://artifacts.antgroup-inc.cn/simple"
 reference = "antgroup-pypi"
 
 [[package]]
+name = "tree-sitter"
+version = "0.21.2"
+description = "Python bindings for the Tree-Sitter parsing library"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tree-sitter-0.21.2.tar.gz", hash = "sha256:7ba9cbfafee65e0f469f321c31c09d1a2b57cf3a5839f27a960be3550b7fea35"},
+    {file = "tree_sitter-0.21.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:51a8640d3eba42b40484530eb7f19630789bea677478fa8d717888d010cb4a11"},
+    {file = "tree_sitter-0.21.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:53006c5325a592acbbed876319e908e011d2a12513c16d51d1e54db9d7b9559d"},
+    {file = "tree_sitter-0.21.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ccd81aaea79a0af624b50ea889604c8dc2f8de80aa10d22c42e36d01ff137622"},
+    {file = "tree_sitter-0.21.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:29f039021e1cb08b9cc1c5d8a99e5427b46ce79936fe1e94002da252c1e5888f"},
+    {file = "tree_sitter-0.21.2-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:5041dfdc2a0558a6688aae36292719208d23e7175c85acd4d227472939f42dd4"},
+    {file = "tree_sitter-0.21.2-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:52f4fd391fcfbcc05e51712e21ed37797d1b26ba29143ae085bf5b9460045511"},
+    {file = "tree_sitter-0.21.2-cp310-cp310-win_amd64.whl", hash = "sha256:eeebc8811812e1821cdf8967ce736fc192466ca1d4e4203a60e0e6ab1c5aae52"},
+    {file = "tree_sitter-0.21.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:1c7acf1305ebac2dcd879c53886630e1b5b16ce2a9c93c2cad5da1762d4ab335"},
+    {file = "tree_sitter-0.21.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0631ada11059987568eb855a33ee13d60d4bdb5eb117bfb0d0ede9a17b8e220a"},
+    {file = "tree_sitter-0.21.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:74d31aa22c96fb3f71a9e23310d9a914594bf932c8710a86894e7db57113f363"},
+    {file = "tree_sitter-0.21.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c8301d47d025861d54f2e589666f4dc94a5e5f8a2d86fc5212aa112ae977b20e"},
+    {file = "tree_sitter-0.21.2-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:52ca15b7f8078b34b7a2802a5ee5b6cf254568771570f7248b5c19e6f1a930c3"},
+    {file = "tree_sitter-0.21.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:d8ad3c847955f71a897c7d30e46eef3324861018d8b5db195c3369c76a26286b"},
+    {file = "tree_sitter-0.21.2-cp311-cp311-win_amd64.whl", hash = "sha256:6de7b9d198e16f9a747f8f110b2fa4a5605c05ce1ec5c3d8f0ef895ed02802c3"},
+    {file = "tree_sitter-0.21.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:aab2567e73d1b787c59cd47b87d3e7869032aa84d0cc4cd4ba6184a22865fa68"},
+    {file = "tree_sitter-0.21.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:491fbfab63206245e52b9c1c2bcc57b05e50cc788c1efb154f852fa2e84ba3ee"},
+    {file = "tree_sitter-0.21.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:baaabcd3966f264bcfaf50b51fff3640d1b847a95c3052acf197c6d37e5b734c"},
+    {file = "tree_sitter-0.21.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:689c03c8d12fd6eee1ce39dd5caf72040d00c5f3984bc0430e56f0b304cdee5e"},
+    {file = "tree_sitter-0.21.2-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:f12c99db307e3ca6f0cabe5976a9dbf826dadf065bbf92bd4f72301065878779"},
+    {file = "tree_sitter-0.21.2-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:f54d1bf01b9d1999d5a4a09e9a756a51bf82ec87bc3c49fe03ae105994158ca2"},
+    {file = "tree_sitter-0.21.2-cp312-cp312-win_amd64.whl", hash = "sha256:c7a12e461a1a55c916040318ac34ce7245a298a5978d01f1a8c49c9ebbfb8e19"},
+    {file = "tree_sitter-0.21.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:b5bda0caec692d00799defcfcd324ad71f0e28db0e00960e270a55b8883f0216"},
+    {file = "tree_sitter-0.21.2-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:49602b8ef79d0652af7329cf5e9ef9de9ab81be65d52be185d5cac035bace33f"},
+    {file = "tree_sitter-0.21.2-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7e163fe6ddecb12cebd73dbe77b122c220f1d1819818693498fe1cbef48f3cc6"},
+    {file = "tree_sitter-0.21.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a693dcd96b2d24f1df4007a9bb63ccdf346eb5da3dd091e797c38d0f6690e2fa"},
+    {file = "tree_sitter-0.21.2-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:c99815bf9a4576a854b29d21730e9bf2e9431218ef8672aab319eca02db90ee6"},
+    {file = "tree_sitter-0.21.2-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:ba8d3985c234da31b3fde4ee6d8fd184f31c6242131ebdc6af021676470c720c"},
+    {file = "tree_sitter-0.21.2-cp38-cp38-win_amd64.whl", hash = "sha256:bc9a5351e8c5ccb3a5ae9e12de748d3e3df39ff7a2929ee7ee567a48c74a40f3"},
+    {file = "tree_sitter-0.21.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:e7a108337479646bb3bae28545d9a6daec5a7f38562075b9cb1902e9e5ffc8e9"},
+    {file = "tree_sitter-0.21.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:cca501a561582b4cc0bac7a237c49e2a7f6a652fe14d313537b9572d7c128cf2"},
+    {file = "tree_sitter-0.21.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:67c7427b85a362aa1e1fccf53360d49f9f42600d76f6145f879288387ad78ce6"},
+    {file = "tree_sitter-0.21.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3a2994c4a7ac1a93a67e79ecc39b2aeed0bddfac98ca828e5591fb68fda66c7c"},
+    {file = "tree_sitter-0.21.2-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:52a6f063777c443b01e907c0fcfa8ca52dd470a3949fbe75d06c3b86cf0d3ad9"},
+    {file = "tree_sitter-0.21.2-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:a97ee0fa9e7f5acbea77ff9186d2adcc995da9e7132d37edf82a60b0da1163e9"},
+    {file = "tree_sitter-0.21.2-cp39-cp39-win_amd64.whl", hash = "sha256:c9cc8048750682b68cd1747fc206d6b4332290356e4f149cabd05533d86fa9a4"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://artifacts.antgroup-inc.cn/simple"
+reference = "antgroup-pypi"
+
+[[package]]
 name = "typing-extensions"
 version = "4.9.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -1058,4 +1108,4 @@ reference = "antgroup-pypi"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "8418e024c70b5f61f082fc61921cffb84750342dad89c9bd3eb885f7a6d985ed"
+content-hash = "3ecb45068259e46f737dbbae22ebf69ed494ab7b232531c1ea6e8814a5e312d4"
