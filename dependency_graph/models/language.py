@@ -9,4 +9,4 @@ class Language(str, enum.Enum):
     TypeScript = "typescript"
 
     def __str__(self):
-        return self.name
+        return self.value

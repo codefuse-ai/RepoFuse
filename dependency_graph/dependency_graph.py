@@ -172,7 +172,9 @@ class DependencyGraphContextRetriever:
             node_filter=lambda n: n.location and n.location.file_path == file_path
         )
         intervals = [
-            (node.location.start_line, node.location.end_line, node) for node in nodes
+            (node.location.start_line, node.location.end_line, node)
+            for node in nodes
+            if node.location.start_line and node.location.end_line
         ]
         innermost_interval = find_innermost_interval(intervals, start_line)
         return innermost_interval[2] if innermost_interval else None
@@ -243,6 +245,8 @@ class DependencyGraphContextRetriever:
         It will return the cross-file definition of the innermost scope(func/class) located between the start_line.
         Usually it is the out-node we are interested in.
         """
+        edge_list = []
+
         related_edge_list = self.get_related_edges_by_innermost_node_between_line(
             file_path,
             start_line,
@@ -253,6 +257,8 @@ class DependencyGraphContextRetriever:
             EdgeRelation.Instantiates,
             EdgeRelation.Uses,
         )
+        if related_edge_list:
+            edge_list += related_edge_list
 
         # Find the module node that is related to the file
         module_node = self.graph.get_nodes(
@@ -262,19 +268,21 @@ class DependencyGraphContextRetriever:
             and n.type == NodeType.MODULE
         )
         assert (
-            len(module_node) == 1
-        ), f"There should be exactly one module node related to the file: {file_path}"
+            len(module_node) <= 1
+        ), f"There should be at most 1 module node related to the file: {file_path}"
 
         # Find the importation edges
-        importation_edge_list = self.graph.get_related_edges_by_node(
-            module_node[0],
-            EdgeRelation.Imports,
-        )
+        if module_node:
+            importation_edge_list = self.graph.get_related_edges_by_node(
+                module_node[0],
+                EdgeRelation.Imports,
+            )
+            edge_list += importation_edge_list
 
         # Filter the cross-file related edges, the edge location start_line should be less than the start_line
         cross_file_related_edge_list = [
             edge
-            for edge in related_edge_list + importation_edge_list
+            for edge in edge_list
             if self.is_node_from_cross_file(edge[1], file_path)
             and edge[2].location.start_line < start_line
         ]
@@ -305,6 +313,8 @@ class DependencyGraphContextRetriever:
             EdgeRelation.UsedBy,
             EdgeRelation.ImportedBy,
         )
+        if not related_edge_list:
+            return None
 
         cross_file_related_edge_list = [
             edge

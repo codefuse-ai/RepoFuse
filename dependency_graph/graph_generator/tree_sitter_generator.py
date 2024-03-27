@@ -2,8 +2,9 @@ import platform
 import sys
 from collections import defaultdict
 from pathlib import Path
+from textwrap import dedent
 
-from tree_sitter import Language as TS_LANGUAGE, Parser, Tree, Node
+from tree_sitter import Language as TS_LANGUAGE, Parser, Tree, Node as TS_Node
 
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import BaseDependencyGraphGenerator
@@ -43,7 +44,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.Java,
     )
 
-    def __init__(self, language: Language = Language.Python):
+    def __init__(self, language: Language):
         super().__init__(language)
 
     def _generate_file(
@@ -53,13 +54,21 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         parser: Parser,
         ts_language: TS_LANGUAGE,
         classes_map: dict[str, list[Path]],
-        import_map: dict[tuple[Path, str], list[Node]],
+        import_map: dict[tuple[Path, str], list[TS_Node]],
     ):
         tree: Tree = parser.parse(code.encode())
 
         # Find package name in the file
         query = ts_language.query(
-            "(package_declaration (scoped_identifier) @package_name)"
+            dedent(
+                """
+                (package_declaration
+                [
+                  (identifier) @package_name
+                  (scoped_identifier) @package_name
+                ])
+                """
+            )
         )
         captures = query.captures(tree.root_node)
 
@@ -71,7 +80,15 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
         # Find import name in the file and save it to import map
         query = ts_language.query(
-            "(import_declaration (scoped_identifier) @import_name)"
+            dedent(
+                """
+                (import_declaration
+                [
+                  (identifier) @import_name
+                  (scoped_identifier) @import_name
+                ])
+                """
+            )
         )
         captures = query.captures(tree.root_node)
 
@@ -88,14 +105,14 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         lib_path = get_builtin_lib_path(TS_LIB_PATH)
 
         # Initialize the Tree-sitter language
-        ts_language = TS_LANGUAGE(str(lib_path.absolute()), repo.language)
+        ts_language = TS_LANGUAGE(str(lib_path.absolute()), str(repo.language))
         parser = Parser()
         parser.set_language(ts_language)
 
         D = DependencyGraph(repo.repo_path, repo.language)
         classes_map: dict[str, list[Path]] = defaultdict(list)
         # The key is (file_path, class_name)
-        import_map: dict[tuple[Path, str], list[Node]] = defaultdict(list)
+        import_map: dict[tuple[Path, str], list[TS_Node]] = defaultdict(list)
         for file in repo.files:
             if not file.content.strip():
                 continue
@@ -118,17 +135,35 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     importee_class_name in classes_map
                     and classes_map[importee_class_name]
                 ):
-                    # We only resolve the first class found first
+                    # We only resolve the first found class
                     importee_file_path = classes_map[importee_class_name][0]
+                    importer_node = parser.parse(
+                        importer_file_path.read_bytes()
+                    ).root_node
+                    importee_node = parser.parse(
+                        importee_file_path.read_bytes()
+                    ).root_node
                     from_node = Node(
                         type=NodeType.MODULE,
                         name=importer_class_name,
-                        location=Location(file_path=importer_file_path),
+                        location=Location(
+                            file_path=importer_file_path,
+                            start_line=importer_node.start_point[0] + 1,
+                            start_column=importer_node.start_point[1] + 1,
+                            end_line=importer_node.end_point[0] + 1,
+                            end_column=importer_node.end_point[1] + 1,
+                        ),
                     )
                     to_node = Node(
                         type=NodeType.MODULE,
                         name=importee_class_name,
-                        location=Location(file_path=importee_file_path),
+                        location=Location(
+                            file_path=importee_file_path,
+                            start_line=importee_node.start_point[0] + 1,
+                            start_column=importee_node.start_point[1] + 1,
+                            end_line=importee_node.end_point[0] + 1,
+                            end_column=importee_node.end_point[1] + 1,
+                        ),
                     )
                     import_location = Location(
                         file_path=importer_file_path,
