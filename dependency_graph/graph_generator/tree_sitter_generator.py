@@ -4,7 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from textwrap import dedent
 
-from tree_sitter import Language as TS_LANGUAGE, Parser, Tree, Node as TS_Node
+from tree_sitter import Language as TS_Language, Parser, Tree, Node as TS_Node
 
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import BaseDependencyGraphGenerator
@@ -52,7 +52,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         code: str,
         file_path: PathLike,
         parser: Parser,
-        ts_language: TS_LANGUAGE,
+        ts_language: TS_Language,
         classes_map: dict[str, list[Path]],
         import_map: dict[tuple[Path, str], list[TS_Node]],
     ):
@@ -105,7 +105,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         lib_path = get_builtin_lib_path(TS_LIB_PATH)
 
         # Initialize the Tree-sitter language
-        ts_language = TS_LANGUAGE(str(lib_path.absolute()), str(repo.language))
+        ts_language = TS_Language(str(lib_path.absolute()), str(repo.language))
         parser = Parser()
         parser.set_language(ts_language)
 
