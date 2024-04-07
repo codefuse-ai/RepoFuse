@@ -40,3 +40,8 @@ B(3).return_A()
 from x import X
 
 class_x = X()
+
+if class_x:
+    global_class_b = A(4)
+else:
+    global_class_b = B(5)

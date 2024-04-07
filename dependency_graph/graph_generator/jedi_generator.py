@@ -279,77 +279,79 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
                 # Instantiate name is the name that is being instantiated
                 instantiate_name = name
+
                 # Instance_type is the type of the instance
-                instance_type = instance_types[0]
+                for instance_type in instance_types:
+                    # Resolve the instance_type if it is an import statement
+                    if instance_type._name and instance_type._name.is_import():
+                        tmp_names = instance_type.goto()
+                        if not tmp_names:
+                            continue
+                        instance_type = tmp_names[0]
 
-                # Resolve the instance_type if it is an import statement
-                if instance_type._name and instance_type._name.is_import():
-                    tmp_names = instance_type.goto()
-                    if not tmp_names:
-                        continue
-                    instance_type = tmp_names[0]
-
-                # Skip builtin types
-                if instance_type.in_builtin_module():
-                    continue
-
-                if instance_type.type == "param":
-                    tmp_names = instance_type.infer()
-                    if not tmp_names:
+                    # Skip builtin types
+                    if instance_type.in_builtin_module():
                         continue
 
-                    tmp_name = tmp_names[0]
-                    if tmp_name.in_builtin_module():
+                    if instance_type.type == "param":
+                        tmp_names = instance_type.infer()
+                        if not tmp_names:
+                            continue
+
+                        tmp_name = tmp_names[0]
+                        if tmp_name.in_builtin_module():
+                            continue
+
+                        # e.g. resolve 'instance A' to 'class A'
+                        if tmp_name._name.tree_name is None:
+                            continue
+                        tree_def = tmp_name._name.tree_name.get_definition()
+                        if tree_def is None or not hasattr(tree_def, "name"):
+                            continue
+                        if not tmp_name.module_path:
+                            continue
+
+                        other_script = jedi.Script(path=tmp_name.module_path)
+                        instantiate_name = name
+                        instance_type = BaseName(
+                            other_script._inference_state,
+                            other_script._get_module_context().create_name(
+                                tree_def.name
+                            ),
+                        )
+
+                    # We only accept class type as an instance for now
+                    if instance_type.type not in ("class",):
                         continue
 
-                    # e.g. resolve 'instance A' to 'class A'
-                    if tmp_name._name.tree_name is None:
-                        continue
-                    tree_def = tmp_name._name.tree_name.get_definition()
-                    if tree_def is None or not hasattr(tree_def, "name"):
-                        continue
-                    if not tmp_name.module_path:
-                        continue
+                    instance_owner = name.parent()
+                    if instance_owner.type == "module":
+                        # the instance owner is a module, try to find if the actual owner is a global variable
+                        expr_stmt_node: BaseNode = name._name.tree_name.search_ancestor(
+                            "expr_stmt"
+                        )
+                        if expr_stmt_node and len(expr_stmt_node.children) > 0:
+                            if isinstance(expr_stmt_node.children[0], ParsoTreeName):
+                                instance_owner = BaseName(
+                                    instance_type._inference_state,
+                                    script._get_module_context().create_name(
+                                        expr_stmt_node.children[0]
+                                    ),
+                                )
 
-                    other_script = jedi.Script(path=tmp_name.module_path)
-                    instantiate_name = name
-                    instance_type = BaseName(
-                        other_script._inference_state,
-                        other_script._get_module_context().create_name(tree_def.name),
+                    # Use the helper function to update the graph
+                    self._update_graph(
+                        D=D,
+                        from_name=instance_owner,
+                        from_type=NodeType.VARIABLE
+                        if instance_owner.type == "statement"
+                        else _JEDI_API_TYPES_dict[instance_owner.type],
+                        to_name=instance_type,
+                        to_type=_JEDI_API_TYPES_dict[instance_type.type],
+                        edge_name=instantiate_name,
+                        edge_relation=EdgeRelation.Instantiates,
+                        inverse_edge_relation=EdgeRelation.InstantiatedBy,
                     )
-
-                # We only accept class type as an instance for now
-                if instance_type.type not in ("class",):
-                    continue
-
-                instance_owner = name.parent()
-                if instance_owner.type == "module":
-                    # the instance owner is a module, try to find if the actual owner is a global variable
-                    expr_stmt_node: BaseNode = name._name.tree_name.search_ancestor(
-                        "expr_stmt"
-                    )
-                    if expr_stmt_node and len(expr_stmt_node.children) > 0:
-                        if isinstance(expr_stmt_node.children[0], ParsoTreeName):
-                            instance_owner = BaseName(
-                                instance_type._inference_state,
-                                script._get_module_context().create_name(
-                                    expr_stmt_node.children[0]
-                                ),
-                            )
-
-                # Use the helper function to update the graph
-                self._update_graph(
-                    D=D,
-                    from_name=instance_owner,
-                    from_type=NodeType.VARIABLE
-                    if instance_owner.type == "statement"
-                    else _JEDI_API_TYPES_dict[instance_owner.type],
-                    to_name=instance_type,
-                    to_type=_JEDI_API_TYPES_dict[instance_type.type],
-                    edge_name=instantiate_name,
-                    edge_relation=EdgeRelation.Instantiates,
-                    inverse_edge_relation=EdgeRelation.InstantiatedBy,
-                )
             except Exception as e:
                 tb_str = "\n".join(traceback.format_tb(e.__traceback__))
                 logger.error(
