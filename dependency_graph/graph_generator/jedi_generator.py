@@ -298,27 +298,27 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         if not tmp_names:
                             continue
 
-                        tmp_name = tmp_names[0]
-                        if tmp_name.in_builtin_module():
-                            continue
+                        for tmp_name in tmp_names:
+                            if tmp_name.in_builtin_module():
+                                continue
 
-                        # e.g. resolve 'instance A' to 'class A'
-                        if tmp_name._name.tree_name is None:
-                            continue
-                        tree_def = tmp_name._name.tree_name.get_definition()
-                        if tree_def is None or not hasattr(tree_def, "name"):
-                            continue
-                        if not tmp_name.module_path:
-                            continue
+                            # e.g. resolve 'instance A' to 'class A'
+                            if tmp_name._name.tree_name is None:
+                                continue
+                            tree_def = tmp_name._name.tree_name.get_definition()
+                            if tree_def is None or not hasattr(tree_def, "name"):
+                                continue
+                            if not tmp_name.module_path:
+                                continue
 
-                        other_script = jedi.Script(path=tmp_name.module_path)
-                        instantiate_name = name
-                        instance_type = BaseName(
-                            other_script._inference_state,
-                            other_script._get_module_context().create_name(
-                                tree_def.name
-                            ),
-                        )
+                            other_script = jedi.Script(path=tmp_name.module_path)
+                            instantiate_name = name
+                            instance_type = BaseName(
+                                other_script._inference_state,
+                                other_script._get_module_context().create_name(
+                                    tree_def.name
+                                ),
+                            )
 
                     # We only accept class type as an instance for now
                     if instance_type.type not in ("class",):
@@ -384,7 +384,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             self._extract_call_relation(script, all_ref_names, D)
 
             all_def_ref_names = script.get_names(
-                all_scopes=True, definitions=False, references=True
+                all_scopes=True, definitions=True, references=True
             )
             self._extract_instantiate_relation(script, all_def_ref_names, D)
         except Exception as e:
