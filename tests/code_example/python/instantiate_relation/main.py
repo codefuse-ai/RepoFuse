@@ -45,3 +45,11 @@ if class_x:
     global_class_b = A(4)
 else:
     global_class_b = B(5)
+
+
+def func_3(class_a_or_b):
+    print(class_a_or_b)
+
+
+func_3(A(4))
+func_3(B(5))
