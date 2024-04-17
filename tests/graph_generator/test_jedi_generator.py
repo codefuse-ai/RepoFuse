@@ -1,4 +1,5 @@
 import pytest
+from pytest_unordered import unordered
 
 from dependency_graph.graph_generator.jedi_generator import JediDependencyGraphGenerator
 from dependency_graph.models.graph_data import EdgeRelation
@@ -66,7 +67,7 @@ def test_instantiate_relation(jedi_generator, python_repo_suite_path):
 
     edges = D.get_related_edges(EdgeRelation.Instantiates)
     assert edges
-    assert len(edges) == 17
+    assert len(edges) == 16
 
     instantiations = [
         (
@@ -80,25 +81,26 @@ def test_instantiate_relation(jedi_generator, python_repo_suite_path):
         for edge in edges
     ]
 
-    assert instantiations == [
-        ("function", "B.return_A", "class", "A", "main.py", 14),
-        ("function", "B.return_A", "class", "X", "x.py", 15),
-        ("function", "func_1", "class", "A", "main.py", 20),
-        ("function", "func_1", "class", "X", "x.py", 21),
-        ("variable", "global_class_a", "class", "A", "main.py", 25),
-        ("function", "func_2", "class", "A", "main.py", 28),
-        ("function", "func_2", "class", "A", "main.py", 29),
-        ("function", "func_2", "class", "B", "main.py", 30),
-        ("function", "func_2", "class", "B", "main.py", 31),
-        ("module", "main", "class", "B", "main.py", 37),
-        ("variable", "class_x", "class", "X", "x.py", 42),
-        ("variable", "global_class_b", "class", "A", "main.py", 45),
-        ("variable", "global_class_b", "class", "B", "main.py", 47),
-        ("function", "func_3", "class", "B", "main.py", 50),
-        ("function", "func_3", "class", "B", "main.py", 51),
-        ("module", "main", "class", "A", "main.py", 54),
-        ("module", "main", "class", "B", "main.py", 55),
-    ]
+    assert instantiations == unordered(
+        [
+            ("function", "B.return_A", "class", "A", "main.py", 14),
+            ("function", "B.return_A", "class", "X", "x.py", 15),
+            ("function", "B.return_A", "class", "X", "main.py", 15),
+            ("function", "func_1", "class", "A", "main.py", 20),
+            ("function", "func_1", "class", "X", "x.py", 21),
+            ("function", "func_1", "class", "X", "main.py", 21),
+            ("variable", "global_class_a", "class", "A", "main.py", 25),
+            ("function", "func_2", "class", "B", "main.py", 30),
+            ("function", "func_2", "class", "B", "main.py", 31),
+            ("module", "main", "class", "B", "main.py", 37),
+            ("variable", "class_x", "class", "X", "x.py", 42),
+            ("variable", "class_x", "class", "X", "main.py", 42),
+            ("variable", "global_class_b", "class", "A", "main.py", 45),
+            ("variable", "global_class_b", "class", "B", "main.py", 47),
+            ("module", "main", "class", "A", "main.py", 54),
+            ("module", "main", "class", "B", "main.py", 55),
+        ]
+    )
 
 
 def test_call_relation(jedi_generator, python_repo_suite_path):

@@ -132,9 +132,11 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 definitions = name.goto(
                     follow_imports=True, follow_builtin_imports=False
                 )
-                if definitions:
-                    definition = definitions[0]
+                if not definitions:
+                    continue
 
+                parent = name.parent()
+                for definition in definitions:
                     # Skip builtin
                     # Skip definition that are not in the same file
                     if (
@@ -143,18 +145,17 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     ):
                         continue
 
-                parent = name.parent()
-                self._update_graph(
-                    D=D,
-                    from_name=parent,
-                    from_type=_JEDI_API_TYPES_dict[parent.type],
-                    to_name=name,
-                    # TODO what if _JEDI_API_TYPES_dict doesn't have the key ?
-                    to_type=_JEDI_API_TYPES_dict[name.type],
-                    edge_name=None,
-                    edge_relation=EdgeRelation.ParentOf,
-                    inverse_edge_relation=EdgeRelation.ChildOf,
-                )
+                    self._update_graph(
+                        D=D,
+                        from_name=parent,
+                        from_type=_JEDI_API_TYPES_dict[parent.type],
+                        to_name=name,
+                        # TODO what if _JEDI_API_TYPES_dict doesn't have the key ?
+                        to_type=_JEDI_API_TYPES_dict[name.type],
+                        edge_name=None,
+                        edge_relation=EdgeRelation.ParentOf,
+                        inverse_edge_relation=EdgeRelation.ChildOf,
+                    )
             except Exception as e:
                 tb_str = "\n".join(traceback.format_tb(e.__traceback__))
                 logger.error(
@@ -175,36 +176,35 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 if not definitions:
                     continue
 
-                definition = definitions[0]
+                for definition in definitions:
+                    # If the definition's parent is not a module, it means it is not importable
+                    if definition.parent() and definition.parent().type not in (
+                        "module",
+                        "namespace",
+                    ):
+                        continue
 
-                # If the definition's parent is not a module, it means it is not importable
-                if definition.parent() and definition.parent().type not in (
-                    "module",
-                    "namespace",
-                ):
-                    continue
+                    # Skip instantiation, this should be dealt with in the instantiate relation
+                    if definition.type == "instance":
+                        continue
 
-                # Skip instantiation, this should be dealt with in the instantiate relation
-                if definition.type == "instance":
-                    continue
+                    # Skip definition that are in the same file
+                    if definition.module_path == script.path:
+                        continue
 
-                # Skip definition that are in the same file
-                if definition.module_path == script.path:
-                    continue
-
-                # Use the helper function to update the graph
-                self._update_graph(
-                    D=D,
-                    from_name=script.get_context(),
-                    from_type=NodeType.MODULE,
-                    to_name=definition,
-                    to_type=NodeType.VARIABLE
-                    if definition.type == "statement"
-                    else _JEDI_API_TYPES_dict[definition.type],
-                    edge_name=name,
-                    edge_relation=EdgeRelation.Imports,
-                    inverse_edge_relation=EdgeRelation.ImportedBy,
-                )
+                    # Use the helper function to update the graph
+                    self._update_graph(
+                        D=D,
+                        from_name=script.get_context(),
+                        from_type=NodeType.MODULE,
+                        to_name=definition,
+                        to_type=NodeType.VARIABLE
+                        if definition.type == "statement"
+                        else _JEDI_API_TYPES_dict[definition.type],
+                        edge_name=name,
+                        edge_relation=EdgeRelation.Imports,
+                        inverse_edge_relation=EdgeRelation.ImportedBy,
+                    )
             except Exception as e:
                 tb_str = "\n".join(traceback.format_tb(e.__traceback__))
                 logger.error(
@@ -223,27 +223,26 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 if not callers:
                     continue
 
-                callee = callers[0]
+                for callee in callers:
+                    if callee.type != "function":
+                        continue
 
-                if not callee or callee.type != "function":
-                    continue
+                    # Find caller, caller should be a function, or a module (call under `if __name__ == "__main__"`)
+                    if name.parent().type not in ("function", "module", "namespace"):
+                        continue
+                    caller = name.parent()
 
-                # Find caller, caller should be a function, or a module (call under `if __name__ == "__main__"`)
-                if name.parent().type not in ("function", "module", "namespace"):
-                    continue
-                caller = name.parent()
-
-                # Use the helper function to update the graph
-                self._update_graph(
-                    D=D,
-                    from_name=caller,
-                    from_type=_JEDI_API_TYPES_dict[caller.type],
-                    to_name=callee,
-                    to_type=_JEDI_API_TYPES_dict[callee.type],
-                    edge_name=name,
-                    edge_relation=EdgeRelation.Calls,
-                    inverse_edge_relation=EdgeRelation.CalledBy,
-                )
+                    # Use the helper function to update the graph
+                    self._update_graph(
+                        D=D,
+                        from_name=caller,
+                        from_type=_JEDI_API_TYPES_dict[caller.type],
+                        to_name=callee,
+                        to_type=_JEDI_API_TYPES_dict[callee.type],
+                        edge_name=name,
+                        edge_relation=EdgeRelation.Calls,
+                        inverse_edge_relation=EdgeRelation.CalledBy,
+                    )
             except Exception as e:
                 tb_str = "\n".join(traceback.format_tb(e.__traceback__))
                 logger.error(
@@ -258,7 +257,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     ):
         for name in all_names:
             try:
-                if name.type not in ("statement", "param"):
+                if name.type not in ("statement",):
                     continue
 
                 # Skip self
@@ -273,52 +272,29 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 ):
                     continue
 
-                instance_types = name.goto()
-                if not instance_types:
+                instance_type_names = name.goto()
+                if not instance_type_names:
                     continue
 
-                # Instantiate name is the name that is being instantiated
-                instantiate_name = name
-
+                instance_types = []
                 # Instance_type is the type of the instance
-                for instance_type in instance_types:
+                for instance_type in instance_type_names:
                     # Resolve the instance_type if it is an import statement
                     if instance_type._name and instance_type._name.is_import():
                         tmp_names = instance_type.goto()
                         if not tmp_names:
                             continue
-                        instance_type = tmp_names[0]
+                        instance_types.extend(tmp_names)
 
+                    instance_types.append(instance_type)
+
+                for instance_type in instance_types:
                     # Skip builtin types
                     if instance_type.in_builtin_module():
                         continue
 
                     if instance_type.type == "param":
-                        tmp_names = instance_type.infer()
-                        if not tmp_names:
-                            continue
-
-                        for tmp_name in tmp_names:
-                            if tmp_name.in_builtin_module():
-                                continue
-
-                            # e.g. resolve 'instance A' to 'class A'
-                            if tmp_name._name.tree_name is None:
-                                continue
-                            tree_def = tmp_name._name.tree_name.get_definition()
-                            if tree_def is None or not hasattr(tree_def, "name"):
-                                continue
-                            if not tmp_name.module_path:
-                                continue
-
-                            other_script = jedi.Script(path=tmp_name.module_path)
-                            instantiate_name = name
-                            instance_type = BaseName(
-                                other_script._inference_state,
-                                other_script._get_module_context().create_name(
-                                    tree_def.name
-                                ),
-                            )
+                        continue
 
                     # We only accept class type as an instance for now
                     if instance_type.type not in ("class",):
@@ -348,7 +324,8 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         else _JEDI_API_TYPES_dict[instance_owner.type],
                         to_name=instance_type,
                         to_type=_JEDI_API_TYPES_dict[instance_type.type],
-                        edge_name=instantiate_name,
+                        # Instantiate name is the name that is being instantiated
+                        edge_name=name,
                         edge_relation=EdgeRelation.Instantiates,
                         inverse_edge_relation=EdgeRelation.InstantiatedBy,
                     )
@@ -382,11 +359,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 all_scopes=True, definitions=False, references=True
             )
             self._extract_call_relation(script, all_ref_names, D)
-
-            all_def_ref_names = script.get_names(
-                all_scopes=True, definitions=True, references=True
-            )
-            self._extract_instantiate_relation(script, all_def_ref_names, D)
+            self._extract_instantiate_relation(script, all_ref_names, D)
         except Exception as e:
             tb_str = "\n".join(traceback.format_tb(e.__traceback__))
             logger.error(
