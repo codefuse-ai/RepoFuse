@@ -285,8 +285,8 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         if not tmp_names:
                             continue
                         instance_types.extend(tmp_names)
-
-                    instance_types.append(instance_type)
+                    else:
+                        instance_types.append(instance_type)
 
                 for instance_type in instance_types:
                     # Skip builtin types
