@@ -172,3 +172,41 @@ def test_call_relation(jedi_generator, python_repo_suite_path):
             "print",
         ),
     ]
+
+
+def test_def_use_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "def_use_relation"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = jedi_generator.generate(repository)
+
+    edges = D.get_related_edges(EdgeRelation.Defines)
+    assert edges
+    assert len(edges) == 7
+
+    def_use_chain = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            # edge[0].location.file_path.name,
+            edge[0].location.start_line,
+            edge[0].location.start_column,
+            edge[1].type.value,
+            edge[1].name,
+            # edge[1].location.file_path.name,
+            edge[1].location.start_line,
+            edge[1].location.start_column,
+        )
+        for edge in edges
+    ]
+
+    assert def_use_chain == unordered(
+        [
+            ("statement", "x", 1, 1, "statement", "x", 2, 5),
+            ("statement", "x", 1, 1, "statement", "x", 3, 1),
+            ("statement", "x", 1, 1, "statement", "x", 3, 5),
+            ("statement", "x", 1, 1, "statement", "x", 4, 7),
+            ("statement", "x", 3, 1, "statement", "x", 3, 5),
+            ("statement", "x", 3, 1, "statement", "x", 4, 7),
+            ("statement", "y", 2, 1, "statement", "y", 5, 7),
+        ]
+    )

@@ -41,6 +41,9 @@ class EdgeRelation(enum.Enum):
     # 7. Field use relations
     Uses = (7, 0, 0)
     UsedBy = (7, 0, 1)
+    # 8. Def-use relations
+    Defines = (8, 0, 0)
+    DefinedBy = (8, 0, 1)
 
     def __str__(self):
         return self.name
@@ -108,6 +111,7 @@ class NodeType(str, enum.Enum):
     CLASS = "class"
     FUNCTION = "function"
     VARIABLE = "variable"
+    STATEMENT = "statement"
 
     def __str__(self):
         return self.value
@@ -129,6 +133,10 @@ class Node:
         match language:
             case Language.Python:
                 return generate_python_stub(self.get_text())
+            case Language.Java:
+                from dependency_graph.utils.tree_sitter_stub import generate_java_stub
+
+                return generate_java_stub(self.get_text())
             case _:
                 logger.warning(f"Stub generation is not supported for {language}")
                 return None
