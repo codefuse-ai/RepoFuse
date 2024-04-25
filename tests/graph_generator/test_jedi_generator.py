@@ -210,3 +210,33 @@ def test_def_use_relation(jedi_generator, python_repo_suite_path):
             ("statement", "y", 2, 1, "statement", "y", 5, 7),
         ]
     )
+
+
+def test_class_hierarchy_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "class_hierarchy"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = jedi_generator.generate(repository)
+
+    edges = D.get_related_edges(EdgeRelation.BaseClassOf)
+    assert edges
+    assert len(edges) == 5
+
+    class_hierarchy = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+        )
+        for edge in edges
+    ]
+
+    assert class_hierarchy == unordered(
+        [
+            ("class", "Father", "class", "Child"),
+            ("class", "Mother", "class", "Child"),
+            ("class", "Animal", "class", "Dog"),
+            ("class", "Animal", "class", "Cat"),
+            ("class", "Animal", "class", "Cow"),
+        ]
+    )
