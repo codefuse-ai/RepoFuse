@@ -4,7 +4,7 @@ Construct a dependency graph of a project
 
 ## Install
 
-```
+```shell
 poetry install
 ```
 
@@ -14,13 +14,13 @@ poetry install
 
 help:
 
-```
+```shell
 python -m dependency_graph -h
 ```
 
 ### Python usage
 
-```
+```python
 from dependency_graph import construct_dependency_graph
 from dependency_graph.models.language import Language
 from dependency_graph.graph_generator import DependencyGraphGeneratorType

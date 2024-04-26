@@ -1,3 +1,4 @@
+import re
 import traceback
 
 import jedi
@@ -29,13 +30,13 @@ logger = setup_logger()
 _JEDI_API_TYPES_dict: dict[str, NodeType | None] = {
     "module": NodeType.MODULE,
     "class": NodeType.CLASS,
-    "instance": None,
+    "instance": NodeType.VARIABLE,
     "function": NodeType.FUNCTION,
     "param": NodeType.VARIABLE,
     "path": NodeType.MODULE,
     "keyword": None,
     "property": NodeType.VARIABLE,
-    "statement": None,
+    "statement": NodeType.STATEMENT,
     "namespace": NodeType.MODULE,
 }
 
@@ -122,12 +123,12 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     ):
         for name in all_names:
             try:
-                # TODO missing adding global variable
-                if name.type not in (
-                    "class",
-                    "function",
-                ):
-                    continue
+                # # TODO missing adding global variable
+                # if name.type not in (
+                #     "class",
+                #     "function",
+                # ):
+                #     continue
 
                 definitions = name.goto(
                     follow_imports=True, follow_builtin_imports=False
@@ -285,8 +286,8 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         if not tmp_names:
                             continue
                         instance_types.extend(tmp_names)
-
-                    instance_types.append(instance_type)
+                    else:
+                        instance_types.append(instance_type)
 
                 for instance_type in instance_types:
                     # Skip builtin types
@@ -335,6 +336,119 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     f"Error while extracting instantiate relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
                 )
 
+    def _extract_def_use_relation(
+        self,
+        script: jedi.Script,
+        all_names: list[Name],
+        D: DependencyGraph,
+    ):
+        for name in all_names:
+            try:
+                if name._name.is_import():
+                    continue
+
+                references = script.get_references(name.line, name.column)
+                for ref in references:  # type: Name
+                    if ref == name:
+                        continue
+
+                    if ref.line is None:
+                        continue
+
+                    # Kill previous definitions
+                    if ref.line < name.line or (
+                        ref.line == name.line and ref.column < name.column
+                    ):
+                        continue
+
+                    self._update_graph(
+                        D=D,
+                        from_name=name,
+                        from_type=_JEDI_API_TYPES_dict[name.type],
+                        to_name=ref,
+                        to_type=_JEDI_API_TYPES_dict[ref.type],
+                        edge_name=None,
+                        edge_relation=EdgeRelation.Defines,
+                        inverse_edge_relation=EdgeRelation.DefinedBy,
+                    )
+            except Exception as e:
+                tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                logger.error(
+                    f"Error while extracting def-use relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
+                )
+
+    def _extract_class_hierarchy_relation(
+        self,
+        script: jedi.Script,
+        all_names: list[Name],
+        D: DependencyGraph,
+    ):
+        def get_parent_classes_with_columns(class_definition: str) -> dict[str, int]:
+            """
+            Get the parent classes and their columns in the class definition header
+            e.g.
+            "class Child(object, A, B):" will return {'object': 12, 'A': 20, 'B': 23}
+            """
+            # Regex to find the class header
+            class_header_regex = r"class\s+\w+\(([^)]+)\):"
+
+            # Regex to match class names
+            class_name_regex = r"\b\w+\b"
+
+            # Find the class header
+            header_match = re.search(class_header_regex, class_definition)
+            if not header_match:
+                return {}
+
+            parent_class_string = header_match.group(1)
+
+            # Find the parent class names and their columns
+            parent_classes_with_columns = {}
+
+            for match in re.finditer(class_name_regex, parent_class_string):
+                # Column = start index of match within the class header + offset up to the opening parenthesis
+                column_number = match.start() + header_match.start(1)
+                class_name = match.group()
+                parent_classes_with_columns[class_name] = column_number
+
+            return parent_classes_with_columns
+
+        for name in all_names:
+            try:
+                if name.type != "class":
+                    continue
+
+                class_header = name.get_line_code()
+                parent_classes_with_columns = get_parent_classes_with_columns(
+                    class_header
+                )
+
+                for column_index in parent_classes_with_columns.values():
+                    references = script.get_references(name.line, column_index)
+
+                    # Deduplicate the references
+                    ref_set = set()
+                    for ref in references:  # type: Name
+                        if ref.type == "class":
+                            ref_set.update(ref.goto())
+
+                    for ref in ref_set:
+                        self._update_graph(
+                            D=D,
+                            from_name=name,
+                            from_type=_JEDI_API_TYPES_dict[name.type],
+                            to_name=ref,
+                            to_type=_JEDI_API_TYPES_dict[ref.type],
+                            edge_name=None,
+                            edge_relation=EdgeRelation.DerivedClassOf,
+                            inverse_edge_relation=EdgeRelation.BaseClassOf,
+                        )
+            except Exception as e:
+                tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                logger.error(
+                    f"Error while extracting def-use relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
+                )
+
     def _generate_file(
         self,
         code: str,
@@ -354,6 +468,8 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             )
             self._extract_parent_relation(script, all_def_names, D)
             self._extract_import_relation(script, all_def_names, D)
+            self._extract_def_use_relation(script, all_def_names, D)
+            self._extract_class_hierarchy_relation(script, all_def_names, D)
 
             all_ref_names = script.get_names(
                 all_scopes=True, definitions=False, references=True

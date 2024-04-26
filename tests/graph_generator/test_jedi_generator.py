@@ -19,7 +19,7 @@ def test_parent_relation(jedi_generator, python_repo_suite_path):
 
     edges = D.get_related_edges(EdgeRelation.ParentOf)
     assert edges
-    assert len(edges) == 4
+    assert len(edges) == 9
     relations = [
         (edge[0].type.value, edge[0].name, edge[1].type.value, edge[1].name)
         for edge in edges
@@ -27,7 +27,12 @@ def test_parent_relation(jedi_generator, python_repo_suite_path):
     assert relations == [
         ("module", "main", "class", "A"),
         ("module", "main", "function", "func"),
+        ("module", "main", "statement", "global_var"),
+        ("module", "main", "statement", "global_var"),
+        ("class", "A", "statement", "var_a"),
         ("class", "A", "function", "A.a"),
+        ("function", "A.a", "variable", "self"),
+        ("function", "A.a", "statement", "var_a"),
         ("function", "func", "function", "closure"),
     ]
 
@@ -67,7 +72,7 @@ def test_instantiate_relation(jedi_generator, python_repo_suite_path):
 
     edges = D.get_related_edges(EdgeRelation.Instantiates)
     assert edges
-    assert len(edges) == 16
+    assert len(edges) == 13
 
     instantiations = [
         (
@@ -85,16 +90,13 @@ def test_instantiate_relation(jedi_generator, python_repo_suite_path):
         [
             ("function", "B.return_A", "class", "A", "main.py", 14),
             ("function", "B.return_A", "class", "X", "x.py", 15),
-            ("function", "B.return_A", "class", "X", "main.py", 15),
             ("function", "func_1", "class", "A", "main.py", 20),
             ("function", "func_1", "class", "X", "x.py", 21),
-            ("function", "func_1", "class", "X", "main.py", 21),
             ("variable", "global_class_a", "class", "A", "main.py", 25),
             ("function", "func_2", "class", "B", "main.py", 30),
             ("function", "func_2", "class", "B", "main.py", 31),
             ("module", "main", "class", "B", "main.py", 37),
             ("variable", "class_x", "class", "X", "x.py", 42),
-            ("variable", "class_x", "class", "X", "main.py", 42),
             ("variable", "global_class_b", "class", "A", "main.py", 45),
             ("variable", "global_class_b", "class", "B", "main.py", 47),
             ("module", "main", "class", "A", "main.py", 54),
@@ -175,3 +177,71 @@ def test_call_relation(jedi_generator, python_repo_suite_path):
             "print",
         ),
     ]
+
+
+def test_def_use_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "def_use_relation"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = jedi_generator.generate(repository)
+
+    edges = D.get_related_edges(EdgeRelation.Defines)
+    assert edges
+    assert len(edges) == 7
+
+    def_use_chain = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            # edge[0].location.file_path.name,
+            edge[0].location.start_line,
+            edge[0].location.start_column,
+            edge[1].type.value,
+            edge[1].name,
+            # edge[1].location.file_path.name,
+            edge[1].location.start_line,
+            edge[1].location.start_column,
+        )
+        for edge in edges
+    ]
+
+    assert def_use_chain == unordered(
+        [
+            ("statement", "x", 1, 1, "statement", "x", 2, 5),
+            ("statement", "x", 1, 1, "statement", "x", 3, 1),
+            ("statement", "x", 1, 1, "statement", "x", 3, 5),
+            ("statement", "x", 1, 1, "statement", "x", 4, 7),
+            ("statement", "x", 3, 1, "statement", "x", 3, 5),
+            ("statement", "x", 3, 1, "statement", "x", 4, 7),
+            ("statement", "y", 2, 1, "statement", "y", 5, 7),
+        ]
+    )
+
+
+def test_class_hierarchy_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "class_hierarchy"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = jedi_generator.generate(repository)
+
+    edges = D.get_related_edges(EdgeRelation.BaseClassOf)
+    assert edges
+    assert len(edges) == 5
+
+    class_hierarchy = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+        )
+        for edge in edges
+    ]
+
+    assert class_hierarchy == unordered(
+        [
+            ("class", "Father", "class", "Child"),
+            ("class", "Mother", "class", "Child"),
+            ("class", "Animal", "class", "Dog"),
+            ("class", "Animal", "class", "Cat"),
+            ("class", "Animal", "class", "Cow"),
+        ]
+    )
