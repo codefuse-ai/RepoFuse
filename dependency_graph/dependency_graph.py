@@ -168,8 +168,11 @@ class DependencyGraphContextRetriever:
         file_path: PathLike,
         start_line: int,
     ) -> Node | None:
+        # Statement nodes are not taken into account for now
         nodes = self.graph.get_nodes(
-            node_filter=lambda n: n.location and n.location.file_path == file_path
+            node_filter=lambda n: n.location
+            and n.location.file_path == file_path
+            and n.type != NodeType.STATEMENT
         )
         intervals = [
             (node.location.start_line, node.location.end_line, node)
@@ -256,6 +259,7 @@ class DependencyGraphContextRetriever:
             EdgeRelation.Calls,
             EdgeRelation.Instantiates,
             EdgeRelation.Uses,
+            EdgeRelation.Defines,
         )
         if related_edge_list:
             edge_list += related_edge_list
@@ -279,13 +283,19 @@ class DependencyGraphContextRetriever:
             )
             edge_list += importation_edge_list
 
-        # Filter the cross-file related edges, the edge location start_line should be less than the start_line
-        cross_file_related_edge_list = [
-            edge
-            for edge in edge_list
-            if self.is_node_from_cross_file(edge[1], file_path)
-            and edge[2].location.start_line < start_line
-        ]
+        cross_file_related_edge_list = []
+        for edge in edge_list:
+            if self.is_node_from_cross_file(edge[1], file_path):
+                if (
+                    edge[2].relation in (EdgeRelation.DefinedBy, EdgeRelation.DefinedBy)
+                    and edge[1].location
+                    and edge[1].location.start_line < start_line
+                ):
+                    cross_file_related_edge_list.append(edge)
+                elif edge[2].location and edge[2].location.start_line < start_line:
+                    # Filter the cross-file related edges, the edge location start_line should be less than the
+                    # start_line
+                    cross_file_related_edge_list.append(edge)
 
         # Sort by edge's location
         return sorted(
@@ -312,6 +322,7 @@ class DependencyGraphContextRetriever:
             EdgeRelation.InstantiatedBy,
             EdgeRelation.UsedBy,
             EdgeRelation.ImportedBy,
+            EdgeRelation.DefinedBy,
         )
         if not related_edge_list:
             return None

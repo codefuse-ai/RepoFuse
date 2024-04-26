@@ -344,25 +344,20 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     ):
         for name in all_names:
             try:
-                references = script.get_references(
-                    *name.get_definition_start_position()
-                )
+                if name._name.is_import():
+                    continue
+
+                references = script.get_references(name.line, name.column)
                 for ref in references:  # type: Name
                     if ref == name:
                         continue
 
+                    if ref.line is None:
+                        continue
+
                     # Kill previous definitions
-                    (
-                        name_start_line,
-                        name_start_column,
-                    ) = name.get_definition_start_position()
-                    (
-                        ref_start_line,
-                        ref_start_column,
-                    ) = ref.get_definition_start_position()
-                    if ref_start_line < name_start_line or (
-                        ref_start_line == name_start_line
-                        and ref_start_column < name_start_column
+                    if ref.line < name.line or (
+                        ref.line == name.line and ref.column < name.column
                     ):
                         continue
 
@@ -429,9 +424,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 )
 
                 for column_index in parent_classes_with_columns.values():
-                    references = script.get_references(
-                        name.get_definition_start_position()[0], column_index
-                    )
+                    references = script.get_references(name.line, column_index)
 
                     # Deduplicate the references
                     ref_set = set()

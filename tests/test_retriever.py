@@ -5,6 +5,7 @@ from dependency_graph import (
     construct_dependency_graph,
     DependencyGraphGeneratorType,
     Language,
+    EdgeRelation,
 )
 
 
@@ -19,10 +20,12 @@ def sample_retriever(python_repo_suite_path):
 
 def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
     cross_file_edge_list = sample_retriever.get_cross_file_context(
-        python_repo_suite_path / "cross_file_context" / "main.py"
+        python_repo_suite_path / "cross_file_context" / "main.py",
+        edge_filter=lambda u, v, e: e.relation
+        not in (EdgeRelation.Defines, EdgeRelation.DefinedBy),
     )
 
-    assert len(cross_file_edge_list) == 29
+    assert len(cross_file_edge_list) == 27
     context = [
         (
             edge[0].type.value,
@@ -39,20 +42,17 @@ def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
 
     assert context == unordered(
         [
-            ("class", "Bar", 5, 1, "b.py", "InstantiatedBy", "Foo.call", "main.py"),
-            ("function", "bar", 1, 1, "b.py", "CalledBy", "Foo.call", "main.py"),
-            ("function", "bar", 1, 1, "b.py", "ImportedBy", "main", "main.py"),
-            ("class", "Bar", 5, 1, "b.py", "ImportedBy", "main", "main.py"),
             ("function", "baz", 1, 1, "c.py", "ImportedBy", "main", "main.py"),
+            ("function", "baz", 1, 1, "c.py", "ImportedBy", "main", "main.py"),
+            ("function", "baz", 1, 1, "c.py", "CalledBy", "Foo.call", "main.py"),
+            ("function", "baz", 1, 1, "c.py", "CalledBy", "test", "main.py"),
+            ("class", "Baz", 5, 1, "c.py", "ImportedBy", "main", "main.py"),
             ("class", "Baz", 5, 1, "c.py", "ImportedBy", "main", "main.py"),
             ("class", "Baz", 5, 1, "c.py", "InstantiatedBy", "Foo.call", "main.py"),
-            ("function", "baz", 1, 1, "c.py", "CalledBy", "Foo.call", "main.py"),
-            ("class", "Bar", 5, 1, "b.py", "InstantiatedBy", "test", "main.py"),
-            ("function", "bar", 1, 1, "b.py", "CalledBy", "test", "main.py"),
-            ("function", "baz", 1, 1, "c.py", "ImportedBy", "main", "main.py"),
-            ("class", "Baz", 5, 1, "c.py", "ImportedBy", "main", "main.py"),
             ("class", "Baz", 5, 1, "c.py", "InstantiatedBy", "test", "main.py"),
-            ("function", "baz", 1, 1, "c.py", "CalledBy", "test", "main.py"),
+            ("class", "Bar", 5, 1, "b.py", "ImportedBy", "main", "main.py"),
+            ("class", "Bar", 5, 1, "b.py", "InstantiatedBy", "Foo.call", "main.py"),
+            ("class", "Bar", 5, 1, "b.py", "InstantiatedBy", "test", "main.py"),
             (
                 "class",
                 "Bar",
@@ -61,6 +61,43 @@ def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
                 "b.py",
                 "InstantiatedBy",
                 "bar_instance_in_module",
+                "main.py",
+            ),
+            ("function", "bar", 1, 1, "b.py", "ImportedBy", "main", "main.py"),
+            ("function", "bar", 1, 1, "b.py", "CalledBy", "Foo.call", "main.py"),
+            ("function", "bar", 1, 1, "b.py", "CalledBy", "test", "main.py"),
+            ("module", "usage", 1, 1, "usage.py", "Imports", "Foo", "main.py"),
+            ("module", "usage", 1, 1, "usage.py", "Imports", "test", "main.py"),
+            ("module", "usage", 1, 1, "usage.py", "Calls", "test", "main.py"),
+            (
+                "module",
+                "usage",
+                1,
+                1,
+                "usage.py",
+                "Imports",
+                "global_var_in_main",
+                "main.py",
+            ),
+            ("module", "usage", 1, 1, "usage.py", "Calls", "Foo.call", "main.py"),
+            (
+                "function",
+                "use_Foo_in_main",
+                4,
+                1,
+                "usage.py",
+                "Calls",
+                "Foo.call",
+                "main.py",
+            ),
+            (
+                "function",
+                "use_Foo_in_main",
+                4,
+                1,
+                "usage.py",
+                "Instantiates",
+                "Foo",
                 "main.py",
             ),
             (
@@ -81,18 +118,6 @@ def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
                 "usage.py",
                 "Instantiates",
                 "Foo",
-                "main.py",
-            ),
-            ("module", "usage", 1, 1, "usage.py", "Imports", "Foo", "main.py"),
-            ("module", "usage", 1, 1, "usage.py", "Imports", "test", "main.py"),
-            (
-                "module",
-                "usage",
-                1,
-                1,
-                "usage.py",
-                "Imports",
-                "global_var_in_main",
                 "main.py",
             ),
             (
@@ -116,48 +141,6 @@ def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
                 "main.py",
             ),
             ("variable", "foo", 31, 1, "usage.py", "Instantiates", "Foo", "main.py"),
-            ("module", "usage", 1, 1, "usage.py", "Calls", "Foo.call", "main.py"),
-            ("module", "usage", 1, 1, "usage.py", "Calls", "test", "main.py"),
-            (
-                "function",
-                "use_Foo_in_main",
-                4,
-                1,
-                "usage.py",
-                "Instantiates",
-                "Foo",
-                "main.py",
-            ),
-            (
-                "function",
-                "use_Foo_in_main",
-                4,
-                1,
-                "usage.py",
-                "Calls",
-                "Foo.call",
-                "main.py",
-            ),
-            (
-                "statement",
-                "global_var_in_main",
-                14,
-                11,
-                "usage.py",
-                "DefinedBy",
-                "global_var_in_main",
-                "main.py",
-            ),
-            (
-                "statement",
-                "global_var_in_main",
-                28,
-                15,
-                "usage.py",
-                "DefinedBy",
-                "global_var_in_main",
-                "main.py",
-            ),
         ]
     )
 
