@@ -19,7 +19,7 @@ def test_parent_relation(jedi_generator, python_repo_suite_path):
 
     edges = D.get_related_edges(EdgeRelation.ParentOf)
     assert edges
-    assert len(edges) == 4
+    assert len(edges) == 9
     relations = [
         (edge[0].type.value, edge[0].name, edge[1].type.value, edge[1].name)
         for edge in edges
@@ -27,7 +27,12 @@ def test_parent_relation(jedi_generator, python_repo_suite_path):
     assert relations == [
         ("module", "main", "class", "A"),
         ("module", "main", "function", "func"),
+        ("module", "main", "statement", "global_var"),
+        ("module", "main", "statement", "global_var"),
+        ("class", "A", "statement", "var_a"),
         ("class", "A", "function", "A.a"),
+        ("function", "A.a", "variable", "self"),
+        ("function", "A.a", "statement", "var_a"),
         ("function", "func", "function", "closure"),
     ]
 

@@ -123,12 +123,12 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     ):
         for name in all_names:
             try:
-                # TODO missing adding global variable
-                if name.type not in (
-                    "class",
-                    "function",
-                ):
-                    continue
+                # # TODO missing adding global variable
+                # if name.type not in (
+                #     "class",
+                #     "function",
+                # ):
+                #     continue
 
                 definitions = name.goto(
                     follow_imports=True, follow_builtin_imports=False
