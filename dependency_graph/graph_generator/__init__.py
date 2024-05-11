@@ -27,7 +27,10 @@ class BaseDependencyGraphGenerator(ABC):
 
     @abstractmethod
     def generate_file(
-        self, code: str = None, file_path: PathLike = None, repo: Repository = None
+        self,
+        repo: Repository,
+        code: str = None,
+        file_path: PathLike = None,
     ) -> DependencyGraph:
         """
         Generate dependency graph for a file.
