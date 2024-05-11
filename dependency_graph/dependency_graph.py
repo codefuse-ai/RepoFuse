@@ -259,7 +259,7 @@ class DependencyGraphContextRetriever:
             EdgeRelation.Calls,
             EdgeRelation.Instantiates,
             EdgeRelation.Uses,
-            EdgeRelation.Defines,
+            # EdgeRelation.Defines,
         )
         if related_edge_list:
             edge_list += related_edge_list
@@ -322,7 +322,7 @@ class DependencyGraphContextRetriever:
             EdgeRelation.InstantiatedBy,
             EdgeRelation.UsedBy,
             EdgeRelation.ImportedBy,
-            EdgeRelation.DefinedBy,
+            # EdgeRelation.DefinedBy,
         )
         if not related_edge_list:
             return None

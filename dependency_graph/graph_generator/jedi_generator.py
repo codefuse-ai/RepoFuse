@@ -483,14 +483,15 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             )
 
     def generate_file(
-        self, code: str = None, file_path: PathLike = None, repo: Repository = None
+        self,
+        repo: Repository,
+        code: str = None,
+        file_path: PathLike = None,
     ) -> DependencyGraph:
         if code is None and file_path is None:
             raise ValueError("Must provide at least one of code or file_path")
 
-        project = None
-        if repo:
-            project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
+        project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
 
         D = DependencyGraph(repo.repo_path, repo.language)
         self._generate_file(code, file_path, D, project)

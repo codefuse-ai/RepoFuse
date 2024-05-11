@@ -96,10 +96,12 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
             import_map[(file_path, class_name)].append(node)
 
     def generate_file(
-        self, code: str = None, file_path: PathLike = None, repo: Repository = None
+        self,
+        repo: Repository,
+        code: str = None,
+        file_path: PathLike = None,
     ) -> DependencyGraph:
-        # TODO
-        pass
+        raise NotImplementedError("generate_file is not implemented")
 
     def generate(self, repo: Repository) -> DependencyGraph:
         lib_path = get_builtin_lib_path(TS_LIB_PATH)
