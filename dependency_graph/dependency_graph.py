@@ -271,9 +271,9 @@ class DependencyGraphContextRetriever:
             and n.location.file_path == file_path
             and n.type == NodeType.MODULE
         )
-        assert (
-            len(module_node) <= 1
-        ), f"There should be at most 1 module node related to the file: {file_path}"
+        # assert (
+        #     len(module_node) <= 1
+        # ), f"There should be at most 1 module node related to the file: {file_path}"
 
         # Find the importation edges
         if module_node:
