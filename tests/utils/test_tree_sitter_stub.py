@@ -3,6 +3,7 @@ from textwrap import dedent
 from dependency_graph.utils.tree_sitter_stub import (
     generate_java_stub,
     generate_c_sharp_stub,
+    generate_typescript_stub,
 )
 
 
@@ -316,5 +317,179 @@ def test_generate_c_sharp_stub_without_comments():
             public static async Task<string> SimulateDataProcessing()
         
         }"""
+    )
+    assert actual == expected
+
+
+def test_generate_typescript_stub_without_comments():
+    code = dedent(
+        """
+        // Import the entire lodash library
+        import _ from 'lodash';
+        
+        // Or, to import individual functions to potentially reduce bundle size
+        import { shuffle, capitalize } from 'lodash';
+        
+        // Defining an interface
+        interface Person {
+          firstName: string;
+          lastName: string;
+        }
+        
+        // Implementing an interface with a class
+        class Employee implements Person {
+          constructor(public firstName: string, public lastName: string, public position: string) {}
+        
+          // Method
+          introduceSelf(): void {
+            console.log(`Hello, my name is ${this.firstName} ${this.lastName} and I am a ${this.position}.`);
+          }
+        }
+        
+        // Enum
+        enum Status {
+          Active,
+          Inactive,
+          Probation
+        }
+        
+        // Function with return type
+        function getStatusDescription(status: Status): string {
+          switch (status) {
+            case Status.Active:
+              return 'The employee is active.';
+            case Status.Inactive:
+              return 'The employee is inactive.';
+            case Status.Probation:
+              return 'The employee is on probation.';
+          }
+        }
+        
+        // Generic function
+        function getArrayItems<T>(items: T[]): T[] {
+          return new Array<T>().concat(items);
+        }
+        
+        // Arrow function with implicit return type
+        const greet = (name: string): void => {
+          console.log(`Hello, ${name}!`);
+        };
+        
+        // Using the class and interface
+        let emp: Person = new Employee("John", "Doe", "Developer");
+        (emp as Employee).introduceSelf(); // Type assertion
+        
+        // Using the enum
+        console.log(getStatusDescription(Status.Probation));
+        
+        // Using the generic function
+        let numArray = getArrayItems<number>([1, 2, 3]);
+        console.log(numArray);
+        
+        // Using the arrow function
+        greet('Jane Doe');
+        
+        /* test
+        * test
+        */
+        
+        // Promise and async/await
+        const promiseFunction = (): Promise<string> => {
+          return new Promise<string>((resolve, reject) => {
+            setTimeout(() => {
+              resolve('Promise resolved!');
+            }, 1000);
+          });
+        };
+        
+        const runAsyncCalls = async () => {
+          console.log('Before promise execution');
+          const result = await promiseFunction();
+          console.log(result); // Output after 1 second: Promise resolved!
+          console.log('After promise execution');
+        };
+        
+        runAsyncCalls();
+        
+        const a = () => {console.log()}
+        """
+    )
+    actual = generate_typescript_stub(code, include_comments=False)
+    expected = dedent(
+        """\
+
+
+
+
+
+
+
+
+        interface Person {
+          firstName: string;
+          lastName: string;
+        }
+        
+        
+        class Employee implements Person {
+          constructor(public firstName: string, public lastName: string, public position: string)
+        
+        
+          introduceSelf(): void
+        }
+        
+        
+        enum Status {
+          Active,
+          Inactive,
+          Probation
+        }
+        
+        
+        function getStatusDescription(status: Status): string
+        
+        
+        function getArrayItems<T>(items: T[]): T[]
+        
+        
+        const greet = (name: string): void => {
+          console.log(`Hello, ${name}!`);
+        };
+        
+        
+        let emp: Person = new Employee("John", "Doe", "Developer");
+        (emp as Employee).introduceSelf();
+        
+        
+        console.log(getStatusDescription(Status.Probation));
+        
+        
+        let numArray = getArrayItems<number>([1, 2, 3]);
+        console.log(numArray);
+        
+        
+        greet('Jane Doe');
+        
+        
+        
+        
+        const promiseFunction = (): Promise<string> => {
+          return new Promise<string>((resolve, reject) => {
+            setTimeout(() => {
+              resolve('Promise resolved!');
+            }, 1000);
+          });
+        };
+        
+        const runAsyncCalls = async () => {
+          console.log('Before promise execution');
+          const result = await promiseFunction();
+          console.log(result);
+          console.log('After promise execution');
+        };
+        
+        runAsyncCalls();
+        
+        const a = () => {console.log()}"""
     )
     assert actual == expected
