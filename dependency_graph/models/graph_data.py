@@ -136,7 +136,13 @@ class Node:
             case Language.Java:
                 from dependency_graph.utils.tree_sitter_stub import generate_java_stub
 
-                return generate_java_stub(self.get_text())
+                return generate_java_stub(self.get_text(), include_comments=False)
+            case Language.CSharp:
+                from dependency_graph.utils.tree_sitter_stub import (
+                    generate_c_sharp_stub,
+                )
+
+                return generate_c_sharp_stub(self.get_text(), include_comments=False)
             case _:
                 logger.warning(f"Stub generation is not supported for {language}")
                 return None
