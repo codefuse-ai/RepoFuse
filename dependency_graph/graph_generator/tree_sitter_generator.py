@@ -42,12 +42,13 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
     supported_languages: tuple[Language] = (
         # Language.Python,
         Language.Java,
+        Language.CSharp,
     )
 
     def __init__(self, language: Language):
         super().__init__(language)
 
-    def _generate_file(
+    def _generate_java_file(
         self,
         code: str,
         file_path: PathLike,
@@ -95,6 +96,53 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         for node, _ in captures:
             import_map[(file_path, class_name)].append(node)
 
+    def _generate_csharp_file(
+        self,
+        code: str,
+        file_path: PathLike,
+        parser: Parser,
+        ts_language: TS_Language,
+        namespace_map: dict[str, list[Path]],
+        import_map: dict[tuple[Path, str], list[TS_Node]],
+    ):
+        tree: Tree = parser.parse(code.encode())
+
+        # Find package name in the file
+        query = ts_language.query(
+            dedent(
+                """
+                (namespace_declaration
+                [
+                  (qualified_name) @namespace_name
+                  (identifier) @namespace_name
+                ])
+                """
+            )
+        )
+        captures = query.captures(tree.root_node)
+
+        namespace_name = ""
+        for node, _ in captures:
+            namespace_name = node.text.decode()
+            namespace_map[namespace_name].append(file_path)
+
+        # Find using name in the file and save it to import map
+        query = ts_language.query(
+            dedent(
+                """
+                (using_directive
+                [
+                  (qualified_name) @package_name
+                  (identifier) @package_name
+                ])
+                """
+            )
+        )
+        captures = query.captures(tree.root_node)
+
+        for node, _ in captures:
+            import_map[(file_path, namespace_name)].append(node)
+
     def generate_file(
         self,
         repo: Repository,
@@ -118,21 +166,33 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         for file in repo.files:
             if not file.content.strip():
                 continue
-            self._generate_file(
-                file.content,
-                file.file_path,
-                parser,
-                ts_language,
-                classes_map,
-                import_map,
-            )
+
+            match repo.language:
+                case Language.Java:
+                    self._generate_java_file(
+                        file.content,
+                        file.file_path,
+                        parser,
+                        ts_language,
+                        classes_map,
+                        import_map,
+                    )
+                case Language.CSharp:
+                    self._generate_csharp_file(
+                        file.content,
+                        file.file_path,
+                        parser,
+                        ts_language,
+                        classes_map,
+                        import_map,
+                    )
 
         for (
             importer_file_path,
             importer_class_name,
-        ), importee_nodes in import_map.items():
-            for importee_node in importee_nodes:
-                importee_class_name = importee_node.text.decode()
+        ), importation_nodes in import_map.items():
+            for importation_node in importation_nodes:
+                importee_class_name = importation_node.text.decode()
                 if (
                     importee_class_name in classes_map
                     and classes_map[importee_class_name]
@@ -169,10 +229,10 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     )
                     import_location = Location(
                         file_path=importer_file_path,
-                        start_line=importee_node.start_point[0] + 1,
-                        start_column=importee_node.start_point[1] + 1,
-                        end_line=importee_node.end_point[0] + 1,
-                        end_column=importee_node.end_point[1] + 1,
+                        start_line=importation_node.start_point[0] + 1,
+                        start_column=importation_node.start_point[1] + 1,
+                        end_line=importation_node.end_point[0] + 1,
+                        end_column=importation_node.end_point[1] + 1,
                     )
                     D.add_relational_edge(
                         from_node,
