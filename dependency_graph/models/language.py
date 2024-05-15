@@ -2,7 +2,7 @@ import enum
 
 
 class Language(str, enum.Enum):
-    CSharp = "c-sharp"
+    CSharp = "c_sharp"
     Python = "python"
     Java = "java"
     JavaScript = "javascript"
