@@ -3,7 +3,7 @@ from textwrap import dedent
 from dependency_graph.utils.tree_sitter_stub import (
     generate_java_stub,
     generate_c_sharp_stub,
-    generate_typescript_stub,
+    generate_ts_js_stub,
 )
 
 
@@ -414,7 +414,7 @@ def test_generate_typescript_stub_without_comments():
         const a = () => {console.log()}
         """
     )
-    actual = generate_typescript_stub(code, include_comments=False)
+    actual = generate_ts_js_stub(code, include_comments=False)
     expected = dedent(
         """\
 

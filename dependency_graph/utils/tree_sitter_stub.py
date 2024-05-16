@@ -166,7 +166,7 @@ def generate_c_sharp_stub(code: str, include_comments: bool = True) -> str:
     return code
 
 
-def generate_typescript_stub(code: str, include_comments: bool = True) -> str:
+def generate_ts_js_stub(code: str, include_comments: bool = True) -> str:
     lib_path = get_builtin_lib_path(TS_LIB_PATH)
 
     # Initialize the Tree-sitter language
