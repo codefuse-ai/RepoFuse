@@ -129,26 +129,34 @@ class Node:
     def get_text(self) -> str | None:
         return self.location.get_text()
 
-    def get_stub(self, language: Language) -> str | None:
+    def get_stub(
+        self, language: Language, include_comments: bool = False
+    ) -> str | None:
         match language:
             case Language.Python:
                 return generate_python_stub(self.get_text())
             case Language.Java:
                 from dependency_graph.utils.tree_sitter_stub import generate_java_stub
 
-                return generate_java_stub(self.get_text(), include_comments=False)
+                return generate_java_stub(
+                    self.get_text(), include_comments=include_comments
+                )
             case Language.CSharp:
                 from dependency_graph.utils.tree_sitter_stub import (
                     generate_c_sharp_stub,
                 )
 
-                return generate_c_sharp_stub(self.get_text(), include_comments=False)
-            case Language.TypeScript:
+                return generate_c_sharp_stub(
+                    self.get_text(), include_comments=include_comments
+                )
+            case Language.TypeScript | Language.JavaScript:
                 from dependency_graph.utils.tree_sitter_stub import (
-                    generate_typescript_stub,
+                    generate_ts_js_stub,
                 )
 
-                return generate_typescript_stub(self.get_text(), include_comments=False)
+                return generate_ts_js_stub(
+                    self.get_text(), include_comments=include_comments
+                )
             case _:
                 logger.warning(f"Stub generation is not supported for {language}")
                 return None
