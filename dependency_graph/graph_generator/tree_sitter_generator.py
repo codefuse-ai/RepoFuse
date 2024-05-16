@@ -43,6 +43,8 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         # Language.Python,
         Language.Java,
         Language.CSharp,
+        Language.TypeScript,
+        Language.JavaScript,
     )
 
     def __init__(self, language: Language):
@@ -143,6 +145,29 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         for node, _ in captures:
             import_map[(file_path, namespace_name)].append(node)
 
+    def _generate_ts_js_file(
+        self,
+        code: str,
+        file_path: PathLike,
+        parser: Parser,
+        ts_language: TS_Language,
+        module_map: dict[str, list[Path]],
+        import_map: dict[tuple[Path, str], list[TS_Node]],
+    ):
+        tree: Tree = parser.parse(code.encode())
+
+        module_name = Path(file_path).stem
+        module_map[module_name].append(file_path)
+
+        # Find import name in the file and save it to import map
+        query = ts_language.query(
+            "(import_statement (string (string_fragment) @import_name))"
+        )
+        captures = query.captures(tree.root_node)
+
+        for node, _ in captures:
+            import_map[(file_path, module_name)].append(node)
+
     def generate_file(
         self,
         repo: Repository,
@@ -150,6 +175,45 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         file_path: PathLike = None,
     ) -> DependencyGraph:
         raise NotImplementedError("generate_file is not implemented")
+
+    def resolve_import(
+        self,
+        importee_class_name: str,
+        classes_map: dict[str, list[Path]],
+        importer_file_path: Path,
+        language: Language,
+    ) -> list[Path] | None:
+        match language:
+            case Language.Java | Language.CSharp:
+                return classes_map.get(importee_class_name, None)
+            case Language.TypeScript | Language.JavaScript:
+                # Find the module path
+                # e.g. './Descriptor' -> './Descriptor.ts'; '../Descriptor' -> '../Descriptor.ts'
+                if "." in importee_class_name or ".." in importee_class_name:
+                    extension_list = (
+                        Repository.code_file_extensions[Language.TypeScript]
+                        + Repository.code_file_extensions[Language.JavaScript]
+                    )
+
+                    result_path = None
+                    # If there is a suffix in the name
+                    if suffix := Path(importee_class_name).suffix:
+                        # In case of '../package.json', we should filter it out
+                        path = importer_file_path.parent / importee_class_name
+                        if suffix in extension_list and path.exists():
+                            result_path = [path]
+                    else:
+                        result_path = [
+                            importer_file_path.parent / f"{importee_class_name}{ext}"
+                            for ext in extension_list
+                            if (
+                                importer_file_path.parent
+                                / f"{importee_class_name}{ext}"
+                            ).exists()
+                        ]
+                    return result_path
+                else:
+                    return classes_map.get(importee_class_name, None)
 
     def generate(self, repo: Repository) -> DependencyGraph:
         lib_path = get_builtin_lib_path(TS_LIB_PATH)
@@ -186,6 +250,19 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         classes_map,
                         import_map,
                     )
+                case Language.TypeScript | Language.JavaScript:
+                    self._generate_ts_js_file(
+                        file.content,
+                        file.file_path,
+                        parser,
+                        ts_language,
+                        classes_map,
+                        import_map,
+                    )
+                case _:
+                    raise NotImplementedError(
+                        f"Language {repo.language} is not supported"
+                    )
 
         for (
             importer_file_path,
@@ -193,12 +270,12 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         ), importation_nodes in import_map.items():
             for importation_node in importation_nodes:
                 importee_class_name = importation_node.text.decode()
-                if (
-                    importee_class_name in classes_map
-                    and classes_map[importee_class_name]
+
+                if resolved := self.resolve_import(
+                    importee_class_name, classes_map, importer_file_path, repo.language
                 ):
                     # We only resolve the first found class
-                    importee_file_path = classes_map[importee_class_name][0]
+                    importee_file_path = resolved[0]
                     importer_node = parser.parse(
                         importer_file_path.read_bytes()
                     ).root_node
