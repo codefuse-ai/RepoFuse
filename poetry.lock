@@ -75,6 +75,22 @@ url = "https://artifacts.antgroup-inc.cn/simple"
 reference = "antgroup-pypi"
 
 [[package]]
+name = "chardet"
+version = "5.2.0"
+description = "Universal encoding detector for Python 3"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "chardet-5.2.0-py3-none-any.whl", hash = "sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970"},
+    {file = "chardet-5.2.0.tar.gz", hash = "sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://artifacts.antgroup-inc.cn/simple"
+reference = "antgroup-pypi"
+
+[[package]]
 name = "click"
 version = "8.1.7"
 description = "Composable command line interface toolkit"
@@ -1109,4 +1125,4 @@ reference = "antgroup-pypi"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "fe550d56f922ffa124c004f553be6b73891f208f67d4004ce0b550c9b290a08f"
+content-hash = "ba6b76f6603f47fda405ad92aeb791bff78cac48ee3a4bda9c18d824cb20fb42"
