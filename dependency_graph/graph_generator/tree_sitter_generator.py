@@ -18,6 +18,7 @@ from dependency_graph.models.graph_data import (
 )
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
+from dependency_graph.utils.read_file import read_file_to_string
 
 TS_LIB_PATH = Path(__file__).parent.parent / "lib"
 
@@ -276,11 +277,12 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 ):
                     # We only resolve the first found class
                     importee_file_path = resolved[0]
+                    # Use read_file_to_string here to avoid non-UTF8 decoding issue
                     importer_node = parser.parse(
-                        importer_file_path.read_bytes()
+                        read_file_to_string(importer_file_path).encode()
                     ).root_node
                     importee_node = parser.parse(
-                        importee_file_path.read_bytes()
+                        read_file_to_string(importee_file_path).encode()
                     ).root_node
                     from_node = Node(
                         type=NodeType.MODULE,

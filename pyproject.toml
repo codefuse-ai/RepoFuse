@@ -15,6 +15,7 @@ dataclasses-json = "^0.6.3"
 mypy = "^1.8.0"
 ipysigma = "^0.24.2"
 tree-sitter = "^0.21.2"
+chardet = "^5.2.0"
 
 [[tool.poetry.source]]
 name = "antgroup-pypi"
