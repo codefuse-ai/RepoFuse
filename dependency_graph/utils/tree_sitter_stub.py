@@ -10,6 +10,12 @@ TS_LIB_PATH = Path(__file__).parent.parent / "lib"
 SPECIAL_CHAR = b" "
 
 
+def _post_process(text: str) -> str:
+    """Post process the code to rstrip the trailing whitespaces and remove the lines having only whitespace"""
+    code = "\n".join([c.rstrip() for c in text.splitlines() if set(c) != {" "}])
+    return code
+
+
 def generate_java_stub(code: str, include_comments: bool = True) -> str:
     lib_path = get_builtin_lib_path(TS_LIB_PATH)
 
@@ -80,8 +86,7 @@ def generate_java_stub(code: str, include_comments: bool = True) -> str:
             )
 
     if code_has_changed:
-        # rstrip the trailing whitespaces
-        code = "\n".join([c.rstrip() for c in code_bytes_arr.decode().splitlines()])
+        code = _post_process(code_bytes_arr.decode())
 
     return code
 
@@ -160,8 +165,7 @@ def generate_c_sharp_stub(code: str, include_comments: bool = True) -> str:
             )
 
     if code_has_changed:
-        # rstrip the trailing whitespaces
-        code = "\n".join([c.rstrip() for c in code_bytes_arr.decode().splitlines()])
+        code = _post_process(code_bytes_arr.decode())
 
     return code
 
@@ -237,7 +241,6 @@ def generate_ts_js_stub(code: str, include_comments: bool = True) -> str:
             )
 
     if code_has_changed:
-        # rstrip the trailing whitespaces
-        code = "\n".join([c.rstrip() for c in code_bytes_arr.decode().splitlines()])
+        code = _post_process(code_bytes_arr.decode())
 
     return code

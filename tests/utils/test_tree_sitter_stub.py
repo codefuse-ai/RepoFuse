@@ -1,3 +1,4 @@
+from pathlib import Path
 from textwrap import dedent
 
 from dependency_graph.utils.tree_sitter_stub import (
@@ -34,9 +35,9 @@ def test_generate_java_stub():
         """
     )
     actual = generate_java_stub(code)
+    print(actual)
     expected = dedent(
         """
-        
         /**
          * Block comment
          */
@@ -44,11 +45,11 @@ def test_generate_java_stub():
             // line comment
             private int X;
             public int Y;
-            
+        
             public Test()
         
             public void test()
-            
+        
             public static void main(String[] args)
         }"""
     )
@@ -82,19 +83,18 @@ def test_generate_java_stub_without_comments():
         """
     )
     actual = generate_java_stub(code, include_comments=False)
+    print(actual)
+
     expected = dedent(
         """
-
-
         public class Test {
-        
             private int X;
             public int Y;
-
+        
             public Test()
-
+        
             public void test()
-
+        
             public static void main(String[] args)
         }"""
     )
@@ -238,15 +238,11 @@ def test_generate_c_sharp_stub_without_comments():
         """
     )
     actual = generate_c_sharp_stub(code, include_comments=False)
+    print(actual)
+
     expected = dedent(
-        """\
+        """
         
-
-
-
-
-
-
         public enum ComputerType
         {
             Laptop,
@@ -254,13 +250,11 @@ def test_generate_c_sharp_stub_without_comments():
             Tablet
         }
         
-        
         public interface IComputer
         {
             ComputerType Type
             void TurnOn();
         }
-        
         
         public abstract class Computer : IComputer
         {
@@ -269,21 +263,15 @@ def test_generate_c_sharp_stub_without_comments():
         
             public Computer(ComputerType type)
         
-        
             public virtual void TurnOn()
-        
         }
-        
         
         public class Laptop : Computer
         {
             public Laptop() : base(ComputerType.Laptop)
         
-        
             public override void TurnOn()
-        
         }
-        
         
         public class Inventory<T>
         {
@@ -291,31 +279,21 @@ def test_generate_c_sharp_stub_without_comments():
         
             public void Add(T item)
         
-        
-        
             public T FindFirst()
-        
         }
-        
         
         public class Button
         {
-        
             public event Action OnClick;
         
-        
             public void Click()
-        
         }
         
         class Program
         {
             static async Task Main(string[] args)
         
-        
-        
             public static async Task<string> SimulateDataProcessing()
-        
         }"""
     )
     assert actual == expected
@@ -415,29 +393,22 @@ def test_generate_typescript_stub_without_comments():
         """
     )
     actual = generate_ts_js_stub(code, include_comments=False)
+    print(actual)
+
     expected = dedent(
-        """\
-
-
-
-
-
-
-
-
+        """
+        
+        
         interface Person {
           firstName: string;
           lastName: string;
         }
         
-        
         class Employee implements Person {
           constructor(public firstName: string, public lastName: string, public position: string)
         
-        
           introduceSelf(): void
         }
-        
         
         enum Status {
           Active,
@@ -445,32 +416,23 @@ def test_generate_typescript_stub_without_comments():
           Probation
         }
         
-        
         function getStatusDescription(status: Status): string
         
-        
         function getArrayItems<T>(items: T[]): T[]
-        
         
         const greet = (name: string): void => {
           console.log(`Hello, ${name}!`);
         };
         
-        
         let emp: Person = new Employee("John", "Doe", "Developer");
         (emp as Employee).introduceSelf();
         
-        
         console.log(getStatusDescription(Status.Probation));
-        
         
         let numArray = getArrayItems<number>([1, 2, 3]);
         console.log(numArray);
         
-        
         greet('Jane Doe');
-        
-        
         
         
         const promiseFunction = (): Promise<string> => {
