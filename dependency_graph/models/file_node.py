@@ -21,11 +21,12 @@ class FileNode:
         # TODO Compare file timestamp to detect file changes made by others
         try:
             self._content = read_file_to_string(self.file_path.resolve())
-        except Exception:
+        except UnicodeDecodeError:
+            self._content = self.file_path.resolve().read_text(errors="ignore")
+        except Exception as e:
             logger.error(
-                f"Decoding or reading File {self.file_path} failed. Returning empty string."
+                f"Decoding or reading File {self.file_path} failed: {e}. Returning empty string."
             )
-            self._content = ""
         return self._content
 
     def write_content(self, content: str) -> None:
