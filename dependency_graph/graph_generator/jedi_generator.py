@@ -426,6 +426,11 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 for column_index in parent_classes_with_columns.values():
                     references = script.get_references(name.line, column_index)
 
+                    edge_names = script.goto(name.line, column_index)
+                    edge_name = None
+                    if edge_names:
+                        edge_name = edge_names[0]
+
                     # Deduplicate the references
                     ref_set = set()
                     for ref in references:  # type: Name
@@ -439,7 +444,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                             from_type=_JEDI_API_TYPES_dict[name.type],
                             to_name=ref,
                             to_type=_JEDI_API_TYPES_dict[ref.type],
-                            edge_name=None,
+                            edge_name=edge_name,
                             edge_relation=EdgeRelation.DerivedClassOf,
                             inverse_edge_relation=EdgeRelation.BaseClassOf,
                         )

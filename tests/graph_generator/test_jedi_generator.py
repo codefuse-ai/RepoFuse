@@ -232,16 +232,18 @@ def test_class_hierarchy_relation(jedi_generator, python_repo_suite_path):
             edge[0].name,
             edge[1].type.value,
             edge[1].name,
+            edge[2].location.file_path.name,
+            edge[2].location.start_line,
         )
         for edge in edges
     ]
 
     assert class_hierarchy == unordered(
         [
-            ("class", "Father", "class", "Child"),
-            ("class", "Mother", "class", "Child"),
-            ("class", "Animal", "class", "Dog"),
-            ("class", "Animal", "class", "Cat"),
-            ("class", "Animal", "class", "Cow"),
+            ("class", "Father", "class", "Child", "multiple_inheritance.py", 2),
+            ("class", "Mother", "class", "Child", "multiple_inheritance.py", 11),
+            ("class", "Animal", "class", "Cow", "inherit_from_import.py", 1),
+            ("class", "Animal", "class", "Dog", "single_inheritance.py", 2),
+            ("class", "Animal", "class", "Cat", "single_inheritance.py", 2),
         ]
     )
