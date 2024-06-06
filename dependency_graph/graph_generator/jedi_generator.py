@@ -54,11 +54,13 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         if name is None:
             return None
 
-        location_params = {"file_path": name.module_path}
+        location_params = {"file_path": name.module_path} if name.module_path else {}
 
+        start_pos, end_pos = None, None
         if node_type and node_type == NodeType.MODULE:
-            start_pos = name._name.get_root_context()._value.tree_node.start_pos
-            end_pos = name._name.get_root_context()._value.tree_node.end_pos
+            if name._name.get_root_context()._value.tree_node:
+                start_pos = name._name.get_root_context()._value.tree_node.start_pos
+                end_pos = name._name.get_root_context()._value.tree_node.end_pos
         else:
             start_pos = name.get_definition_start_position()
             end_pos = name.get_definition_end_position()
