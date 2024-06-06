@@ -81,6 +81,9 @@ class Location:
 
     def get_text(self) -> str | None:
         # TODO should leverage the FileNode.content
+        if self.file_path is None:
+            return None
+
         content = self.file_path.read_text()
         loc = [self.start_line, self.start_column, self.end_line, self.end_column]
         if any([l is None for l in loc]):
