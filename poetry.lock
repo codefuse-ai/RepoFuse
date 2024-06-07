@@ -20,8 +20,8 @@ test = ["astroid (>=1,<2)", "astroid (>=2,<4)", "pytest"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "black"
@@ -71,8 +71,8 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "chardet"
@@ -87,8 +87,8 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "click"
@@ -106,8 +106,8 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "colorama"
@@ -122,8 +122,8 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "comm"
@@ -144,18 +144,18 @@ test = ["pytest"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "dataclasses-json"
-version = "0.6.4"
+version = "0.6.6"
 description = "Easily serialize dataclasses to and from JSON."
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "dataclasses_json-0.6.4-py3-none-any.whl", hash = "sha256:f90578b8a3177f7552f4e1a6e535e84293cd5da421fcce0642d49c0d7bdf8df2"},
-    {file = "dataclasses_json-0.6.4.tar.gz", hash = "sha256:73696ebf24936560cca79a2430cbc4f3dd23ac7bf46ed17f38e5e5e7657a6377"},
+    {file = "dataclasses_json-0.6.6-py3-none-any.whl", hash = "sha256:e54c5c87497741ad454070ba0ed411523d46beb5da102e221efb873801b0ba85"},
+    {file = "dataclasses_json-0.6.6.tar.gz", hash = "sha256:0c09827d26fffda27f1be2fed7a7a01a29c5ddcd2eb6393ad5ebf9d77e9deae8"},
 ]
 
 [package.dependencies]
@@ -164,8 +164,8 @@ typing-inspect = ">=0.4.0,<1"
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "decorator"
@@ -180,18 +180,18 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "exceptiongroup"
-version = "1.2.0"
+version = "1.2.1"
 description = "Backport of PEP 654 (exception groups)"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "exceptiongroup-1.2.0-py3-none-any.whl", hash = "sha256:4bfd3996ac73b41e9b9628b04e079f193850720ea5945fc96a08633c66912f14"},
-    {file = "exceptiongroup-1.2.0.tar.gz", hash = "sha256:91f5c769735f051a4290d52edd0858999b57e5876e9f85937691bd4c9fa3ed68"},
+    {file = "exceptiongroup-1.2.1-py3-none-any.whl", hash = "sha256:5258b9ed329c5bbdd31a309f53cbfb0b155341807f6ff7606a1e801a891b29ad"},
+    {file = "exceptiongroup-1.2.1.tar.gz", hash = "sha256:a4785e48b045528f5bfe627b6ad554ff32def154f42372786903b7abcfe1aa16"},
 ]
 
 [package.extras]
@@ -199,8 +199,8 @@ test = ["pytest (>=6)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "executing"
@@ -218,8 +218,8 @@ tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipyth
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "gitdb"
@@ -237,8 +237,8 @@ smmap = ">=3.0.1,<6"
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "gitpython"
@@ -260,8 +260,8 @@ test = ["coverage[toml]", "ddt (>=1.1.1,!=1.4.3)", "mock", "mypy", "pre-commit",
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "iniconfig"
@@ -276,8 +276,8 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "ipysigma"
@@ -298,18 +298,18 @@ test = ["nbval", "pytest (>=4.6)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "ipython"
-version = "8.23.0"
+version = "8.25.0"
 description = "IPython: Productive Interactive Computing"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "ipython-8.23.0-py3-none-any.whl", hash = "sha256:07232af52a5ba146dc3372c7bf52a0f890a23edf38d77caef8d53f9cdc2584c1"},
-    {file = "ipython-8.23.0.tar.gz", hash = "sha256:7468edaf4f6de3e1b912e57f66c241e6fd3c7099f2ec2136e239e142e800274d"},
+    {file = "ipython-8.25.0-py3-none-any.whl", hash = "sha256:53eee7ad44df903a06655871cbab66d156a051fd86f3ec6750470ac9604ac1ab"},
+    {file = "ipython-8.25.0.tar.gz", hash = "sha256:c6ed726a140b6e725b911528f80439c534fac915246af3efc39440a6b0f9d716"},
 ]
 
 [package.dependencies]
@@ -323,12 +323,12 @@ prompt-toolkit = ">=3.0.41,<3.1.0"
 pygments = ">=2.4.0"
 stack-data = "*"
 traitlets = ">=5.13.0"
-typing-extensions = {version = "*", markers = "python_version < \"3.12\""}
+typing-extensions = {version = ">=4.6", markers = "python_version < \"3.12\""}
 
 [package.extras]
 all = ["ipython[black,doc,kernel,matplotlib,nbconvert,nbformat,notebook,parallel,qtconsole]", "ipython[test,test-extra]"]
 black = ["black"]
-doc = ["docrepr", "exceptiongroup", "ipykernel", "ipython[test]", "matplotlib", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "sphinxcontrib-jquery", "stack-data", "typing-extensions"]
+doc = ["docrepr", "exceptiongroup", "intersphinx-registry", "ipykernel", "ipython[test]", "matplotlib", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "sphinxcontrib-jquery", "tomli", "typing-extensions"]
 kernel = ["ipykernel"]
 matplotlib = ["matplotlib"]
 nbconvert = ["nbconvert"]
@@ -336,39 +336,39 @@ nbformat = ["nbformat"]
 notebook = ["ipywidgets", "notebook"]
 parallel = ["ipyparallel"]
 qtconsole = ["qtconsole"]
-test = ["pickleshare", "pytest (<8)", "pytest-asyncio (<0.22)", "testpath"]
+test = ["pickleshare", "pytest", "pytest-asyncio (<0.22)", "testpath"]
 test-extra = ["curio", "ipython[test]", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.23)", "pandas", "trio"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "ipywidgets"
-version = "8.1.2"
+version = "8.1.3"
 description = "Jupyter interactive widgets"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "ipywidgets-8.1.2-py3-none-any.whl", hash = "sha256:bbe43850d79fb5e906b14801d6c01402857996864d1e5b6fa62dd2ee35559f60"},
-    {file = "ipywidgets-8.1.2.tar.gz", hash = "sha256:d0b9b41e49bae926a866e613a39b0f0097745d2b9f1f3dd406641b4a57ec42c9"},
+    {file = "ipywidgets-8.1.3-py3-none-any.whl", hash = "sha256:efafd18f7a142248f7cb0ba890a68b96abd4d6e88ddbda483c9130d12667eaf2"},
+    {file = "ipywidgets-8.1.3.tar.gz", hash = "sha256:f5f9eeaae082b1823ce9eac2575272952f40d748893972956dc09700a6392d9c"},
 ]
 
 [package.dependencies]
 comm = ">=0.1.3"
 ipython = ">=6.1.0"
-jupyterlab-widgets = ">=3.0.10,<3.1.0"
+jupyterlab-widgets = ">=3.0.11,<3.1.0"
 traitlets = ">=4.3.1"
-widgetsnbextension = ">=4.0.10,<4.1.0"
+widgetsnbextension = ">=4.0.11,<4.1.0"
 
 [package.extras]
 test = ["ipykernel", "jsonschema", "pytest (>=3.6.0)", "pytest-cov", "pytz"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "jedi"
@@ -391,18 +391,18 @@ testing = ["Django", "attrs", "colorama", "docopt", "pytest (<7.0.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "jinja2"
-version = "3.1.3"
+version = "3.1.4"
 description = "A very fast and expressive template engine."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "Jinja2-3.1.3-py3-none-any.whl", hash = "sha256:7d6d50dd97d52cbc355597bd845fabfbac3f551e1f99619e39a35ce8c370b5fa"},
-    {file = "Jinja2-3.1.3.tar.gz", hash = "sha256:ac8bd6544d4bb2c9792bf3a159e80bba8fda7f07e81bc3aed565432d5925ba90"},
+    {file = "jinja2-3.1.4-py3-none-any.whl", hash = "sha256:bc5dd2abb727a5319567b7a813e6a2e7318c39f4f487cfe6c89c6f9c7d25197d"},
+    {file = "jinja2-3.1.4.tar.gz", hash = "sha256:4a3aee7acbbe7303aede8e9648d13b8bf88a429282aa6122a993f0ac800cb369"},
 ]
 
 [package.dependencies]
@@ -413,44 +413,45 @@ i18n = ["Babel (>=2.7)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "jsonpickle"
-version = "3.0.3"
-description = "Python library for serializing any arbitrary object graph into JSON"
+version = "3.0.4"
+description = "Serialize any Python object to JSON"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "jsonpickle-3.0.3-py3-none-any.whl", hash = "sha256:e8d6dcc58f6722bea0321cd328fbda81c582461185688a535df02be0f699afb4"},
-    {file = "jsonpickle-3.0.3.tar.gz", hash = "sha256:5691f44495327858ab3a95b9c440a79b41e35421be1a6e09a47b6c9b9421fd06"},
+    {file = "jsonpickle-3.0.4-py3-none-any.whl", hash = "sha256:04ae7567a14269579e3af66b76bda284587458d7e8a204951ca8f71a3309952e"},
+    {file = "jsonpickle-3.0.4.tar.gz", hash = "sha256:a1b14c8d6221cd8f394f2a97e735ea1d7edc927fbd135b26f2f8700657c8c62b"},
 ]
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9)", "rst.linker (>=1.9)", "sphinx"]
-testing = ["ecdsa", "feedparser", "gmpy2", "numpy", "pandas", "pymongo", "pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-cov", "pytest-enabler (>=1.0.1)", "pytest-ruff", "scikit-learn", "simplejson", "sqlalchemy", "ujson"]
+docs = ["furo", "rst.linker (>=1.9)", "sphinx"]
+packaging = ["build", "twine"]
+testing = ["bson", "ecdsa", "feedparser", "gmpy2", "numpy", "pandas", "pymongo", "pytest (>=3.5,!=3.7.3)", "pytest-benchmark", "pytest-benchmark[histogram]", "pytest-checkdocs (>=1.2.3)", "pytest-cov", "pytest-enabler (>=1.0.1)", "pytest-ruff (>=0.2.1)", "scikit-learn", "scipy", "scipy (>=1.9.3)", "simplejson", "sqlalchemy", "ujson"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "jupyterlab-widgets"
-version = "3.0.10"
+version = "3.0.11"
 description = "Jupyter interactive widgets for JupyterLab"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "jupyterlab_widgets-3.0.10-py3-none-any.whl", hash = "sha256:dd61f3ae7a5a7f80299e14585ce6cf3d6925a96c9103c978eda293197730cb64"},
-    {file = "jupyterlab_widgets-3.0.10.tar.gz", hash = "sha256:04f2ac04976727e4f9d0fa91cdc2f1ab860f965e504c29dbd6a65c882c9d04c0"},
+    {file = "jupyterlab_widgets-3.0.11-py3-none-any.whl", hash = "sha256:78287fd86d20744ace330a61625024cf5521e1c012a352ddc0a3cdc2348becd0"},
+    {file = "jupyterlab_widgets-3.0.11.tar.gz", hash = "sha256:dd5ac679593c969af29c9bed054c24f26842baa51352114736756bc035deee27"},
 ]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "markupsafe"
@@ -523,18 +524,18 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "marshmallow"
-version = "3.21.1"
+version = "3.21.3"
 description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "marshmallow-3.21.1-py3-none-any.whl", hash = "sha256:f085493f79efb0644f270a9bf2892843142d80d7174bbbd2f3713f2a589dc633"},
-    {file = "marshmallow-3.21.1.tar.gz", hash = "sha256:4e65e9e0d80fc9e609574b9983cf32579f305c718afb30d7233ab818571768c3"},
+    {file = "marshmallow-3.21.3-py3-none-any.whl", hash = "sha256:86ce7fb914aa865001a4b2092c4c2872d13bc347f3d42673272cabfdbad386f1"},
+    {file = "marshmallow-3.21.3.tar.gz", hash = "sha256:4f57c5e050a54d66361e826f94fba213eb10b67b2fdb02c3e0343ce207ba1662"},
 ]
 
 [package.dependencies]
@@ -542,23 +543,23 @@ packaging = ">=17.0"
 
 [package.extras]
 dev = ["marshmallow[tests]", "pre-commit (>=3.5,<4.0)", "tox"]
-docs = ["alabaster (==0.7.16)", "autodocsumm (==0.2.12)", "sphinx (==7.2.6)", "sphinx-issues (==4.0.0)", "sphinx-version-warning (==1.1.2)"]
+docs = ["alabaster (==0.7.16)", "autodocsumm (==0.2.12)", "sphinx (==7.3.7)", "sphinx-issues (==4.1.0)", "sphinx-version-warning (==1.1.2)"]
 tests = ["pytest", "pytz", "simplejson"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "matplotlib-inline"
-version = "0.1.6"
+version = "0.1.7"
 description = "Inline Matplotlib backend for Jupyter"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.8"
 files = [
-    {file = "matplotlib-inline-0.1.6.tar.gz", hash = "sha256:f887e5f10ba98e8d2b150ddcf4702c1e5f8b3a20005eb0f74bfdbd360ee6f304"},
-    {file = "matplotlib_inline-0.1.6-py3-none-any.whl", hash = "sha256:f1f41aab5328aa5aaea9b16d083b128102f8712542f819fe7e6a420ff581b311"},
+    {file = "matplotlib_inline-0.1.7-py3-none-any.whl", hash = "sha256:df192d39a4ff8f21b1895d72e6a13f5fcc5099f00fa84384e0ea28c2cc0653ca"},
+    {file = "matplotlib_inline-0.1.7.tar.gz", hash = "sha256:8423b23ec666be3d16e16b60bdd8ac4e86e840ebd1dd11a30b9f117f2fa0ab90"},
 ]
 
 [package.dependencies]
@@ -566,43 +567,43 @@ traitlets = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "mypy"
-version = "1.9.0"
+version = "1.10.0"
 description = "Optional static typing for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mypy-1.9.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:f8a67616990062232ee4c3952f41c779afac41405806042a8126fe96e098419f"},
-    {file = "mypy-1.9.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:d357423fa57a489e8c47b7c85dfb96698caba13d66e086b412298a1a0ea3b0ed"},
-    {file = "mypy-1.9.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:49c87c15aed320de9b438ae7b00c1ac91cd393c1b854c2ce538e2a72d55df150"},
-    {file = "mypy-1.9.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:48533cdd345c3c2e5ef48ba3b0d3880b257b423e7995dada04248725c6f77374"},
-    {file = "mypy-1.9.0-cp310-cp310-win_amd64.whl", hash = "sha256:4d3dbd346cfec7cb98e6cbb6e0f3c23618af826316188d587d1c1bc34f0ede03"},
-    {file = "mypy-1.9.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:653265f9a2784db65bfca694d1edd23093ce49740b2244cde583aeb134c008f3"},
-    {file = "mypy-1.9.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:3a3c007ff3ee90f69cf0a15cbcdf0995749569b86b6d2f327af01fd1b8aee9dc"},
-    {file = "mypy-1.9.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2418488264eb41f69cc64a69a745fad4a8f86649af4b1041a4c64ee61fc61129"},
-    {file = "mypy-1.9.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:68edad3dc7d70f2f17ae4c6c1b9471a56138ca22722487eebacfd1eb5321d612"},
-    {file = "mypy-1.9.0-cp311-cp311-win_amd64.whl", hash = "sha256:85ca5fcc24f0b4aeedc1d02f93707bccc04733f21d41c88334c5482219b1ccb3"},
-    {file = "mypy-1.9.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:aceb1db093b04db5cd390821464504111b8ec3e351eb85afd1433490163d60cd"},
-    {file = "mypy-1.9.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:0235391f1c6f6ce487b23b9dbd1327b4ec33bb93934aa986efe8a9563d9349e6"},
-    {file = "mypy-1.9.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d4d5ddc13421ba3e2e082a6c2d74c2ddb3979c39b582dacd53dd5d9431237185"},
-    {file = "mypy-1.9.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:190da1ee69b427d7efa8aa0d5e5ccd67a4fb04038c380237a0d96829cb157913"},
-    {file = "mypy-1.9.0-cp312-cp312-win_amd64.whl", hash = "sha256:fe28657de3bfec596bbeef01cb219833ad9d38dd5393fc649f4b366840baefe6"},
-    {file = "mypy-1.9.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:e54396d70be04b34f31d2edf3362c1edd023246c82f1730bbf8768c28db5361b"},
-    {file = "mypy-1.9.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:5e6061f44f2313b94f920e91b204ec600982961e07a17e0f6cd83371cb23f5c2"},
-    {file = "mypy-1.9.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:81a10926e5473c5fc3da8abb04119a1f5811a236dc3a38d92015cb1e6ba4cb9e"},
-    {file = "mypy-1.9.0-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:b685154e22e4e9199fc95f298661deea28aaede5ae16ccc8cbb1045e716b3e04"},
-    {file = "mypy-1.9.0-cp38-cp38-win_amd64.whl", hash = "sha256:5d741d3fc7c4da608764073089e5f58ef6352bedc223ff58f2f038c2c4698a89"},
-    {file = "mypy-1.9.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:587ce887f75dd9700252a3abbc9c97bbe165a4a630597845c61279cf32dfbf02"},
-    {file = "mypy-1.9.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:f88566144752999351725ac623471661c9d1cd8caa0134ff98cceeea181789f4"},
-    {file = "mypy-1.9.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:61758fabd58ce4b0720ae1e2fea5cfd4431591d6d590b197775329264f86311d"},
-    {file = "mypy-1.9.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:e49499be624dead83927e70c756970a0bc8240e9f769389cdf5714b0784ca6bf"},
-    {file = "mypy-1.9.0-cp39-cp39-win_amd64.whl", hash = "sha256:571741dc4194b4f82d344b15e8837e8c5fcc462d66d076748142327626a1b6e9"},
-    {file = "mypy-1.9.0-py3-none-any.whl", hash = "sha256:a260627a570559181a9ea5de61ac6297aa5af202f06fd7ab093ce74e7181e43e"},
-    {file = "mypy-1.9.0.tar.gz", hash = "sha256:3cc5da0127e6a478cddd906068496a97a7618a21ce9b54bde5bf7e539c7af974"},
+    {file = "mypy-1.10.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:da1cbf08fb3b851ab3b9523a884c232774008267b1f83371ace57f412fe308c2"},
+    {file = "mypy-1.10.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:12b6bfc1b1a66095ab413160a6e520e1dc076a28f3e22f7fb25ba3b000b4ef99"},
+    {file = "mypy-1.10.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9e36fb078cce9904c7989b9693e41cb9711e0600139ce3970c6ef814b6ebc2b2"},
+    {file = "mypy-1.10.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:2b0695d605ddcd3eb2f736cd8b4e388288c21e7de85001e9f85df9187f2b50f9"},
+    {file = "mypy-1.10.0-cp310-cp310-win_amd64.whl", hash = "sha256:cd777b780312ddb135bceb9bc8722a73ec95e042f911cc279e2ec3c667076051"},
+    {file = "mypy-1.10.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:3be66771aa5c97602f382230165b856c231d1277c511c9a8dd058be4784472e1"},
+    {file = "mypy-1.10.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:8b2cbaca148d0754a54d44121b5825ae71868c7592a53b7292eeb0f3fdae95ee"},
+    {file = "mypy-1.10.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1ec404a7cbe9fc0e92cb0e67f55ce0c025014e26d33e54d9e506a0f2d07fe5de"},
+    {file = "mypy-1.10.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:e22e1527dc3d4aa94311d246b59e47f6455b8729f4968765ac1eacf9a4760bc7"},
+    {file = "mypy-1.10.0-cp311-cp311-win_amd64.whl", hash = "sha256:a87dbfa85971e8d59c9cc1fcf534efe664d8949e4c0b6b44e8ca548e746a8d53"},
+    {file = "mypy-1.10.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:a781f6ad4bab20eef8b65174a57e5203f4be627b46291f4589879bf4e257b97b"},
+    {file = "mypy-1.10.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b808e12113505b97d9023b0b5e0c0705a90571c6feefc6f215c1df9381256e30"},
+    {file = "mypy-1.10.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8f55583b12156c399dce2df7d16f8a5095291354f1e839c252ec6c0611e86e2e"},
+    {file = "mypy-1.10.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:4cf18f9d0efa1b16478c4c129eabec36148032575391095f73cae2e722fcf9d5"},
+    {file = "mypy-1.10.0-cp312-cp312-win_amd64.whl", hash = "sha256:bc6ac273b23c6b82da3bb25f4136c4fd42665f17f2cd850771cb600bdd2ebeda"},
+    {file = "mypy-1.10.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:9fd50226364cd2737351c79807775136b0abe084433b55b2e29181a4c3c878c0"},
+    {file = "mypy-1.10.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:f90cff89eea89273727d8783fef5d4a934be2fdca11b47def50cf5d311aff727"},
+    {file = "mypy-1.10.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fcfc70599efde5c67862a07a1aaf50e55bce629ace26bb19dc17cece5dd31ca4"},
+    {file = "mypy-1.10.0-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:075cbf81f3e134eadaf247de187bd604748171d6b79736fa9b6c9685b4083061"},
+    {file = "mypy-1.10.0-cp38-cp38-win_amd64.whl", hash = "sha256:3f298531bca95ff615b6e9f2fc0333aae27fa48052903a0ac90215021cdcfa4f"},
+    {file = "mypy-1.10.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:fa7ef5244615a2523b56c034becde4e9e3f9b034854c93639adb667ec9ec2976"},
+    {file = "mypy-1.10.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:3236a4c8f535a0631f85f5fcdffba71c7feeef76a6002fcba7c1a8e57c8be1ec"},
+    {file = "mypy-1.10.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4a2b5cdbb5dd35aa08ea9114436e0d79aceb2f38e32c21684dcf8e24e1e92821"},
+    {file = "mypy-1.10.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:92f93b21c0fe73dc00abf91022234c79d793318b8a96faac147cd579c1671746"},
+    {file = "mypy-1.10.0-cp39-cp39-win_amd64.whl", hash = "sha256:28d0e038361b45f099cc086d9dd99c15ff14d0188f44ac883010e172ce86c38a"},
+    {file = "mypy-1.10.0-py3-none-any.whl", hash = "sha256:f8c083976eb530019175aabadb60921e73b4f45736760826aa1689dda8208aee"},
+    {file = "mypy-1.10.0.tar.gz", hash = "sha256:3d087fcbec056c4ee34974da493a826ce316947485cef3901f511848e687c131"},
 ]
 
 [package.dependencies]
@@ -618,8 +619,8 @@ reports = ["lxml"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "mypy-extensions"
@@ -634,8 +635,8 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "networkx"
@@ -657,8 +658,8 @@ test = ["pytest (>=7.2)", "pytest-cov (>=4.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "packaging"
@@ -673,8 +674,8 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "parso"
@@ -693,8 +694,8 @@ testing = ["docopt", "pytest"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "pathspec"
@@ -709,8 +710,8 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "pexpect"
@@ -728,38 +729,39 @@ ptyprocess = ">=0.5"
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "platformdirs"
-version = "4.2.0"
-description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
+version = "4.2.2"
+description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "platformdirs-4.2.0-py3-none-any.whl", hash = "sha256:0614df2a2f37e1a662acbd8e2b25b92ccf8632929bc6d43467e17fe89c75e068"},
-    {file = "platformdirs-4.2.0.tar.gz", hash = "sha256:ef0cc731df711022c174543cb70a9b5bd22e5a9337c8624ef2c2ceb8ddad8768"},
+    {file = "platformdirs-4.2.2-py3-none-any.whl", hash = "sha256:2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee"},
+    {file = "platformdirs-4.2.2.tar.gz", hash = "sha256:38b7b51f512eed9e84a22788b4bce1de17c0adb134d6becb09836e37d8654cd3"},
 ]
 
 [package.extras]
 docs = ["furo (>=2023.9.10)", "proselint (>=0.13)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1.25.2)"]
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)"]
+type = ["mypy (>=1.8)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "pluggy"
-version = "1.4.0"
+version = "1.5.0"
 description = "plugin and hook calling mechanisms for python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pluggy-1.4.0-py3-none-any.whl", hash = "sha256:7db9f7b503d67d1c5b95f59773ebb58a8c1c288129a88665838012cfb07b8981"},
-    {file = "pluggy-1.4.0.tar.gz", hash = "sha256:8c85c2876142a764e5b7548e7d9a0e0ddb46f5185161049a79b7e974454223be"},
+    {file = "pluggy-1.5.0-py3-none-any.whl", hash = "sha256:44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669"},
+    {file = "pluggy-1.5.0.tar.gz", hash = "sha256:2cffa88e94fdc978c4c574f15f9e59b7f4201d439195c3715ca9e2486f1d0cf1"},
 ]
 
 [package.extras]
@@ -768,18 +770,18 @@ testing = ["pytest", "pytest-benchmark"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "prompt-toolkit"
-version = "3.0.43"
+version = "3.0.46"
 description = "Library for building powerful interactive command lines in Python"
 optional = false
 python-versions = ">=3.7.0"
 files = [
-    {file = "prompt_toolkit-3.0.43-py3-none-any.whl", hash = "sha256:a11a29cb3bf0a28a387fe5122cdb649816a957cd9261dcedf8c9f1fef33eacf6"},
-    {file = "prompt_toolkit-3.0.43.tar.gz", hash = "sha256:3527b7af26106cbc65a040bcc84839a3566ec1b051bb0bfe953631e704b0ff7d"},
+    {file = "prompt_toolkit-3.0.46-py3-none-any.whl", hash = "sha256:45abe60a8300f3c618b23c16c4bb98c6fc80af8ce8b17c7ae92db48db3ee63c1"},
+    {file = "prompt_toolkit-3.0.46.tar.gz", hash = "sha256:869c50d682152336e23c4db7f74667639b5047494202ffe7670817053fd57795"},
 ]
 
 [package.dependencies]
@@ -787,8 +789,8 @@ wcwidth = "*"
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "ptyprocess"
@@ -803,8 +805,8 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "pure-eval"
@@ -822,28 +824,27 @@ tests = ["pytest"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "pygments"
-version = "2.17.2"
+version = "2.18.0"
 description = "Pygments is a syntax highlighting package written in Python."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pygments-2.17.2-py3-none-any.whl", hash = "sha256:b27c2826c47d0f3219f29554824c30c5e8945175d888647acd804ddd04af846c"},
-    {file = "pygments-2.17.2.tar.gz", hash = "sha256:da46cec9fd2de5be3a8a784f434e4c4ab670b4ff54d605c4c2717e9d49c4c367"},
+    {file = "pygments-2.18.0-py3-none-any.whl", hash = "sha256:b8e6aca0523f3ab76fee51799c488e38782ac06eafcf95e7ba832985c8e7b13a"},
+    {file = "pygments-2.18.0.tar.gz", hash = "sha256:786ff802f32e91311bff3889f6e9a86e81505fe99f2735bb6d60ae0c5004f199"},
 ]
 
 [package.extras]
-plugins = ["importlib-metadata"]
 windows-terminal = ["colorama (>=0.4.6)"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "pytest"
@@ -869,8 +870,8 @@ testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "no
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "pytest-unordered"
@@ -888,8 +889,8 @@ pytest = ">=6.0.0"
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "pyvis"
@@ -909,8 +910,8 @@ networkx = ">=1.11"
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "six"
@@ -925,8 +926,8 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "smmap"
@@ -941,8 +942,8 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "stack-data"
@@ -965,8 +966,8 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "tomli"
@@ -981,28 +982,28 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "traitlets"
-version = "5.14.2"
+version = "5.14.3"
 description = "Traitlets Python configuration system"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "traitlets-5.14.2-py3-none-any.whl", hash = "sha256:fcdf85684a772ddeba87db2f398ce00b40ff550d1528c03c14dbf6a02003cd80"},
-    {file = "traitlets-5.14.2.tar.gz", hash = "sha256:8cdd83c040dab7d1dee822678e5f5d100b514f7b72b01615b26fc5718916fdf9"},
+    {file = "traitlets-5.14.3-py3-none-any.whl", hash = "sha256:b74e89e397b1ed28cc831db7aea759ba6640cb3de13090ca145426688ff1ac4f"},
+    {file = "traitlets-5.14.3.tar.gz", hash = "sha256:9ed0579d3502c94b4b3732ac120375cda96f923114522847de4b3bb98b96b6b7"},
 ]
 
 [package.extras]
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
-test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<8.1)", "pytest-mock", "pytest-mypy-testing"]
+test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<8.2)", "pytest-mock", "pytest-mypy-testing"]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "tree-sitter"
@@ -1051,24 +1052,24 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "typing-extensions"
-version = "4.11.0"
+version = "4.12.1"
 description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "typing_extensions-4.11.0-py3-none-any.whl", hash = "sha256:c1f94d72897edaf4ce775bb7558d5b79d8126906a14ea5ed1635921406c0387a"},
-    {file = "typing_extensions-4.11.0.tar.gz", hash = "sha256:83f085bd5ca59c80295fc2a82ab5dac679cbe02b9f33f7d83af68e241bea51b0"},
+    {file = "typing_extensions-4.12.1-py3-none-any.whl", hash = "sha256:6024b58b69089e5a89c347397254e35f1bf02a907728ec7fee9bf0fe837d203a"},
+    {file = "typing_extensions-4.12.1.tar.gz", hash = "sha256:915f5e35ff76f56588223f15fdd5938f9a1cf9195c0de25130c627e4d597f6d1"},
 ]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "typing-inspect"
@@ -1087,8 +1088,8 @@ typing-extensions = ">=3.7.4"
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "wcwidth"
@@ -1103,26 +1104,26 @@ files = [
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [[package]]
 name = "widgetsnbextension"
-version = "4.0.10"
+version = "4.0.11"
 description = "Jupyter interactive widgets for Jupyter Notebook"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "widgetsnbextension-4.0.10-py3-none-any.whl", hash = "sha256:d37c3724ec32d8c48400a435ecfa7d3e259995201fbefa37163124a9fcb393cc"},
-    {file = "widgetsnbextension-4.0.10.tar.gz", hash = "sha256:64196c5ff3b9a9183a8e699a4227fb0b7002f252c814098e66c4d1cd0644688f"},
+    {file = "widgetsnbextension-4.0.11-py3-none-any.whl", hash = "sha256:55d4d6949d100e0d08b94948a42efc3ed6dfdc0e9468b2c4b128c9a2ce3a7a36"},
+    {file = "widgetsnbextension-4.0.11.tar.gz", hash = "sha256:8b22a8f1910bfd188e596fe7fc05dcbd87e810c8a4ba010bdb3da86637398474"},
 ]
 
 [package.source]
 type = "legacy"
-url = "https://artifacts.antgroup-inc.cn/simple"
-reference = "antgroup-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ba6b76f6603f47fda405ad92aeb791bff78cac48ee3a4bda9c18d824cb20fb42"
+content-hash = "9356afbb50b7a3e052b0332c64aae3cc7f968041ca9cf7418d13716aed3c57b7"
