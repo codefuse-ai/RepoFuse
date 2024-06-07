@@ -2,7 +2,7 @@
 name = "dependency-graph"
 version = "0.0.1"
 description = ""
-authors = ["友恒 <zhengxunjin.zx@antgroup.com>", "明牧 <liangming.liang@antgroup.com>"]
+authors = []
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -18,8 +18,8 @@ tree-sitter = "^0.21.2"
 chardet = "^5.2.0"
 
 [[tool.poetry.source]]
-name = "antgroup-pypi"
-url = "https://artifacts.antgroup-inc.cn/simple"
+name = "tsinghua-pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 priority = "primary"
 
 [tool.poetry.group.dev.dependencies]
