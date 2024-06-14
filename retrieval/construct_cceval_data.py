@@ -12,7 +12,7 @@ from dependency_graph import (
     Repository,
     Language,
     construct_dependency_graph,
-    DependencyGraphGeneratorType,
+    GraphGeneratorType,
 )
 from dependency_graph.models.graph_data import Node, Edge, NodeType
 from tqdm import tqdm
@@ -149,9 +149,9 @@ def process_data(
 
     match language:
         case "python":
-            dependency_graph_generator = DependencyGraphGeneratorType.JEDI
+            dependency_graph_generator = GraphGeneratorType.JEDI
         case "java" | "typescript" | "javascript" | "c_sharp":
-            dependency_graph_generator = DependencyGraphGeneratorType.TREE_SITTER
+            dependency_graph_generator = GraphGeneratorType.TREE_SITTER
         case _:
             raise ValueError(f"Unsupported language: {language}")
 
