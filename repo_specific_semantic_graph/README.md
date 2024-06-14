@@ -74,13 +74,13 @@ graph = construct_dependency_graph(repo, dependency_graph_generator)
 #### Output
 
 ```python
-from dependency_graph import output_dependency_graph_generator
+from dependency_graph import output_dependency_graph
 
-output_dependency_graph_generator(graph, "edgelist", "graph.json")
+output_dependency_graph(graph, "edgelist", "graph.json")
 # Or
-output_dependency_graph_generator(graph, "pyvis", "graph.html")
+output_dependency_graph(graph, "pyvis", "graph.html")
 # Or
-output_dependency_graph_generator(graph, "ipysigma", "graph.html")
+output_dependency_graph(graph, "ipysigma", "graph.html")
 ```
 
 #### Retrieval
