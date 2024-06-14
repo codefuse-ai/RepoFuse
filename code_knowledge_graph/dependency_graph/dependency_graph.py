@@ -169,6 +169,7 @@ class DependencyGraphContextRetriever:
         start_line: int,
     ) -> Node | None:
         # Statement nodes are not taken into account for now
+        file_path = Path(file_path)
         nodes = self.graph.get_nodes(
             node_filter=lambda n: n.location
             and n.location.file_path == file_path
