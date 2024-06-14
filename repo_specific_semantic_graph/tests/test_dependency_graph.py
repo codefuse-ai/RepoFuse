@@ -5,7 +5,7 @@ from networkx.utils import graphs_equal
 
 from dependency_graph import (
     construct_dependency_graph,
-    DependencyGraphGeneratorType,
+    GraphGeneratorType,
 )
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.models.graph_data import (
@@ -24,7 +24,7 @@ repo_suite_path = Path(__file__).parent / "code_example" / "python"
 def sample_graph(python_repo_suite_path):
     return construct_dependency_graph(
         python_repo_suite_path,
-        DependencyGraphGeneratorType.JEDI,
+        GraphGeneratorType.JEDI,
         Language.Python,
     )
 

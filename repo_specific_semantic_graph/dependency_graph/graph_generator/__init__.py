@@ -7,7 +7,7 @@ from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 
 
-class DependencyGraphGeneratorType(str, enum.Enum):
+class GraphGeneratorType(str, enum.Enum):
     """
     Graph generator type
     """
@@ -33,7 +33,7 @@ class BaseDependencyGraphGenerator(ABC):
         file_path: PathLike = None,
     ) -> DependencyGraph:
         """
-        Generate dependency graph for a file.
+        Generate Repo-Specific Semantic Graph for a file.
         Should provide either code or file_path
         """
         ...

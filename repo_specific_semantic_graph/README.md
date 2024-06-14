@@ -1,21 +1,19 @@
-# Dependency Graph
+# Repo-Specific Semantic Graph
 
-Construct a dependency graph of a project.
+Construct a Repo-Specific Semantic Graph of a project. For simplicity, the Python package name is called `dependency_graph`.
 
 ## Features
 
 1. Multi-language support: Python, Java, C#, JavaScript, TypeScript.
-2. Retrieval of cross-file context from the dependency graph.
+2. Retrieval of cross-file context from the Repo-Specific Semantic Graph.
 3. Serialization/Deserialization: edge list in JSON format is supported to output the graph. The graph can also be deserialized from JSON/Dictionary.
 4. Graph visualizations: [Pyvis](https://pyvis.readthedocs.io/en/latest/) and [ipysigma](https://github.com/medialab/ipysigma) interactive visualizations are supported.
 
-Currently, the following dependency graph generator types are supported, with the corresponding languages and dependency relations:
+Currently, the following Repo-Specific Semantic Graph generator types are supported, with the corresponding languages and dependency relations:
 | **Graph Generator Type** | **Supported Languages**                                   | **Supported Dependency Relations**                                                                            |
 |--------------------------|-----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
 | Jedi                     | Python                                                    | ParentOf/ChildOf, Imports/ImportedBy, BaseClassOf/DerivedClassOf, Calls/CalledBy, Instantiates/InstantiatedBy, Defines/DefinedBy |
 | Tree-sitter              | Java, C#, TypeScript, JavaScript                          | Imports/ImportedBy                                                                                            |
-
-This table summarizes the capabilities of different graph generator types, including the languages they support and the types of dependency relations they can handle.
 
 ## Install
 
@@ -29,21 +27,21 @@ poetry shell
 
 ## Usage
 
-### Command line usage to construct a dependency graph
+### Command line usage to construct a Repo-Specific Semantic Graph
 
 See `python -m dependency_graph -h` for help:
 
 ```shell
 ~ python -m dependency_graph -h
-usage: __main__.py [-h] -r REPO -l LANG [-g DEPENDENCY_GRAPH_GENERATOR] [-f {edgelist,pyvis,ipysigma}] [-o OUTPUT_FILE]
+usage: __main__.py [-h] -r REPO -l LANG [-g GRAPH_GENERATOR] [-f {edgelist,pyvis,ipysigma}] [-o OUTPUT_FILE]
 
-Construct Dependency Graph for a given project.
+Construct Repo-Specific Semantic Graph for a given project.
 
 options:
   -h, --help            show this help message and exit
   -r REPO, --repo REPO  The path to a local repository.
   -l LANG, --lang LANG  The language of the parsed file.
-  -g DEPENDENCY_GRAPH_GENERATOR, --dependency_graph_generator DEPENDENCY_GRAPH_GENERATOR
+  -g GRAPH_GENERATOR, --graph-generator GRAPH_GENERATOR
                         The code agent type to use. Should be one of the ['jedi', 'tree_sitter']. Defaults to jedi.
   -f {edgelist,pyvis,ipysigma}, --output-format {edgelist,pyvis,ipysigma}
                         The format of the output.
@@ -59,15 +57,15 @@ python -m dependency_graph -r </path/to/repo> -l python -g jedi -f edgelist -o e
 
 ### Python API usage
 
-#### Construct a dependency graph
+#### Construct a Repo-Specific Semantic Graph
 
 ```python
 from dependency_graph import construct_dependency_graph
 from dependency_graph.models.language import Language
-from dependency_graph.graph_generator import DependencyGraphGeneratorType
+from dependency_graph.graph_generator import GraphGeneratorType
 from dependency_graph.models.repository import Repository
 
-dependency_graph_generator = DependencyGraphGeneratorType.JEDI
+dependency_graph_generator = GraphGeneratorType.JEDI
 
 repo = Repository('/path/to/repo', Language.Python)
 graph = construct_dependency_graph(repo, dependency_graph_generator)

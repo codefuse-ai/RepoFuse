@@ -6,7 +6,7 @@ from ipysigma import Sigma
 from pyvis.network import Network
 
 from dependency_graph.dependency_graph import DependencyGraph
-from dependency_graph.graph_generator import DependencyGraphGeneratorType
+from dependency_graph.graph_generator import GraphGeneratorType
 from dependency_graph.graph_generator.jedi_generator import JediDependencyGraphGenerator
 from dependency_graph.graph_generator.tree_sitter_generator import (
     TreeSitterDependencyGraphGenerator,
@@ -23,7 +23,7 @@ logger = setup_logger()
 
 def construct_dependency_graph(
     repo: Repository | PathLike,
-    dependency_graph_generator: DependencyGraphGeneratorType,
+    dependency_graph_generator: GraphGeneratorType,
     language: Language | None = None,
 ) -> DependencyGraph:
     if isinstance(repo, PathLike):
@@ -32,9 +32,9 @@ def construct_dependency_graph(
         repo = Repository(repo, language)
 
     language = repo.language
-    if dependency_graph_generator == DependencyGraphGeneratorType.JEDI:
+    if dependency_graph_generator == GraphGeneratorType.JEDI:
         return JediDependencyGraphGenerator(language).generate(repo)
-    elif dependency_graph_generator == DependencyGraphGeneratorType.TREE_SITTER:
+    elif dependency_graph_generator == GraphGeneratorType.TREE_SITTER:
         return TreeSitterDependencyGraphGenerator(language).generate(repo)
 
 
@@ -189,12 +189,12 @@ def output_dependency_graph(
     """
     Outputs the dependency The graph outputted to a file or stdout.
 
-    :param graph: The dependency graph to output.
+    :param graph: The Repo-Specific Semantic Graph to output.
     :param output_format: The format in which to output the graph (e.g., "edgelist" or "pyvis").
     :param output_file: The file path to write the graph to. If None, outputs to stdout.
     """
     logger.info(
-        f"Outputting the dependency graph in {output_file if output_file else 'stdout'} with format {output_format}"
+        f"Outputting the Repo-Specific Semantic Graph in {output_file if output_file else 'stdout'} with format {output_format}"
     )
 
     match output_format:

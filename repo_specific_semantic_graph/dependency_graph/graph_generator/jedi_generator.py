@@ -9,7 +9,7 @@ from parso.tree import BaseNode
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import (
     BaseDependencyGraphGenerator,
-    DependencyGraphGeneratorType,
+    GraphGeneratorType,
 )
 from dependency_graph.models import PathLike
 from dependency_graph.models.graph_data import (
@@ -486,7 +486,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         except Exception as e:
             tb_str = "\n".join(traceback.format_tb(e.__traceback__))
             logger.error(
-                f"Error while generating graph of type {DependencyGraphGeneratorType.JEDI.value} for {file_path}, will ignore it. Error {e} occurred at:\n{tb_str}"
+                f"Error while generating graph of type {GraphGeneratorType.JEDI.value} for {file_path}, will ignore it. Error {e} occurred at:\n{tb_str}"
             )
 
     def generate_file(

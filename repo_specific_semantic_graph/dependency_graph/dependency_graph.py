@@ -155,7 +155,7 @@ class DependencyGraph:
 
 class DependencyGraphContextRetriever:
     """
-    DependencyGraphRetriever provides a class to retrieve code snippets from a dependency graph in context level.
+    DependencyGraphRetriever provides a class to retrieve code snippets from a Repo-Specific Semantic Graph in context level.
     The difference between this and the DependencyGraph is that this retrieves the context of a code, it is not dealing
     with a graph problem, while the DependencyGraph is.
     """

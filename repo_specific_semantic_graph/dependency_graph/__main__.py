@@ -7,7 +7,7 @@ from dependency_graph import (
     output_dependency_graph,
 )
 from dependency_graph.graph_generator import (
-    DependencyGraphGeneratorType,
+    GraphGeneratorType,
 )
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
@@ -21,7 +21,7 @@ OUTPUT_FORMATS = ["edgelist", "pyvis", "ipysigma"]
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Construct Dependency Graph for a given project."
+        description="Construct Repo-Specific Semantic Graph for a given project."
     )
     parser.add_argument(
         "-r",
@@ -37,10 +37,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "-g",
-        "--dependency_graph_generator",
-        type=DependencyGraphGeneratorType,
-        default=DependencyGraphGeneratorType.JEDI,
-        help=f"The code agent type to use. Should be one of the {[g.value for g in DependencyGraphGeneratorType]}. Defaults to {DependencyGraphGeneratorType.JEDI.value}.",
+        "--graph-generator",
+        type=GraphGeneratorType,
+        default=GraphGeneratorType.JEDI,
+        help=f"The code agent type to use. Should be one of the {[g.value for g in GraphGeneratorType]}. Defaults to {GraphGeneratorType.JEDI.value}.",
     )
 
     parser.add_argument(
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     lang = args.lang
-    dependency_graph_generator = args.dependency_graph_generator
+    graph_generator = args.graph_generator
     repo = Repository(args.repo, lang)
     output_file: Path = args.output_file
     output_format: str = args.output_format
@@ -73,10 +73,10 @@ if __name__ == "__main__":
         raise IsADirectoryError(f"{output_file} is a directory.")
 
     start_time = datetime.now()
-    graph = construct_dependency_graph(repo, dependency_graph_generator)
+    graph = construct_dependency_graph(repo, graph_generator)
     end_time = datetime.now()
 
     elapsed_time = (end_time - start_time).total_seconds()
-    logger.info(f"Finished constructing the dependency graph in {elapsed_time} sec")
+    logger.info(f"Finished constructing the Repo-Specific Semantic Graph in {elapsed_time} sec")
 
     output_dependency_graph(graph, output_format, output_file)
