@@ -3,7 +3,7 @@ from pytest_unordered import unordered
 
 from dependency_graph import (
     construct_dependency_graph,
-    DependencyGraphGeneratorType,
+    GraphGeneratorType,
     Language,
     EdgeRelation,
 )
@@ -13,7 +13,7 @@ from dependency_graph import (
 def sample_retriever(python_repo_suite_path):
     return construct_dependency_graph(
         python_repo_suite_path / "cross_file_context",
-        DependencyGraphGeneratorType.JEDI,
+        GraphGeneratorType.JEDI,
         Language.Python,
     ).as_retriever()
 

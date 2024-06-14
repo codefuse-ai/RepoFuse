@@ -62,7 +62,7 @@ def construct_cross_file_definition_context(
     language: str,
 ) -> CrossfileDefinitionByDependencyGraph:
     """
-    Construct the context of a file by the dependency graph.
+    Construct the context of a file by the Repo-Specific Semantic Graph.
     """
     edge_list: list[tuple[Node, Node, Edge]] = (
         graph.as_retriever().get_cross_file_definition_by_line(file_path, start_line)
@@ -104,7 +104,7 @@ def construct_cross_file_reference_context(
     start_line: int,
 ) -> CrossfileReferenceByDependencyGraph:
     """
-    Construct the context of a file by the dependency graph.
+    Construct the context of a file by the Repo-Specific Semantic Graph.
     """
     edge_list: list[tuple[Node, Node, Edge]] = (
         graph.as_retriever().get_cross_file_reference_by_line(file_path, start_line)
@@ -210,13 +210,13 @@ def main(
     dependency_graph_suite_path: Path | None = None,
 ) -> None:
     """
-    Construct CrossCodeEval data from code dependency graph
+    Construct CrossCodeEval data from code Repo-Specific Semantic Graph
     :param data_path:
     :param repository_suite_path:
     :param language:
     :param output_path:
     :param max_workers:
-    :param dependency_graph_suite_path: if provided, load pre-generated dependency graph
+    :param dependency_graph_suite_path: if provided, load pre-generated Repo-Specific Semantic Graph
     from `dependency_graph_suite_path/{repository}.json`
     :return:
     """
@@ -255,7 +255,7 @@ def main(
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Construct CrossCodeEval data from code dependency graph"
+        description="Construct CrossCodeEval data from code Repo-Specific Semantic Graph"
     )
     parser.add_argument(
         "-d",
@@ -274,7 +274,7 @@ def parse_args():
     parser.add_argument(
         "-g",
         "--dependency-graph-suite-path",
-        help="The dependency graph suite path.",
+        help="The Repo-Specific Semantic Graph suite path.",
         required=False,
         type=Path,
         default=None,
