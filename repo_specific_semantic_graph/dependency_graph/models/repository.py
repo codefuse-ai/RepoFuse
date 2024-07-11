@@ -1,9 +1,9 @@
 from functools import cached_property
 from pathlib import Path
 
-from git import Repo, InvalidGitRepositoryError, GitCommandError
+from git import Repo, InvalidGitRepositoryError, GitCommandError, NoSuchPathError
 
-from dependency_graph.models import PathLike
+from dependency_graph.models import PathLike, VirtualPath
 from dependency_graph.models.file_node import FileNode
 from dependency_graph.models.language import Language
 from dependency_graph.utils.log import setup_logger
@@ -26,7 +26,11 @@ class Repository:
     }
 
     def __init__(self, repo_path: PathLike, language: Language) -> None:
-        self.repo_path = Path(repo_path).expanduser().absolute()
+        if isinstance(repo_path, str):
+            self.repo_path = Path(repo_path).expanduser().absolute()
+        else:
+            self.repo_path = repo_path.expanduser().absolute()
+
         self.language = language
 
         if self.repo_path.is_file():
@@ -35,19 +39,19 @@ class Repository:
         if not self.repo_path.exists():
             raise FileNotFoundError(f"Repo path {self.repo_path} does not exist")
 
-        try:
-            self._git_repo = Repo(repo_path)
-        except InvalidGitRepositoryError:
-            # The repo is not a git repo, just ignore
-            pass
-
-    @cached_property
-    def files(self) -> set[FileNode]:
         if self.language not in self.code_file_extensions:
             raise ValueError(
                 f"Language {self.language} is not supported to get code files"
             )
 
+        try:
+            self._git_repo = Repo(repo_path)
+        except (InvalidGitRepositoryError, NoSuchPathError):
+            # The repo is not a git repo, just ignore
+            pass
+
+    @cached_property
+    def files(self) -> set[FileNode]:
         files: set[FileNode] = set()
         # Loop through the file extensions
         for extension in self.code_file_extensions[self.language]:

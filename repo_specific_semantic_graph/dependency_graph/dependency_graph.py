@@ -134,8 +134,8 @@ class DependencyGraph:
             ],
         }
 
-    def to_json(self) -> str:
-        return json.dumps(self.to_dict())
+    def to_json(self, indent=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent)
 
     @staticmethod
     def from_dict(obj_dict: dict) -> "DependencyGraph":

@@ -1,23 +1,29 @@
 # Repo-Specific Semantic Graph
 
-Construct a Repo-Specific Semantic Graph of a project. For simplicity, the Python package name is called `dependency_graph`.
+Construct a Repo-Specific Semantic Graph of a project. For simplicity, the Python package name is
+called `dependency_graph`.
 
 ## Features
 
 1. Multi-language support: Python, Java, C#, JavaScript, TypeScript.
 2. Retrieval of cross-file context from the Repo-Specific Semantic Graph.
-3. Serialization/Deserialization: edge list in JSON format is supported to output the graph. The graph can also be deserialized from JSON/Dictionary.
-4. Graph visualizations: [Pyvis](https://pyvis.readthedocs.io/en/latest/) and [ipysigma](https://github.com/medialab/ipysigma) interactive visualizations are supported.
+3. Serialization/Deserialization: edge list in JSON format is supported to output the graph. The graph can also be
+   deserialized from JSON/Dictionary.
+4. Graph visualizations: [Pyvis](https://pyvis.readthedocs.io/en/latest/)
+   and [ipysigma](https://github.com/medialab/ipysigma) interactive visualizations are supported.
 
-Currently, the following Repo-Specific Semantic Graph generator types are supported, with the corresponding languages and dependency relations:
-| **Graph Generator Type** | **Supported Languages**                                   | **Supported Dependency Relations**                                                                            |
-|--------------------------|-----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| Jedi                     | Python                                                    | ParentOf/ChildOf, Imports/ImportedBy, BaseClassOf/DerivedClassOf, Calls/CalledBy, Instantiates/InstantiatedBy, Defines/DefinedBy |
-| Tree-sitter              | Java, C#, TypeScript, JavaScript                          | Imports/ImportedBy                                                                                            |
+Currently, the following Repo-Specific Semantic Graph generator types are supported, with the corresponding languages
+and dependency relations:
+
+| **Graph Generator Type** | **Supported Languages**          | **Supported Dependency Relations**                                                                                               |
+|--------------------------|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| Jedi                     | Python                           | ParentOf/ChildOf, Imports/ImportedBy, BaseClassOf/DerivedClassOf, Calls/CalledBy, Instantiates/InstantiatedBy, Defines/DefinedBy |
+| Tree-sitter              | Java, C#, TypeScript, JavaScript | Imports/ImportedBy                                                                                                               |
 
 ## Install
 
-First, install poetry via <https://python-poetry.org/docs/#installation>, then run the following command to create a Python virtual environment and install the dependencies:
+First, install poetry via <https://python-poetry.org/docs/#installation>, then run the following command to create a
+Python virtual environment and install the dependencies:
 
 ```shell
 poetry install
@@ -103,7 +109,6 @@ For example, get call graph of the project:
 
 ```python
 from dependency_graph.models.graph_data import EdgeRelation
-
 
 graph.get_related_edges(EdgeRelation.Calls)
 ```
