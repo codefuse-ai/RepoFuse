@@ -19,8 +19,6 @@ class VirtualPath(pathlib.PosixPath):
 
         def __new__(cls, fs: FS, *pathsegments, disallow_str=False):
             self = super().__new__(cls, *pathsegments)
-            if self.is_absolute():
-                raise ValueError("absolute paths don't make sense here...")
             self.fs = fs
             self.disallow_str = disallow_str
             return self
@@ -305,4 +303,8 @@ class VirtualPath(pathlib.PosixPath):
 
     def expanduser(self):
         # do nothing, as this can't be implemented in a general fashion
+        return self
+
+    def absolute(self):
+        # FS objects have no concept of a current directory
         return self
