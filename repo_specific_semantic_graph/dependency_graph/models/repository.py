@@ -3,7 +3,7 @@ from pathlib import Path
 
 from git import Repo, InvalidGitRepositoryError, GitCommandError, NoSuchPathError
 
-from dependency_graph.models import PathLike, VirtualPath
+from dependency_graph.models import PathLike
 from dependency_graph.models.file_node import FileNode
 from dependency_graph.models.language import Language
 from dependency_graph.utils.log import setup_logger

@@ -6,7 +6,7 @@ import fs.osfs
 import fs.path
 import fs.permissions
 from fs.enums import ResourceType
-from fs.memoryfs import FS
+from fs.base import FS
 
 
 class VirtualPath(pathlib.PosixPath):
@@ -244,7 +244,7 @@ class VirtualPath(pathlib.PosixPath):
         try:
             return self._hash
         except AttributeError:
-            self._hash = hash(self._str_normcase) + hash(self.fs)
+            self._hash = hash(self._str_normcase) ^ hash(self.fs)
             return self._hash
 
     def as_uri(self):

@@ -1,4 +1,3 @@
-from functools import cached_property
 from pathlib import Path
 
 from dependency_graph.models import PathLike
@@ -16,7 +15,7 @@ class FileNode:
     def __init__(self, file_path: PathLike):
         self.file_path = Path(file_path).expanduser().absolute()
 
-    @cached_property
+    @property
     def content(self) -> str:
         # TODO Compare file timestamp to detect file changes made by others
         try:

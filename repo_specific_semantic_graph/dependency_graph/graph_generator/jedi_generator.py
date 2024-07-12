@@ -474,18 +474,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     ):
         try:
             if isinstance(repo, VirtualRepository):
-                """
-                When in virtual file system, we need Jedi to be able to import the module in the virtual fs.
-                And I noticed that Jedi will call `jedi.inference.compiled.subprocess.functions._find_module`
-                when resolving the imported module. It will use the `sys.meta_path` to find the module to be imported
-                (See https://docs.python.org/3/library/sys.html#sys.meta_path for its usage).
-                So I added a custom finder to `sys.meta_path` to make Jedi able to find the module in the virtual fs.
-                The finder is only used when the `repo` is a `VirtualRepository`.
-                We should use `jedi.Interpreter` because it seems the only way to consume the sys.meta_path.
-                We also should update sys.path to make sure the search path in fs can be found.
-                """
-                finder = VirtualFSFinder(repo.fs)
-                sys.meta_path.append(finder)
                 namespace = locals()
                 script = jedi.Interpreter(
                     code,
@@ -541,6 +529,21 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
 
         D = DependencyGraph(repo.repo_path, repo.language)
+
+        if isinstance(repo, VirtualRepository):
+            """
+            When in virtual file system, we need Jedi to be able to import the module in the virtual fs.
+            And I noticed that Jedi will call `jedi.inference.compiled.subprocess.functions._find_module`
+            when resolving the imported module. It will use the `sys.meta_path` to find the module to be imported
+            (See https://docs.python.org/3/library/sys.html#sys.meta_path for its usage).
+            So I added a custom finder to `sys.meta_path` to make Jedi able to find the module in the virtual fs.
+            The finder is only used when the `repo` is a `VirtualRepository`.
+            We should use `jedi.Interpreter` because it seems the only way to consume the sys.meta_path.
+            We also should update sys.path to make sure the search path in fs can be found.
+            """
+            finder = VirtualFSFinder(repo.fs)
+            sys.meta_path.insert(0, finder)
+
         for file in repo.files:
             if not file.content.strip():
                 continue
