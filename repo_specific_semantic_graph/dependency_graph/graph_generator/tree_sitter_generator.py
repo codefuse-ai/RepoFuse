@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from textwrap import dedent
 
+from tqdm import tqdm
 from tree_sitter import Language as TS_Language, Parser, Tree, Node as TS_Node
 
 from dependency_graph.dependency_graph import DependencyGraph
@@ -228,7 +229,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         classes_map: dict[str, list[Path]] = defaultdict(list)
         # The key is (file_path, class_name)
         import_map: dict[tuple[Path, str], list[TS_Node]] = defaultdict(list)
-        for file in repo.files:
+        for file in tqdm(repo.files, desc="Generating graph"):
             if not file.content.strip():
                 continue
 

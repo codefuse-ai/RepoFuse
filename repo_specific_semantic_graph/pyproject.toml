@@ -17,6 +17,7 @@ ipysigma = "^0.24.2"
 tree-sitter = "^0.21.2"
 chardet = "^5.2.0"
 fs = "^2.4.16"
+tqdm = "^4.66.4"
 
 [[tool.poetry.source]]
 name = "tsinghua-pypi"

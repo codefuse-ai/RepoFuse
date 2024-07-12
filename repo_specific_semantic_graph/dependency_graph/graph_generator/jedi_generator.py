@@ -6,6 +6,7 @@ import jedi
 from jedi.api.classes import Name, BaseName
 from parso.python.tree import Name as ParsoTreeName
 from parso.tree import BaseNode
+from tqdm import tqdm
 
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import (
@@ -548,7 +549,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             finder = VirtualFSFinder(repo.fs)
             sys.meta_path.insert(0, finder)
 
-        for file in repo.files:
+        for file in tqdm(repo.files, desc="Generating graph"):
             if not file.content.strip():
                 continue
             self._generate_file(file.content, file.file_path, D, project, repo)

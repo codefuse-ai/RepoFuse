@@ -8,7 +8,6 @@ from dependency_graph.models.repository import Repository
 from dependency_graph.models.virtual_fs.virtual_file_node import VirtualFileNode
 from dependency_graph.models.virtual_fs.virtual_path import VirtualPath
 
-
 # Define the VirtualFile named tuple
 VirtualFile = namedtuple("VirtualFile", ["relative_path", "content"])
 
@@ -40,5 +39,4 @@ class VirtualRepository(Repository):
         for file_path in self._all_file_paths:
             if file_path.suffix in self.code_file_extensions[self.language]:
                 files.add(VirtualFileNode(file_path))
-        # TODO seems the order of set matters for Jedi generator
         return files
