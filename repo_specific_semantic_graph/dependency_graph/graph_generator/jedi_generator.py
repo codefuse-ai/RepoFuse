@@ -473,6 +473,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         repo: Repository = None,
     ):
         try:
+            sys_path = sys.path
             if isinstance(repo, VirtualRepository):
                 namespace = locals()
                 script = jedi.Interpreter(
@@ -509,6 +510,9 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             logger.error(
                 f"Error while generating graph of type {GraphGeneratorType.JEDI.value} for {file_path}, will ignore it. Error {e} occurred at:\n{tb_str}"
             )
+        finally:
+            # Restore the original sys.path
+            sys.path = sys_path
 
     def generate_file(
         self,

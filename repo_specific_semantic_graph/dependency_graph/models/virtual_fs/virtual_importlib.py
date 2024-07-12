@@ -1,7 +1,8 @@
-import importlib
+import os
 import sys
 from importlib.abc import MetaPathFinder
 from importlib.machinery import SourceFileLoader
+from importlib.util import spec_from_loader
 
 from fs.base import FS
 
@@ -38,11 +39,18 @@ class VirtualFSFinder(MetaPathFinder):
         self.memory_loader_cache = {}
 
     def find_spec(self, fullname, path=None, target=None):
+        # Default search in sys.path if path is not provided
+        search_paths = sys.path if path is None else path
+
         # Transform module name to file path
         module_rel_path = f"{fullname.replace('.', '/')}.py"
 
         # Search through all paths in sys.path
-        for p in sys.path:
+        for p in search_paths:
+            # Check for relative import
+            if not os.path.isabs(p):
+                p = os.path.abspath(p)
+
             # Filter out non-existent sys path in the fs
             if not self.fs.exists(p):
                 continue
@@ -55,7 +63,6 @@ class VirtualFSFinder(MetaPathFinder):
                     self.memory_loader_cache[fullname] = loader
                 else:
                     loader = self.memory_loader_cache[fullname]
-
-                return importlib.util.spec_from_loader(fullname, loader)
+                return spec_from_loader(fullname, loader)
 
         return None

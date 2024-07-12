@@ -16,11 +16,11 @@ def test_construct_jedi_graph_on_virtual_repo():
                 "src/a.py",
                 dedent(
                     """
-                    import b
+                    from b import foo
                     
                     def bar():
                         print("hello")
-                        b.foo()
+                        foo()
                     """
                 ),
             ),
