@@ -156,8 +156,10 @@ class VirtualFSLoader(SourceFileLoader):
 
     def get_filename(self, fullname) -> VirtualPath:
         """Return the path to the source file as found by the finder.
-        !!!It is very important to return as VirtualPath instead of str because Jedi will use it to find the source file
-        in the cache, see jedi.parser_utils.get_parso_cache_node
+        !!!It is very important to return as VirtualPath instead of str because Jedi will use it to find the Path
+        in the cache, see jedi.parser_utils.get_parso_cache_node.
+        If we return str, Jedi will initialize it as Path(see parso.file_io.FileIO.__init__), not VirtualPath, causing
+        the cache to be missed.
         """
         return VirtualPath(self.fs, self.path)
 

@@ -3,13 +3,15 @@ from textwrap import dedent
 from dependency_graph import construct_dependency_graph, EdgeRelation
 from dependency_graph.graph_generator import GraphGeneratorType
 from dependency_graph.models.language import Language
-from dependency_graph.models.virtual_fs.virtual_repository import VirtualRepository
+from dependency_graph.models.virtual_fs.virtual_repository import (
+    VirtualRepository,
+)
 
 
 def test_construct_jedi_graph_on_virtual_repo():
     dependency_graph_generator = GraphGeneratorType.JEDI
     repo = VirtualRepository(
-        "/path/to/repo",
+        "repo",
         Language.Python,
         [
             (
@@ -33,6 +35,14 @@ def test_construct_jedi_graph_on_virtual_repo():
                     """
                 ),
             ),
+            (
+                "src/c.py",
+                dedent(
+                    """
+                    from pkg_not_exist import module
+                    """
+                ),
+            ),
         ],
     )
     graph = construct_dependency_graph(repo, dependency_graph_generator)
@@ -46,7 +56,7 @@ def test_construct_jedi_graph_on_virtual_repo():
     ]
 
     assert calls == [
-        ("bar", "print", "/path/to/repo/src/a.py"),
-        ("bar", "foo", "/path/to/repo/src/a.py"),
-        ("foo", "print", "/path/to/repo/src/b.py"),
+        ("bar", "print", "repo/src/a.py"),
+        ("bar", "foo", "repo/src/a.py"),
+        ("foo", "print", "repo/src/b.py"),
     ]
