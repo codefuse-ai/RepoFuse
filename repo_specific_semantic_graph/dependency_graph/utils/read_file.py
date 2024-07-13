@@ -5,11 +5,10 @@ import chardet
 from dependency_graph.models import PathLike
 
 
-def detect_file_encoding(file_path: PathLike) -> str:
+def detect_file_encoding(file_path: Path) -> str:
     """Function to detect encoding"""
-    path = Path(file_path)
     # Read the file as binary data
-    raw_data = path.read_bytes()
+    raw_data = file_path.read_bytes()
     # Detect encoding
     detected = chardet.detect(raw_data)
     encoding = detected["encoding"]
@@ -18,11 +17,12 @@ def detect_file_encoding(file_path: PathLike) -> str:
 
 def read_file_to_string(file_path: PathLike) -> str:
     """Function to detect encoding and read file to string"""
-    path = Path(file_path)
+    if isinstance(file_path, str):
+        file_path = Path(file_path)
 
     encoding = detect_file_encoding(file_path)
 
     # Read the file with the detected encoding
-    content = path.read_text(encoding=encoding)
+    content = file_path.read_text(encoding=encoding)
 
     return content

@@ -60,3 +60,50 @@ def test_construct_jedi_graph_on_virtual_repo():
         ("bar", "foo", "repo/src/a.py"),
         ("foo", "print", "repo/src/b.py"),
     ]
+
+
+def test_construct_tree_sitter_graph_on_virtual_repo(java_repo_suite_path):
+    dependency_graph_generator = GraphGeneratorType.TREE_SITTER
+    virtual_files = [
+        (str(f.relative_to(java_repo_suite_path)), f.read_text())
+        for f in java_repo_suite_path.rglob("*.java")
+    ]
+    repo = VirtualRepository(
+        "repo",
+        Language.Java,
+        virtual_files,
+    )
+
+    graph = construct_dependency_graph(repo, dependency_graph_generator)
+    edges = graph.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 2
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        (
+            "module",
+            "com.example.main.Main",
+            "module",
+            "com.example.util.Greetings",
+            "Greetings.java",
+            "com.example.util.Greetings",
+        ),
+        (
+            "module",
+            "com.example.main.Main",
+            "module",
+            "com.example.models.User",
+            "User.java",
+            "com.example.models.User",
+        ),
+    ]
