@@ -1,10 +1,12 @@
 import re
+import sys
 import traceback
 
 import jedi
 from jedi.api.classes import Name, BaseName
 from parso.python.tree import Name as ParsoTreeName
 from parso.tree import BaseNode
+from tqdm import tqdm
 
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import (
@@ -21,6 +23,8 @@ from dependency_graph.models.graph_data import (
 )
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
+from dependency_graph.models.virtual_fs.virtual_importlib import VirtualFSFinder
+from dependency_graph.models.virtual_fs.virtual_repository import VirtualRepository
 from dependency_graph.utils.log import setup_logger
 
 # Initialize logging
@@ -100,8 +104,9 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         from_type: NodeType,
         to_name: Name,
         to_type: NodeType,
-        edge_name: Name
-        | None,  # Edge name can be None as not all relation have a location
+        edge_name: (
+            Name | None
+        ),  # Edge name can be None as not all relation have a location
         edge_relation: EdgeRelation,
         inverse_edge_relation: EdgeRelation,
     ):
@@ -201,9 +206,11 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         from_name=script.get_context(),
                         from_type=NodeType.MODULE,
                         to_name=definition,
-                        to_type=NodeType.VARIABLE
-                        if definition.type == "statement"
-                        else _JEDI_API_TYPES_dict[definition.type],
+                        to_type=(
+                            NodeType.VARIABLE
+                            if definition.type == "statement"
+                            else _JEDI_API_TYPES_dict[definition.type]
+                        ),
                         edge_name=name,
                         edge_relation=EdgeRelation.Imports,
                         inverse_edge_relation=EdgeRelation.ImportedBy,
@@ -322,9 +329,11 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     self._update_graph(
                         D=D,
                         from_name=instance_owner,
-                        from_type=NodeType.VARIABLE
-                        if instance_owner.type == "statement"
-                        else _JEDI_API_TYPES_dict[instance_owner.type],
+                        from_type=(
+                            NodeType.VARIABLE
+                            if instance_owner.type == "statement"
+                            else _JEDI_API_TYPES_dict[instance_owner.type]
+                        ),
                         to_name=instance_type,
                         to_type=_JEDI_API_TYPES_dict[instance_type.type],
                         # Instantiate name is the name that is being instantiated
@@ -462,13 +471,27 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         file_path: PathLike,
         D: DependencyGraph,
         project: jedi.Project = None,
+        repo: Repository = None,
     ):
         try:
-            script = jedi.Script(
-                code,
-                path=file_path,
-                project=project,
-            )
+            sys_path = sys.path
+            if isinstance(repo, VirtualRepository):
+                namespace = locals()
+                script = jedi.Interpreter(
+                    code,
+                    namespaces=[namespace],
+                    path=file_path,
+                    project=project,
+                )
+                sys.path = project._get_sys_path(
+                    script._inference_state, add_init_paths=True
+                )
+            else:
+                script = jedi.Script(
+                    code,
+                    path=file_path,
+                    project=project,
+                )
 
             all_def_names = script.get_names(
                 all_scopes=True, definitions=True, references=False
@@ -488,6 +511,9 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             logger.error(
                 f"Error while generating graph of type {GraphGeneratorType.JEDI.value} for {file_path}, will ignore it. Error {e} occurred at:\n{tb_str}"
             )
+        finally:
+            # Restore the original sys.path
+            sys.path = sys_path
 
     def generate_file(
         self,
@@ -508,9 +534,24 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         project = jedi.Project(repo.repo_path, load_unsafe_extensions=False)
 
         D = DependencyGraph(repo.repo_path, repo.language)
-        for file in repo.files:
+
+        if isinstance(repo, VirtualRepository):
+            """
+            When in virtual file system, we need Jedi to be able to import the module in the virtual fs.
+            And I noticed that Jedi will call `jedi.inference.compiled.subprocess.functions._find_module`
+            when resolving the imported module. It will use the `sys.meta_path` to find the module to be imported
+            (See https://docs.python.org/3/library/sys.html#sys.meta_path for its usage).
+            So I added a custom finder to `sys.meta_path` to make Jedi able to find the module in the virtual fs.
+            The finder is only used when the `repo` is a `VirtualRepository`.
+            We should use `jedi.Interpreter` because it seems the only way to consume the sys.meta_path.
+            We also should update sys.path to make sure the search path in fs can be found.
+            """
+            finder = VirtualFSFinder(repo.fs)
+            sys.meta_path.insert(0, finder)
+
+        for file in tqdm(repo.files, desc="Generating graph"):
             if not file.content.strip():
                 continue
-            self._generate_file(file.content, file.file_path, D, project)
+            self._generate_file(file.content, file.file_path, D, project, repo)
 
         return D

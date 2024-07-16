@@ -6,7 +6,7 @@ from typing import Iterable, Callable
 import networkx as nx
 
 from dependency_graph.models.language import Language
-from dependency_graph.models import PathLike
+from dependency_graph.models import PathLike, VirtualPath
 from dependency_graph.models.graph_data import Node, Edge, EdgeRelation, NodeType
 from dependency_graph.utils.intervals import find_innermost_interval
 
@@ -16,7 +16,7 @@ class DependencyGraph:
         # See https://networkx.org/documentation/stable/reference/classes/multidigraph.html
         # See also https://stackoverflow.com/questions/26691442/how-do-i-add-a-new-attribute-to-an-edge-in-networkx
         self.graph = nx.MultiDiGraph()
-        self.repo_path = Path(repo_path)
+        self.repo_path = Path(repo_path) if isinstance(repo_path, str) else repo_path
         self.language = language
 
         self._update_callbacks: set[Callable] = set()
@@ -134,8 +134,8 @@ class DependencyGraph:
             ],
         }
 
-    def to_json(self) -> str:
-        return json.dumps(self.to_dict())
+    def to_json(self, indent=None) -> str:
+        return json.dumps(self.to_dict(), indent=indent)
 
     @staticmethod
     def from_dict(obj_dict: dict) -> "DependencyGraph":
@@ -163,13 +163,22 @@ class DependencyGraphContextRetriever:
     def __init__(self, graph: DependencyGraph):
         self.graph = graph
 
+    def _Path(self, file_path: PathLike) -> Path:
+        match self.graph.repo_path:
+            case Path():
+                return Path(file_path)
+            case VirtualPath():
+                return VirtualPath(self.graph.repo_path.fs, file_path)
+            case _:
+                return Path(file_path)
+
     def _get_innermost_node_by_line(
         self,
         file_path: PathLike,
         start_line: int,
     ) -> Node | None:
         # Statement nodes are not taken into account for now
-        file_path = Path(file_path)
+        file_path = self._Path(file_path)
         nodes = self.graph.get_nodes(
             node_filter=lambda n: n.location
             and n.location.file_path == file_path
@@ -197,7 +206,7 @@ class DependencyGraphContextRetriever:
         return related_edge_list
 
     def is_node_from_cross_file(self, node: Node, file_path: PathLike) -> bool:
-        file_path = Path(file_path)
+        file_path = self._Path(file_path)
         return (
             node.location is not None
             and node.location.file_path is not None
@@ -206,7 +215,7 @@ class DependencyGraphContextRetriever:
         )
 
     def is_node_from_in_file(self, node: Node, file_path: PathLike) -> bool:
-        file_path = Path(file_path)
+        file_path = self._Path(file_path)
         return (
             node.location is not None
             and node.location.file_path is not None

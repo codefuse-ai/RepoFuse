@@ -1,4 +1,5 @@
 """This module contains common fixtures for the tests that can be shared across multiple test modules."""
+
 from pathlib import Path
 
 import pytest
@@ -12,3 +13,8 @@ def repo_suite_path():
 @pytest.fixture
 def python_repo_suite_path(repo_suite_path):
     return repo_suite_path / "python"
+
+
+@pytest.fixture
+def java_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "java"
