@@ -21,7 +21,7 @@ from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.read_file import read_file_to_string
 
-TS_LIB_PATH = Path(__file__).parent.parent / "lib"
+TS_LIB_PATH = Path(__file__).parent.parent.parent / "lib"
 
 
 def get_builtin_lib_path(parent_dir: Path) -> Path:
