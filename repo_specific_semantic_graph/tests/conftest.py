@@ -18,3 +18,7 @@ def python_repo_suite_path(repo_suite_path):
 @pytest.fixture
 def java_repo_suite_path(repo_suite_path):
     return repo_suite_path / "java"
+
+@pytest.fixture
+def c_sharp_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "c_sharp"

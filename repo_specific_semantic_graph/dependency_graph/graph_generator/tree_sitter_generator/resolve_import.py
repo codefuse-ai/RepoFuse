@@ -72,14 +72,17 @@ class ImportFinder:
         self.ts_language = TS_Language(str(lib_path.absolute()), str(language))
         self.parser.set_language(self.ts_language)
 
+    def _query_and_captures(self, code: str, query: str):
+        tree: Tree = self.parser.parse(code.encode())
+        query = self.ts_language.query(query)
+        captures = query.captures(tree.root_node)
+        return [node for node, _ in captures]
+
     def find_imports(
         self,
         code: str,
     ) -> list[TS_Node]:
-        tree: Tree = self.parser.parse(code.encode())
-        query = self.ts_language.query(FIND_IMPORT_QUERY[self.language])
-        captures = query.captures(tree.root_node)
-        return [node for node, _ in captures]
+        return self._query_and_captures(code, FIND_IMPORT_QUERY[self.language])
 
     def find_module_name(self, code: str, file_path: Path) -> str:
         """
@@ -90,17 +93,23 @@ class ImportFinder:
         In JavaScript/TypeScript, it is the name of the file.
         """
         match self.language:
-            case Language.Java | Language.CSharp:
-                tree: Tree = self.parser.parse(code.encode())
-                query = self.ts_language.query(FIND_PACKAGE_QUERY[self.language])
-                captures = query.captures(tree.root_node)
+            case Language.Java:
+                captures = self._query_and_captures(code, FIND_PACKAGE_QUERY[self.language])
                 assert (
                     len(captures) == 1
                 ), f"Expected 1 module in the file {file_path}, got {len(captures)}"
-                node, _ = captures[0]
+                node = captures[0]
                 package_name = node.text.decode()
                 module_name = f"{package_name}.{file_path.stem}"
                 return module_name
+            case Language.CSharp:
+                captures = self._query_and_captures(code, FIND_PACKAGE_QUERY[self.language])
+                assert (
+                    len(captures) == 1
+                ), f"Expected 1 module in the file {file_path}, got {len(captures)}"
+                node = captures[0]
+                namespace_name = node.text.decode()
+                return namespace_name
             case Language.TypeScript | Language.JavaScript:
                 return file_path.stem
 
