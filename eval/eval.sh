@@ -10,7 +10,7 @@ lang=$2
 ######################Experiment Setting###################
 export model_name_or_path={YOUR_MODEL_PATH}
 export prompt_file={YOUR_PROMPT_FILE}
-export cfc_seq_length_list=0,256,512 # Crossfile content prompt length. Support split by comma
+export cfc_seq_length_list=0,256,512,1024,2048,4096 # Crossfile content prompt length. Support split by comma
 export crossfile_type_list=S_R,Similar,Related # Crossfile Type：Similar、Related、S_R（Both similar and related. Support split by comma
 export ranking_strategy_list=UnixCoder,Random # Ranking Strategy: Unixcoder CodeBert Jacarrd Edit BM25 InDegree Es_Orcal
 export lang=python # Test Language, Support python java csharp typescript
