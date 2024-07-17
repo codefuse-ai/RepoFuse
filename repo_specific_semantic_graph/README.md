@@ -12,7 +12,7 @@ called `dependency_graph`.
 4. Graph visualizations: [Pyvis](https://pyvis.readthedocs.io/en/latest/)
    and [ipysigma](https://github.com/medialab/ipysigma) interactive visualizations are supported.
 5. Analyze on virtual file system: the graph can be constructed from a virtual file system, which is useful for
-   real-time analysis where the codebase originates from a dataset and the original file structure is either
+   real-time analysis when the codebase originates from a dataset and the original file structure is either
    unavailable or cannot be restored.
 
 Currently, the following Repo-Specific Semantic Graph generator types are supported, with the corresponding languages

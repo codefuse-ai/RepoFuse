@@ -2,25 +2,15 @@
 
 ## Overview
 
-RepoFuse is a pioneering solution designed to enhance repository-level code completion without the latency trade-off.
-RepoFuse uniquely fuses two types of context: the analogy context, rooted in code analogies, and the rationale context,
-which encompasses in-depth semantic relationships. We propose a novel rank truncated generation (RTG) technique that
-efficiently condenses these contexts into prompts with restricted size. This enables RepoFuse to deliver precise code
-completions while maintaining inference efficiency. Our evaluations using the CrossCodeEval suite reveal that RepoFuse
-outperforms common open-source methods, achieving an average improvement of 3.97 in code exact match score for the
-Python dataset and 3.01 for the Java dataset compared to state-of-the-art baseline methods.
-Beyond experimental validation, RepoFuse has been integrated into the workflow of a large enterprise, leading to an 18%
-improvement in acceptance rate during an online experiment.
+RepoFuse is a pioneering solution designed to enhance repository-level code completion without the latency trade-off. RepoFuse uniquely fuses two types of context: the analogy context, rooted in code analogies, and the rationale context, which encompasses in-depth semantic relationships. We propose a novel rank truncated generation (RTG) technique that efficiently condenses these contexts into prompts with restricted size. This enables RepoFuse to deliver precise code completions while maintaining inference efficiency. Our evaluations using the CrossCodeEval suite reveal that RepoFuse outperforms common open-source methods, achieving an average improvement of 3.97 in code exact match score for the Python dataset and 3.01 for the Java dataset compared to state-of-the-art baseline methods. Beyond experimental validation, RepoFuse has been integrated into the workflow of a large enterprise, leading to an 18% improvement in acceptance rate during an online experiment.
 
-![img.jpg](./assets/workflow.jpg)
+<img src="./assets/workflow.png" alt="drawing" width="600"/>
+
 **Figure: The workflow of RepoFuse**
 
 ### Repo-specific semantic graph
 
-The Repo-specific semantic graph is a tool that can construct the dependency relationships between entities in the code
-and store this
-information in the form of a multi-directed graph. We use this graph to construct the context for code
-completion.
+The Repo-specific semantic graph is a tool that can construct the dependency relationships between entities in the code and store this information in the form of a multi-directed graph. We use this graph to construct the context for code completion.
 
 See [repo_specific_semantic_graph/README.md](repo_specific_semantic_graph/README.md) for details.
 
@@ -28,9 +18,7 @@ See [repo_specific_semantic_graph/README.md](repo_specific_semantic_graph/README
 
 ### Construct CrossCodeEval line completion data retrieved from Repo-specific semantic graph context
 
-1. Follow instructions
-   on [repo_specific_semantic_graph/README.md#install](repo_specific_semantic_graph/README.md#install) to install the
-   Repo-specific semantic graph Python package.
+1. Follow instructions on [repo_specific_semantic_graph/README.md#install](repo_specific_semantic_graph/README.md#install) to install the Repo-specific semantic graph Python package.
 2. Install the rest of the dependencies that the script depend on: `pip install -r retrieval/requirements.txt`
 3. Download the CrossCodeEval dataset and the raw data from <https://github.com/amazon-science/cceval>
 4. Run `retrieval/construct_cceval_data.py` to construct the Repo-Specific Semantic Graph context data. You can
