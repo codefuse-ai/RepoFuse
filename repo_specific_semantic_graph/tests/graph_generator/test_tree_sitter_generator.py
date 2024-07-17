@@ -89,3 +89,35 @@ def test_c_sharp(tree_sitter_generator, c_sharp_repo_suite_path):
             "MyApp.Models",
         ),
     ]
+
+
+def test_javascript_sharp(tree_sitter_generator, javascript_repo_suite_path):
+    repo_path = javascript_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.JavaScript)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 3
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        ("module", "index", "module", "utilA", "utilA.js", "./utils/utilA"),
+        ("module", "index", "module", "utilB", "utilB.js", "./utils/utilB"),
+        (
+            "module",
+            "index",
+            "module",
+            "Component",
+            "Component.js",
+            "./components/Component",
+        ),
+    ]

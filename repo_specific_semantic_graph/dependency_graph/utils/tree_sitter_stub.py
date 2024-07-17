@@ -3,9 +3,7 @@ from textwrap import dedent
 
 from tree_sitter import Language, Parser, Tree, Node
 
-from dependency_graph.graph_generator.tree_sitter_generator import get_builtin_lib_path
-
-TS_LIB_PATH = Path(__file__).parent.parent / "lib"
+from dependency_graph.graph_generator.tree_sitter_generator.load_lib import get_builtin_lib_path, TS_LIB_PATH
 
 SPECIAL_CHAR = b" "
 

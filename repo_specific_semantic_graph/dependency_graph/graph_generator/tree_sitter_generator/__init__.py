@@ -54,7 +54,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         for file in tqdm(repo.files, desc="Generating graph"):
             if not file.content.strip():
                 continue
-            name = finder.find_module_name(file.content, file.file_path)
+            name = finder.find_module_name(file.file_path)
             module_map[name].append(file.file_path)
             nodes = finder.find_imports(file.content)
             import_map[(file.file_path, name)].extend(nodes)
@@ -69,7 +69,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 if resolved := resolver.resolve_import(
                     importee_class_name, module_map, importer_file_path
                 ):
-                    # We only resolve the first found class
+                    # FIXME We only resolve the first found class
                     importee_file_path = resolved[0]
                     # Use read_file_to_string here to avoid non-UTF8 decoding issue
                     importer_node = finder.parser.parse(
@@ -78,9 +78,13 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     importee_node = finder.parser.parse(
                         read_file_to_string(importee_file_path).encode()
                     ).root_node
+
+                    importer_module_name = finder.find_module_name(importer_file_path)
+                    importee_module_name = finder.find_module_name(importee_file_path)
+
                     from_node = Node(
                         type=NodeType.MODULE,
-                        name=importer_class_name,
+                        name=importer_module_name,
                         location=Location(
                             file_path=importer_file_path,
                             start_line=importer_node.start_point[0] + 1,
@@ -91,7 +95,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     )
                     to_node = Node(
                         type=NodeType.MODULE,
-                        name=importee_class_name,
+                        name=importee_module_name,
                         location=Location(
                             file_path=importee_file_path,
                             start_line=importee_node.start_point[0] + 1,
