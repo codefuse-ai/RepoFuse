@@ -3,9 +3,7 @@ from textwrap import dedent
 from dependency_graph import construct_dependency_graph, EdgeRelation
 from dependency_graph.graph_generator import GraphGeneratorType
 from dependency_graph.models.language import Language
-from dependency_graph.models.virtual_fs.virtual_repository import (
-    VirtualRepository,
-)
+from dependency_graph.models.virtual_fs.virtual_repository import VirtualRepository
 
 
 def test_construct_jedi_graph_on_virtual_repo():
