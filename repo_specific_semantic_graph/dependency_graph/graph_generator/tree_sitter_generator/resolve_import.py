@@ -147,13 +147,32 @@ class ImportResolver:
         module_map: dict[str, list[Path]],
         importer_file_path: PathLike,
     ) -> list[Path] | None:
+        def _search_file(search_path: Path, module_name: str) -> list[Path]:
+            result_path = []
+            for ext in extension_list:
+                if (search_path / f"{module_name}{ext}").exists():
+                    result_path.append(search_path / f"{module_name}{ext}")
+                elif (search_path / f"{module_name}").is_dir():
+                    """
+                    In case the module is a directory, we should search for the `module_dir/index.{js|ts}` file
+                    """
+                    for ext in extension_list:
+                        if (search_path / f"{module_name}" / f"index{ext}").exists():
+                            result_path.append(
+                                search_path / f"{module_name}" / f"index{ext}"
+                            )
+                    break
+            return result_path
+
+        extension_list = (
+            Repository.code_file_extensions[Language.TypeScript]
+            + Repository.code_file_extensions[Language.JavaScript]
+        )
+
         # Find the module path
         # e.g. './Descriptor' -> './Descriptor.ts'; '../Descriptor' -> '../Descriptor.ts'
         if "." in importee_class_name or ".." in importee_class_name:
-            extension_list = (
-                Repository.code_file_extensions[Language.TypeScript]
-                + Repository.code_file_extensions[Language.JavaScript]
-            )
+
             result_path = None
             # If there is a suffix in the name
             if suffix := Path(importee_class_name).suffix:
@@ -162,13 +181,9 @@ class ImportResolver:
                 if suffix in extension_list and path.exists():
                     result_path = [path]
             else:
-                result_path = [
-                    importer_file_path.parent / f"{importee_class_name}{ext}"
-                    for ext in extension_list
-                    if (
-                        importer_file_path.parent / f"{importee_class_name}{ext}"
-                    ).exists()
-                ]
+                result_path = _search_file(
+                    importer_file_path.parent, importee_class_name
+                )
             return result_path
         else:
             return module_map.get(importee_class_name, None)

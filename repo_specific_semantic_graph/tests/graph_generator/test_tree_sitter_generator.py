@@ -121,3 +121,29 @@ def test_javascript_sharp(tree_sitter_generator, javascript_repo_suite_path):
             "./components/Component",
         ),
     ]
+
+
+def test_typescript_sharp(tree_sitter_generator, typescript_repo_suite_path):
+    repo_path = typescript_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.TypeScript)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 4
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        ("module", "index", "module", "index", "index.ts", "./utils"),
+        ("module", "index", "module", "another", "another.ts", "./utils/another"),
+        ("module", "index", "module", "service", "service.ts", "./services/service"),
+        ("module", "service", "module", "index", "index.ts", "../utils"),
+    ]
