@@ -10,7 +10,7 @@ from dependency_graph import (
 
 @pytest.fixture
 def tree_sitter_generator():
-    return TreeSitterDependencyGraphGenerator(Language.Java)
+    return TreeSitterDependencyGraphGenerator()
 
 
 def test_java(tree_sitter_generator, java_repo_suite_path):
@@ -91,7 +91,7 @@ def test_c_sharp(tree_sitter_generator, c_sharp_repo_suite_path):
     ]
 
 
-def test_javascript_sharp(tree_sitter_generator, javascript_repo_suite_path):
+def test_javascript(tree_sitter_generator, javascript_repo_suite_path):
     repo_path = javascript_repo_suite_path
     repository = Repository(repo_path=repo_path, language=Language.JavaScript)
     D = tree_sitter_generator.generate(repository)
@@ -123,7 +123,7 @@ def test_javascript_sharp(tree_sitter_generator, javascript_repo_suite_path):
     ]
 
 
-def test_typescript_sharp(tree_sitter_generator, typescript_repo_suite_path):
+def test_typescript(tree_sitter_generator, typescript_repo_suite_path):
     repo_path = typescript_repo_suite_path
     repository = Repository(repo_path=repo_path, language=Language.TypeScript)
     D = tree_sitter_generator.generate(repository)

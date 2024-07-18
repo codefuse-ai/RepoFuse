@@ -33,9 +33,9 @@ def construct_dependency_graph(
 
     language = repo.language
     if dependency_graph_generator == GraphGeneratorType.JEDI:
-        return JediDependencyGraphGenerator(language).generate(repo)
+        return JediDependencyGraphGenerator().generate(repo)
     elif dependency_graph_generator == GraphGeneratorType.TREE_SITTER:
-        return TreeSitterDependencyGraphGenerator(language).generate(repo)
+        return TreeSitterDependencyGraphGenerator().generate(repo)
 
 
 def stringify_graph(graph: DependencyGraph) -> nx.Graph:

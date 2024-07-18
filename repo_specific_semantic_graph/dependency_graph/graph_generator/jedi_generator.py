@@ -48,9 +48,6 @@ _JEDI_API_TYPES_dict: dict[str, NodeType | None] = {
 class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     supported_languages: tuple[Language] = (Language.Python,)
 
-    def __init__(self, language: Language = Language.Python):
-        super().__init__(language)
-
     def _convert_name_pos_to_location(
         self, name: Name, node_type: NodeType | None = None
     ) -> Location | None:

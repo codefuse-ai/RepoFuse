@@ -32,9 +32,6 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.JavaScript,
     )
 
-    def __init__(self, language: Language):
-        super().__init__(language)
-
     def generate_file(
         self,
         repo: Repository,
