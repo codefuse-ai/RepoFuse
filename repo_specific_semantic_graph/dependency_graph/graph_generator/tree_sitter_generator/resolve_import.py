@@ -9,6 +9,7 @@ from dependency_graph.graph_generator.tree_sitter_generator.load_lib import (
 from dependency_graph.models import PathLike
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
+from dependency_graph.utils.read_file import read_file_to_string
 
 FIND_IMPORT_QUERY = {
     Language.Java: dedent(
@@ -84,7 +85,7 @@ class ImportFinder:
     ) -> list[TS_Node]:
         return self._query_and_captures(code, FIND_IMPORT_QUERY[self.language])
 
-    def find_module_name(self, code: str, file_path: Path) -> str:
+    def find_module_name(self, file_path: Path) -> str:
         """
         Find the name of the module of the current file.
         This term is broad enough to encompass the different ways in which these languages organize and reference code units
@@ -92,9 +93,13 @@ class ImportFinder:
         In C#, it is the name of the namespace.
         In JavaScript/TypeScript, it is the name of the file.
         """
+        # Use read_file_to_string here to avoid non-UTF8 decoding issue
+        code = read_file_to_string(file_path)
         match self.language:
             case Language.Java:
-                captures = self._query_and_captures(code, FIND_PACKAGE_QUERY[self.language])
+                captures = self._query_and_captures(
+                    code, FIND_PACKAGE_QUERY[self.language]
+                )
                 assert (
                     len(captures) == 1
                 ), f"Expected 1 module in the file {file_path}, got {len(captures)}"
@@ -103,7 +108,9 @@ class ImportFinder:
                 module_name = f"{package_name}.{file_path.stem}"
                 return module_name
             case Language.CSharp:
-                captures = self._query_and_captures(code, FIND_PACKAGE_QUERY[self.language])
+                captures = self._query_and_captures(
+                    code, FIND_PACKAGE_QUERY[self.language]
+                )
                 assert (
                     len(captures) == 1
                 ), f"Expected 1 module in the file {file_path}, got {len(captures)}"

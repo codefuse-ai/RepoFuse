@@ -97,6 +97,9 @@ def dump_graph_as_pyvis_graph(graph: DependencyGraph, filename: PathLike) -> Non
         "magenta",
         "teal",
         "maroon",
+        "lime",
+        "navy",
+        "olive",
     )
 
     for i, relation in enumerate(EdgeRelation):
