@@ -15,7 +15,6 @@ from dependency_graph.models.graph_data import (
     NodeType,
 )
 from dependency_graph.models.language import Language
-from dependency_graph.models.repository import Repository
 
 repo_suite_path = Path(__file__).parent / "code_example" / "python"
 

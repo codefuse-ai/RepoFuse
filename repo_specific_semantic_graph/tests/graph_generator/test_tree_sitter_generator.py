@@ -13,6 +13,68 @@ def tree_sitter_generator():
     return TreeSitterDependencyGraphGenerator()
 
 
+def test_python(tree_sitter_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "import_relation_for_tree_sitter_test"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 5
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        (
+            "module",
+            "baz",
+            "module",
+            "__init__",
+            "__init__.py",
+            "from ..module_a import foo",
+        ),
+        (
+            "module",
+            "baz",
+            "module",
+            "bar",
+            "bar.py",
+            "from ..module_a.submodule.bar import bar_function",
+        ),
+        (
+            "module",
+            "baz",
+            "module",
+            "__init__",
+            "__init__.py",
+            "from ..module_a.submodule import *",
+        ),
+        (
+            "module",
+            "run",
+            "module",
+            "foo",
+            "foo.py",
+            "from module_a.foo import foo_function",
+        ),
+        (
+            "module",
+            "run",
+            "module",
+            "baz",
+            "baz.py",
+            "from module_b.baz import baz_function",
+        ),
+    ]
+
+
 def test_java(tree_sitter_generator, java_repo_suite_path):
     repo_path = java_repo_suite_path
     repository = Repository(repo_path=repo_path, language=Language.Java)
