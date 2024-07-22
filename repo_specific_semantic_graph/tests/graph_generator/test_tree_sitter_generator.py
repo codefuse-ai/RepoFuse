@@ -36,8 +36,8 @@ def test_python(tree_sitter_generator, python_repo_suite_path):
             "module",
             "baz",
             "module",
-            "__init__",
-            "__init__.py",
+            "foo",
+            "foo.py",
             "from ..module_a import foo",
         ),
         (

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from importlab.import_finder import is_builtin
@@ -19,14 +18,14 @@ class Resolver:
         self.current_directory = self.current_module.parent
 
     def _find_file(self, name):
-        init = self.repo_path / name / "__init__.py"
+        init = name / "__init__.py"
         py = name.with_suffix(".py")
         for file in [init, py]:
             if file.exists():
                 return file
         return None
 
-    def resolve_import(self, item) -> Path:
+    def resolve_import(self, item) -> Path | None:
         """Simulate how Python resolves imports.
 
         Returns the filename of the source file Python would load
@@ -64,20 +63,22 @@ class Resolver:
             # relative to the importing file path.
             filename = str(self.current_directory / filename)
 
-        if not short_name:
-            try_filename = True
-            try_short_filename = False
-        elif item.source:
-            # If the import has a source path, we can use it to eliminate
-            # filenames that don't match.
-            source_filename, _ = os.path.splitext(item.source)
-            dirname, basename = os.path.split(source_filename)
-            if basename == "__init__":
-                source_filename = dirname
-            try_filename = source_filename.endswith(filename)
-            try_short_filename = not try_filename
-        else:
-            try_filename = try_short_filename = True
+        try_filename = try_short_filename = True
+
+        # if not short_name:
+        #     try_filename = True
+        #     try_short_filename = False
+        # elif item.source:
+        #     # If the import has a source path, we can use it to eliminate
+        #     # filenames that don't match.
+        #     source_filename, _ = os.path.splitext(item.source)
+        #     dirname, basename = os.path.split(source_filename)
+        #     if basename == "__init__":
+        #         source_filename = dirname
+        #     try_filename = source_filename.endswith(filename)
+        #     try_short_filename = not try_filename
+        # else:
+        #     try_filename = try_short_filename = True
 
         files = []
         if try_filename:

@@ -296,10 +296,7 @@ class VirtualPath(pathlib.PosixPath):
                 )
         else:
             raise NotImplementedError("no idea what should happen here...")
-        # TODO I'm returning a PurePath here because relative paths IMO don't make
-        # sense for VirtualPath... but yeah no idea really
-        t = super().relative_to(other)
-        return pathlib.PurePath(*(super().relative_to(other).parts))
+        return self.__class__(self.fs, *(super().relative_to(other).parts))
 
     def expanduser(self):
         # do nothing, as this can't be implemented in a general fashion

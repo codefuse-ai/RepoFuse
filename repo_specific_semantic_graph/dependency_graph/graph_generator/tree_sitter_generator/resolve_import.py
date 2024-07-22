@@ -283,6 +283,6 @@ class ImportResolver:
 
         try:
             resolved_path = resolver.resolve_import(imp)
-            return [resolved_path]
+            return [resolved_path] if resolved_path else None
         except ImportException as e:
             logger.warn(f"Failed to resolve import: {e}")
