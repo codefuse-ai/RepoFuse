@@ -2,7 +2,6 @@ import ast
 from collections import defaultdict
 from pathlib import Path
 
-from importlab.fs import StoredFileSystem
 from importlab.import_finder import (
     resolve_import as importlab_resolve_import,
     ImportFinder as importlab_ImportFinder,
@@ -57,6 +56,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.CSharp,
         Language.TypeScript,
         Language.JavaScript,
+        Language.Kotlin,
     )
 
     def generate_file(

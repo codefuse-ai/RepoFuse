@@ -60,6 +60,11 @@ FIND_IMPORT_QUERY = {
         ])
         """
     ),
+    Language.Kotlin: dedent(
+        """
+        (import_header (identifier) @import_name)
+        """
+    ),
     Language.CSharp: dedent(
         """
         (using_directive
@@ -91,6 +96,11 @@ FIND_PACKAGE_QUERY = {
         ])
         """
     ),
+    Language.Kotlin: dedent(
+        """
+        (package_header (identifier) @package_name)
+        """
+    ),
     Language.CSharp: dedent(
         """
         (namespace_declaration
@@ -112,7 +122,7 @@ class ImportFinder:
         self.ts_language = TS_Language(str(lib_path.absolute()), str(language))
         self.parser.set_language(self.ts_language)
 
-    def _query_and_captures(self, code: str, query: str):
+    def _query_and_captures(self, code: str, query: str) -> list[TS_Node]:
         tree: Tree = self.parser.parse(code.encode())
         query = self.ts_language.query(query)
         captures = query.captures(tree.root_node)
@@ -135,7 +145,7 @@ class ImportFinder:
         # Use read_file_to_string here to avoid non-UTF8 decoding issue
         code = read_file_to_string(file_path)
         match self.language:
-            case Language.Java:
+            case Language.Java | Language.Kotlin:
                 captures = self._query_and_captures(
                     code, FIND_PACKAGE_QUERY[self.language]
                 )
@@ -158,6 +168,8 @@ class ImportFinder:
                 return namespace_name
             case Language.TypeScript | Language.JavaScript | Language.Python:
                 return file_path.stem
+            case _:
+                raise NotImplementedError(f"Language {self.language} is not supported")
 
 
 class ImportResolver:
@@ -171,7 +183,20 @@ class ImportResolver:
         importer_file_path: Path,
     ) -> list[Path] | None:
         match self.repo.language:
-            case Language.Java | Language.CSharp:
+            case Language.Java | Language.Kotlin:
+                import_symbol_name = import_symbol_node.text.decode()
+                # Deal with star import: `import xxx.*`
+                if b".*" in import_symbol_node.parent.text:
+                    resolved_path_list = []
+                    for module_name, path_list in module_map.items():
+                        # Use rpartition to split the string at the rightmost '.'
+                        package_name, _, _ = module_name.rpartition(".")
+                        if package_name == import_symbol_name:
+                            resolved_path_list.extend(path_list)
+                    return resolved_path_list
+                else:
+                    return module_map.get(import_symbol_name, None)
+            case Language.CSharp:
                 import_symbol_name = import_symbol_node.text.decode()
                 return module_map.get(import_symbol_name, None)
             case Language.TypeScript | Language.JavaScript:
