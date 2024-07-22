@@ -304,6 +304,25 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 reference = "tsinghua-pypi"
 
 [[package]]
+name = "importlab"
+version = "0.8.1"
+description = "A library to calculate python dependency graphs."
+optional = false
+python-versions = ">=3.6.0"
+files = [
+    {file = "importlab-0.8.1-py2.py3-none-any.whl", hash = "sha256:124cfa00e8a34fefe8aac1a5e94f56c781b178c9eb61a1d3f60f7e03b77338d3"},
+    {file = "importlab-0.8.1.tar.gz", hash = "sha256:b3893853b1f6eb027da509c3b40e6787e95dd66b4b66f1b3613aad77556e1465"},
+]
+
+[package.dependencies]
+networkx = ">=2"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua-pypi"
+
+[[package]]
 name = "iniconfig"
 version = "2.0.0"
 description = "brain-dead simple config-ini parsing"
@@ -1211,4 +1230,4 @@ reference = "tsinghua-pypi"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "c8e7ea2961184b9904c7b09a00a09bb11d4fe23d2bcc6d7930333295584a467a"
+content-hash = "6ae2df777f254959f1406652fc7cbb460c3759b394202cf87aa53423391e50f1"

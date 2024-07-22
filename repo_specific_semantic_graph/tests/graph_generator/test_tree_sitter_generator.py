@@ -10,7 +10,69 @@ from dependency_graph import (
 
 @pytest.fixture
 def tree_sitter_generator():
-    return TreeSitterDependencyGraphGenerator(Language.Java)
+    return TreeSitterDependencyGraphGenerator()
+
+
+def test_python(tree_sitter_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "import_relation_for_tree_sitter_test"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 5
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        (
+            "module",
+            "baz",
+            "module",
+            "foo",
+            "foo.py",
+            "from ..module_a import foo",
+        ),
+        (
+            "module",
+            "baz",
+            "module",
+            "bar",
+            "bar.py",
+            "from ..module_a.submodule.bar import bar_function",
+        ),
+        (
+            "module",
+            "baz",
+            "module",
+            "__init__",
+            "__init__.py",
+            "from ..module_a.submodule import *",
+        ),
+        (
+            "module",
+            "run",
+            "module",
+            "foo",
+            "foo.py",
+            "from module_a.foo import foo_function",
+        ),
+        (
+            "module",
+            "run",
+            "module",
+            "baz",
+            "baz.py",
+            "from module_b.baz import baz_function",
+        ),
+    ]
 
 
 def test_java(tree_sitter_generator, java_repo_suite_path):
@@ -91,7 +153,7 @@ def test_c_sharp(tree_sitter_generator, c_sharp_repo_suite_path):
     ]
 
 
-def test_javascript_sharp(tree_sitter_generator, javascript_repo_suite_path):
+def test_javascript(tree_sitter_generator, javascript_repo_suite_path):
     repo_path = javascript_repo_suite_path
     repository = Repository(repo_path=repo_path, language=Language.JavaScript)
     D = tree_sitter_generator.generate(repository)
@@ -120,4 +182,30 @@ def test_javascript_sharp(tree_sitter_generator, javascript_repo_suite_path):
             "Component.js",
             "./components/Component",
         ),
+    ]
+
+
+def test_typescript(tree_sitter_generator, typescript_repo_suite_path):
+    repo_path = typescript_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.TypeScript)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 4
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        ("module", "index", "module", "index", "index.ts", "./utils"),
+        ("module", "index", "module", "another", "another.ts", "./utils/another"),
+        ("module", "index", "module", "service", "service.ts", "./services/service"),
+        ("module", "service", "module", "index", "index.ts", "../utils"),
     ]

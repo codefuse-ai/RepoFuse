@@ -9,7 +9,7 @@ from dependency_graph.models.repository import Repository
 
 @pytest.fixture
 def jedi_generator():
-    return JediDependencyGraphGenerator(Language.Python)
+    return JediDependencyGraphGenerator()
 
 
 def test_parent_relation(jedi_generator, python_repo_suite_path):

@@ -20,7 +20,8 @@ class VirtualRepository(Repository):
         virtual_files: list[VirtualFile],  # Use the named tuple for typing
     ):
         self.fs = MemoryFS()
-        self.repo_path = VirtualPath(self.fs, repo_path)
+        # Make sure the repo path is absolute
+        self.repo_path = VirtualPath(self.fs, "/", repo_path)
         self.repo_path.mkdir(parents=True)
 
         self._all_file_paths = []
