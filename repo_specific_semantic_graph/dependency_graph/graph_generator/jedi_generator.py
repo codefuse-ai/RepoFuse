@@ -490,6 +490,14 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     project=project,
                 )
 
+            # Make sure all_ref_names is executed before all_def_names, otherwise some name references will be missed.
+            # It might be an issue of Jedi.
+            all_ref_names = script.get_names(
+                all_scopes=True, definitions=False, references=True
+            )
+            self._extract_call_relation(script, all_ref_names, D)
+            self._extract_instantiate_relation(script, all_ref_names, D)
+
             all_def_names = script.get_names(
                 all_scopes=True, definitions=True, references=False
             )
@@ -497,12 +505,6 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             self._extract_import_relation(script, all_def_names, D)
             self._extract_def_use_relation(script, all_def_names, D)
             self._extract_class_hierarchy_relation(script, all_def_names, D)
-
-            all_ref_names = script.get_names(
-                all_scopes=True, definitions=False, references=True
-            )
-            self._extract_call_relation(script, all_ref_names, D)
-            self._extract_instantiate_relation(script, all_ref_names, D)
         except Exception as e:
             tb_str = "\n".join(traceback.format_tb(e.__traceback__))
             logger.error(
