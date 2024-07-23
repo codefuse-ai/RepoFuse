@@ -9,6 +9,7 @@ class Language(str, enum.Enum):
     JavaScript = "javascript"
     TypeScript = "typescript"
     PHP = "php"
+    Ruby = "ruby"
 
     def __str__(self):
         return self.value

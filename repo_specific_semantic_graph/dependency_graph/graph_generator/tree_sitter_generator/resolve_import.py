@@ -53,6 +53,8 @@ class ImportResolver:
                 )
             case Language.PHP:
                 return self.resolve_php_import(import_symbol_node, importer_file_path)
+            case Language.Ruby:
+                return self.resolve_ruby_import(import_symbol_node, importer_file_path)
             case _:
                 raise NotImplementedError(
                     f"Language {self.repo.language} is not supported"
@@ -175,4 +177,29 @@ class ImportResolver:
             path = importer_file_path.parent / import_symbol_name
             if path.exists():
                 result_path.append(path)
+        return result_path
+
+    def resolve_ruby_import(
+        self,
+        import_symbol_node: TS_Node,
+        importer_file_path: PathLike,
+    ) -> list[Path] | None:
+        import_symbol_name = import_symbol_node.text.decode()
+        # Strip double and single quote
+        import_symbol_name = import_symbol_name.strip('"').strip("'")
+
+        extension_list = Repository.code_file_extensions[Language.Ruby]
+
+        # Find the module path
+        result_path = []
+        for ext in extension_list:
+            import_path = Path(import_symbol_name).with_suffix(ext)
+            if import_path.is_absolute() and import_path.exists():
+                result_path.append(import_path)
+            else:
+                path = importer_file_path.parent / import_symbol_name
+                path = path.with_suffix(ext)
+                if path.exists():
+                    result_path.append(path)
+
         return result_path

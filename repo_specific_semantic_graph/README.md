@@ -18,10 +18,10 @@ called `dependency_graph`.
 Currently, the following Repo-Specific Semantic Graph generator types are supported, with the corresponding languages
 and dependency relations:
 
-| **Graph Generator Type** | **Supported Languages**                               | **Supported Dependency Relations**                                                                                               |
-|--------------------------|-------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| Jedi                     | Python                                                | ParentOf/ChildOf, Imports/ImportedBy, BaseClassOf/DerivedClassOf, Calls/CalledBy, Instantiates/InstantiatedBy, Defines/DefinedBy |
-| Tree-sitter              | Python, Java, Kotlin, C#, TypeScript, JavaScript, PHP | Imports/ImportedBy                                                                                                               |
+| **Graph Generator Type** | **Supported Languages**                                     | **Supported Dependency Relations**                                                                                               |
+|--------------------------|-------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| Jedi                     | Python                                                      | ParentOf/ChildOf, Imports/ImportedBy, BaseClassOf/DerivedClassOf, Calls/CalledBy, Instantiates/InstantiatedBy, Defines/DefinedBy |
+| Tree-sitter              | Python, Java, Kotlin, C#, TypeScript, JavaScript, PHP, Ruby | Imports/ImportedBy                                                                                                               |
 
 ## Install
 

@@ -25,6 +25,7 @@ class Repository:
         Language.TypeScript: (".ts", ".tsx"),
         Language.Kotlin: (".kt", ".kts"),
         Language.PHP: (".php",),
+        Language.Ruby: (".rb",),
     }
 
     def __init__(self, repo_path: PathLike, language: Language) -> None:

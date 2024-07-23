@@ -303,3 +303,51 @@ def test_php(tree_sitter_generator, php_repo_suite_path):
             "'helpers/constants.php'",
         ),
     ]
+
+
+def test_ruby(tree_sitter_generator, ruby_repo_suite_path):
+    repo_path = ruby_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.Ruby)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 4
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        ("module", "main", "module", "greeting", "greeting.php", "'./greeting.php'"),
+        ("module", "main", "module", "config", "config.php", "'helpers/config.php'"),
+        (
+            "module",
+            "main",
+            "module",
+            "functions",
+            "functions.php",
+            "'helpers/functions.php'",
+        ),
+        (
+            "module",
+            "main",
+            "module",
+            "constants",
+            "constants.php",
+            "'helpers/constants.php'",
+        ),
+        (
+            "module",
+            "main",
+            "module",
+            "constants",
+            "constants.php",
+            "'helpers/constants.php'",
+        ),
+    ]

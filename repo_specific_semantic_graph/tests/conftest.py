@@ -41,3 +41,7 @@ def kotlin_repo_suite_path(repo_suite_path):
 @pytest.fixture
 def php_repo_suite_path(repo_suite_path):
     return repo_suite_path / "php"
+
+@pytest.fixture
+def ruby_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "ruby"

@@ -60,6 +60,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.JavaScript,
         Language.Kotlin,
         Language.PHP,
+        Language.Ruby,
     )
 
     def generate_file(

@@ -81,6 +81,16 @@ FIND_IMPORT_QUERY = {
         ]
         """
     ),
+    Language.Ruby: dedent(
+        """
+        (call
+            method: ((identifier) @require_name
+                (#match? @require_name "require_relative|require")
+            )
+            arguments: (argument_list) @import_name
+        )
+        """
+    ),
 }
 FIND_PACKAGE_QUERY = {
     Language.Java: dedent(
@@ -118,11 +128,20 @@ class ImportFinder:
         self.ts_language = TS_Language(str(lib_path.absolute()), str(language))
         self.parser.set_language(self.ts_language)
 
-    def _query_and_captures(self, code: str, query: str) -> list[TS_Node]:
+    def _query_and_captures(
+        self, code: str, query: str, capture_name="import_name"
+    ) -> list[TS_Node]:
+        """
+        Query the Tree-sitter language and get the nodes that match the query
+        :param code: The code to be parsed
+        :param query: The query to be matched
+        :param capture_name: The name of the capture group to be matched
+        :return: The nodes that match the query
+        """
         tree: Tree = self.parser.parse(code.encode())
         query = self.ts_language.query(query)
         captures = query.captures(tree.root_node)
-        return [node for node, _ in captures]
+        return [node for node, captured in captures if captured == capture_name]
 
     def find_imports(
         self,
@@ -167,6 +186,7 @@ class ImportFinder:
                 | Language.JavaScript
                 | Language.Python
                 | Language.PHP
+                | Language.Ruby
             ):
                 return file_path.stem
             case _:
