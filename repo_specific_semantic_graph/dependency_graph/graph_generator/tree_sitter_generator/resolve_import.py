@@ -8,6 +8,7 @@ from tree_sitter import Node as TS_Node
 from dependency_graph.graph_generator.tree_sitter_generator.python_resolver import (
     Resolver,
 )
+from dependency_graph.models import VirtualPath, PathLike
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
@@ -19,6 +20,18 @@ logger = setup_logger()
 class ImportResolver:
     def __init__(self, repo: Repository):
         self.repo = repo
+
+    def _Path(self, file_path: PathLike) -> Path:
+        """
+        Convert the str file path to handle both physical and virtual paths
+        """
+        match self.repo.repo_path:
+            case Path():
+                return Path(file_path)
+            case VirtualPath():
+                return VirtualPath(self.repo.repo_path.fs, file_path)
+            case _:
+                return Path(file_path)
 
     def resolve_import(
         self,
@@ -101,7 +114,7 @@ class ImportResolver:
 
             result_path = None
             # If there is a suffix in the name
-            if suffix := Path(import_symbol_name).suffix:
+            if suffix := self._Path(import_symbol_name).suffix:
                 # In case of '../package.json', we should filter it out
                 path = importer_file_path.parent / import_symbol_name
                 if suffix in extension_list and path.exists():
@@ -176,7 +189,7 @@ class ImportResolver:
         import_symbol_name = import_symbol_name.strip('"').strip("'")
         # Find the module path
         result_path = []
-        import_path = Path(import_symbol_name)
+        import_path = self._Path(import_symbol_name)
         if import_path.is_absolute() and import_path.exists():
             result_path.append(import_path)
         else:
@@ -199,7 +212,7 @@ class ImportResolver:
         # Find the module path
         result_path = []
         for ext in extension_list:
-            import_path = Path(import_symbol_name).with_suffix(ext)
+            import_path = self._Path(import_symbol_name).with_suffix(ext)
             if import_path.is_absolute() and import_path.exists():
                 result_path.append(import_path)
             else:
@@ -219,7 +232,7 @@ class ImportResolver:
         import_symbol_name = import_symbol_node.text.decode()
         # Strip double quote and angle bracket
         import_symbol_name = import_symbol_name.strip('"').lstrip("<").rstrip(">")
-        import_path = Path(import_symbol_name)
+        import_path = self._Path(import_symbol_name)
 
         # Heuristics to search for the header file
         search_paths = [
@@ -259,20 +272,19 @@ class ImportResolver:
             module_path = None
             replacements = {}
 
-            with open(go_mod_path, "r") as file:
-                for line in file:
-                    line = line.strip()
-                    if line.startswith("module "):
-                        module_path = line.split()[1]
-                    elif line.startswith("replace "):
-                        parts = line.split()
-                        if len(parts) >= 4 and parts[2] == "=>":
-                            replacements[parts[1]] = parts[3]
+            for line in go_mod_path.read_text().splitlines():
+                line = line.strip()
+                if line.startswith("module "):
+                    module_path = line.split()[1]
+                elif line.startswith("replace "):
+                    parts = line.split()
+                    if len(parts) >= 4 and parts[2] == "=>":
+                        replacements[parts[1]] = parts[3]
 
             return module_path, replacements
 
         # Parse the go.mod file
-        go_mod_path = Path(self.repo.repo_path) / "go.mod"
+        go_mod_path = self.repo.repo_path / "go.mod"
         if go_mod_path.exists():
             module_path, replacements = parse_go_mod(go_mod_path)
         else:
@@ -293,12 +305,11 @@ class ImportResolver:
             resolved_path = self.repo.repo_path / import_stmt.replace("/", os.sep)
 
         if resolved_path:
-            resolved_path = Path(resolved_path)
             if resolved_path.is_dir():
                 # Try to find a .go file in the directory
                 go_files = list(resolved_path.glob("*.go"))
                 if go_files:
-                    imported_paths.append(go_files[0])
+                    imported_paths.extend(go_files)
         #         else:
         #             logger.debug(f"No .go files found in the directory: {resolved_path}")
         #     else:
