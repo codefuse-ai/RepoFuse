@@ -13,8 +13,10 @@ from tree_sitter import Node as TS_Node
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import BaseDependencyGraphGenerator
 from dependency_graph.graph_generator.tree_sitter_generator.resolve_import import (
-    ImportFinder,
     ImportResolver,
+)
+from dependency_graph.graph_generator.tree_sitter_generator.import_finder import (
+    ImportFinder,
 )
 from dependency_graph.models import PathLike
 from dependency_graph.models.graph_data import (
