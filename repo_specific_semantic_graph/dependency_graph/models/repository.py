@@ -27,6 +27,7 @@ class Repository:
         Language.PHP: (".php",),
         Language.Ruby: (".rb",),
         Language.C: (".c", ".h"),
+        Language.CPP: (".cpp", ".hpp", ".cc", ".hh", ".cxx", ".hxx", ".c", ".h"),
     }
 
     def __init__(self, repo_path: PathLike, language: Language) -> None:

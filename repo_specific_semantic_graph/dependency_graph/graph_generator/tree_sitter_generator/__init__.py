@@ -62,6 +62,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.PHP,
         Language.Ruby,
         Language.C,
+        Language.CPP,
     )
 
     def generate_file(

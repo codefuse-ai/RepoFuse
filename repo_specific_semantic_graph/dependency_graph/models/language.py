@@ -11,6 +11,7 @@ class Language(str, enum.Enum):
     PHP = "php"
     Ruby = "ruby"
     C = "c"
+    CPP = "cpp"
 
     def __str__(self):
         return self.value

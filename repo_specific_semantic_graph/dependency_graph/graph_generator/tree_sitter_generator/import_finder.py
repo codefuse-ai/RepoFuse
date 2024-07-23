@@ -101,6 +101,16 @@ FIND_IMPORT_QUERY = {
         )
         """
     ),
+    Language.CPP: dedent(
+        """
+        (preproc_include path: 
+            [
+                (string_literal) @import_name
+                (system_lib_string) @import_name
+            ]
+        )
+        """
+    ),
 }
 FIND_PACKAGE_QUERY = {
     Language.Java: dedent(
@@ -198,7 +208,7 @@ class ImportFinder:
                 | Language.Ruby
             ):
                 return file_path.stem
-            case Language.PHP | Language.C:
+            case Language.PHP | Language.C | Language.CPP:
                 return file_path.name
             case _:
                 raise NotImplementedError(f"Language {self.language} is not supported")

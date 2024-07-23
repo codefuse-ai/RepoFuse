@@ -405,3 +405,41 @@ def test_c(tree_sitter_generator, c_repo_suite_path):
         ),
         ("module", "utils.c", "module", "utils.h", "utils.h", '"utils.h"'),
     ]
+
+
+def test_cpp(tree_sitter_generator, cpp_repo_suite_path):
+    repo_path = cpp_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.CPP)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 2
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        (
+            "module",
+            "greetings.cpp",
+            "module",
+            "greetings.hpp",
+            "greetings.hpp",
+            '"greetings.hpp"',
+        ),
+        (
+            "module",
+            "main.cpp",
+            "module",
+            "greetings.hpp",
+            "greetings.hpp",
+            '"greetings.hpp"',
+        ),
+    ]

@@ -54,8 +54,8 @@ class ImportResolver:
                 return self.resolve_php_import(import_symbol_node, importer_file_path)
             case Language.Ruby:
                 return self.resolve_ruby_import(import_symbol_node, importer_file_path)
-            case Language.C:
-                return self.resolve_c_import(import_symbol_node, importer_file_path)
+            case Language.C | Language.CPP:
+                return self.resolve_cfamily_import(import_symbol_node, importer_file_path)
             case _:
                 raise NotImplementedError(
                     f"Language {self.repo.language} is not supported"
@@ -205,7 +205,7 @@ class ImportResolver:
 
         return result_path
 
-    def resolve_c_import(
+    def resolve_cfamily_import(
         self,
         import_symbol_node: TS_Node,
         importer_file_path: Path,
