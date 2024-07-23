@@ -19,7 +19,7 @@ from typing import List
 
 import timeout_decorator
 import torch
-from fuzzywuzzy import fuzz
+from thefuzz import fuzz
 from nltk.tokenize import RegexpTokenizer
 from sacrebleu.tokenizers.tokenizer_intl import TokenizerV14International
 
