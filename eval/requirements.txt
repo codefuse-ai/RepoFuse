@@ -7,7 +7,7 @@ bitsandbytes
 # accelerate
 scikit-learn
 rank-bm25
-fuzzywuzzy
+thefuzz
 nltk
 sacrebleu
 deepspeed>0.9
