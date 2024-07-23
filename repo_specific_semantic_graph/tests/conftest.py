@@ -46,6 +46,11 @@ def php_repo_suite_path(repo_suite_path):
 
 
 @pytest.fixture
+def ruby_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "ruby"
+
+
+@pytest.fixture
 def c_repo_suite_path(repo_suite_path):
     return repo_suite_path / "c"
 

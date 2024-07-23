@@ -57,19 +57,33 @@ FIND_IMPORT_QUERY = {
         """
         (using_directive
         [
-          (qualified_name) @package_name
-          (identifier) @package_name
+          (qualified_name) @import_name
+          (identifier) @import_name
         ])
         """
     ),
     Language.TypeScript: dedent(
         """
-        (import_statement (string (string_fragment) @import_name))
+        [
+            (import_statement (string (string_fragment) @import_name))
+            (call_expression
+              function: ((identifier) @require_name
+                            (#eq? @require_name "require"))
+              arguments: (arguments (string (string_fragment) @import_name))
+            )
+        ]
         """
     ),
     Language.JavaScript: dedent(
         """
-        (import_statement (string (string_fragment) @import_name))
+        [
+            (import_statement (string (string_fragment) @import_name))
+            (call_expression
+              function: ((identifier) @require_name
+                            (#eq? @require_name "require"))
+              arguments: (arguments (string (string_fragment) @import_name))
+            )
+        ]
         """
     ),
     Language.PHP: dedent(
@@ -182,7 +196,7 @@ class ImportFinder:
         match self.language:
             case Language.Java | Language.Kotlin:
                 captures = self._query_and_captures(
-                    code, FIND_PACKAGE_QUERY[self.language]
+                    code, FIND_PACKAGE_QUERY[self.language], "package_name"
                 )
                 assert (
                     len(captures) == 1
@@ -193,7 +207,7 @@ class ImportFinder:
                 return module_name
             case Language.CSharp:
                 captures = self._query_and_captures(
-                    code, FIND_PACKAGE_QUERY[self.language]
+                    code, FIND_PACKAGE_QUERY[self.language], "namespace_name"
                 )
                 assert (
                     len(captures) == 1

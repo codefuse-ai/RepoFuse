@@ -167,7 +167,7 @@ def test_javascript(tree_sitter_generator, javascript_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 3
+    assert len(edges) == 4
     relations = [
         (
             edge[0].type.value,
@@ -180,6 +180,7 @@ def test_javascript(tree_sitter_generator, javascript_repo_suite_path):
         for edge in edges
     ]
     assert relations == [
+        ("module", "app", "module", "mathUtils", "mathUtils.js", "./mathUtils"),
         ("module", "index", "module", "utilA", "utilA.js", "./utils/utilA"),
         ("module", "index", "module", "utilB", "utilB.js", "./utils/utilB"),
         (
@@ -338,32 +339,17 @@ def test_ruby(tree_sitter_generator, ruby_repo_suite_path):
         for edge in edges
     ]
     assert relations == [
-        ("module", "main", "module", "greeting", "greeting.php", "'./greeting.php'"),
-        ("module", "main", "module", "config", "config.php", "'helpers/config.php'"),
+        ("module", "another_helper", "module", "helper", "helper.rb", "'helper'"),
+        ("module", "main", "module", "helper", "helper.rb", "'lib/helper'"),
         (
             "module",
             "main",
             "module",
-            "functions",
-            "functions.php",
-            "'helpers/functions.php'",
+            "another_helper",
+            "another_helper.rb",
+            "'lib/another_helper'",
         ),
-        (
-            "module",
-            "main",
-            "module",
-            "constants",
-            "constants.php",
-            "'helpers/constants.php'",
-        ),
-        (
-            "module",
-            "main",
-            "module",
-            "constants",
-            "constants.php",
-            "'helpers/constants.php'",
-        ),
+        ("module", "main", "module", "greeting", "greeting.rb", "'greeting'"),
     ]
 
 
