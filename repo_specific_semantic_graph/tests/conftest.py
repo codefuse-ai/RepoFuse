@@ -33,3 +33,7 @@ def javascript_repo_suite_path(repo_suite_path):
 @pytest.fixture
 def typescript_repo_suite_path(repo_suite_path):
     return repo_suite_path / "typescript"
+
+@pytest.fixture
+def kotlin_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "kotlin"

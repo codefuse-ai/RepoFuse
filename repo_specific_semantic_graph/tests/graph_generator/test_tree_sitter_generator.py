@@ -81,7 +81,7 @@ def test_java(tree_sitter_generator, java_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 2
+    assert len(edges) == 3
     relations = [
         (
             edge[0].type.value,
@@ -109,6 +109,14 @@ def test_java(tree_sitter_generator, java_repo_suite_path):
             "com.example.models.User",
             "User.java",
             "com.example.models.User",
+        ),
+        (
+            "module",
+            "com.example.main.MainWithStarImport",
+            "module",
+            "com.example.models.User",
+            "User.java",
+            "com.example.models",
         ),
     ]
 
@@ -208,4 +216,42 @@ def test_typescript(tree_sitter_generator, typescript_repo_suite_path):
         ("module", "index", "module", "another", "another.ts", "./utils/another"),
         ("module", "index", "module", "service", "service.ts", "./services/service"),
         ("module", "service", "module", "index", "index.ts", "../utils"),
+    ]
+
+
+def test_kotlin(tree_sitter_generator, kotlin_repo_suite_path):
+    repo_path = kotlin_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.Kotlin)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 2
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        (
+            "module",
+            "com.example.MainAbsolute",
+            "module",
+            "com.example.subpackage.Utility",
+            "Utility.kt",
+            "com.example.subpackage.Utility",
+        ),
+        (
+            "module",
+            "com.example.MainWildcard",
+            "module",
+            "com.example.subpackage.Utility",
+            "Utility.kt",
+            "com.example.subpackage",
+        ),
     ]

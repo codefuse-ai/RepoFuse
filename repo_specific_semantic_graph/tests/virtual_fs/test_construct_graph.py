@@ -75,7 +75,7 @@ def test_construct_tree_sitter_graph_on_virtual_repo(java_repo_suite_path):
     graph = construct_dependency_graph(repo, dependency_graph_generator)
     edges = graph.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 2
+    assert len(edges) == 3
     relations = [
         (
             edge[0].type.value,
@@ -103,6 +103,14 @@ def test_construct_tree_sitter_graph_on_virtual_repo(java_repo_suite_path):
             "com.example.models.User",
             "User.java",
             "com.example.models.User",
+        ),
+        (
+            "module",
+            "com.example.main.MainWithStarImport",
+            "module",
+            "com.example.models.User",
+            "User.java",
+            "com.example.models",
         ),
     ]
 

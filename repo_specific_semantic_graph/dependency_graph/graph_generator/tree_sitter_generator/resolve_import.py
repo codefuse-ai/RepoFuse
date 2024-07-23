@@ -1,13 +1,9 @@
 from pathlib import Path
-from textwrap import dedent
 
 from importlab.parsepy import ImportStatement
 from importlab.resolve import ImportException
-from tree_sitter import Language as TS_Language, Parser, Tree, Node as TS_Node
+from tree_sitter import Node as TS_Node
 
-from dependency_graph.graph_generator.tree_sitter_generator.load_lib import (
-    get_builtin_lib_path,
-)
 from dependency_graph.graph_generator.tree_sitter_generator.python_resolver import (
     Resolver,
 )
@@ -15,149 +11,9 @@ from dependency_graph.models import PathLike
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
-from dependency_graph.utils.read_file import read_file_to_string
 
 # Initialize logging
 logger = setup_logger()
-
-
-FIND_IMPORT_QUERY = {
-    # Language.Python: dedent(
-    #     """
-    #     [
-    #       (import_from_statement
-    #         module_name: [
-    #             (dotted_name) @import_name
-    #             (relative_import) @import_name
-    #         ]
-    #       )
-    #       (import_statement
-    #         name: [
-    #             (dotted_name) @import_name
-    #             (aliased_import
-    #                 name: (dotted_name) @import_name
-    #             )
-    #         ]
-    #       )
-    #     ]
-    #     """
-    # ),
-    # For python, we need the whole import statement to analyze the import symbol
-    Language.Python: dedent(
-        """
-        [
-          (import_from_statement) @import_name
-          (import_statement) @import_name
-        ]
-        """
-    ),
-    Language.Java: dedent(
-        """
-        (import_declaration
-        [
-          (identifier) @import_name
-          (scoped_identifier) @import_name
-        ])
-        """
-    ),
-    Language.CSharp: dedent(
-        """
-        (using_directive
-        [
-          (qualified_name) @package_name
-          (identifier) @package_name
-        ])
-        """
-    ),
-    Language.TypeScript: dedent(
-        """
-        (import_statement (string (string_fragment) @import_name))
-        """
-    ),
-    Language.JavaScript: dedent(
-        """
-        (import_statement (string (string_fragment) @import_name))
-        """
-    ),
-}
-
-FIND_PACKAGE_QUERY = {
-    Language.Java: dedent(
-        """
-        (package_declaration
-        [
-          (identifier) @package_name
-          (scoped_identifier) @package_name
-        ])
-        """
-    ),
-    Language.CSharp: dedent(
-        """
-        (namespace_declaration
-        [
-          (qualified_name) @namespace_name
-          (identifier) @namespace_name
-        ])
-        """
-    ),
-}
-
-
-class ImportFinder:
-    def __init__(self, language: Language):
-        lib_path = get_builtin_lib_path()
-        self.language = language
-        # Initialize the Tree-sitter language
-        self.parser = Parser()
-        self.ts_language = TS_Language(str(lib_path.absolute()), str(language))
-        self.parser.set_language(self.ts_language)
-
-    def _query_and_captures(self, code: str, query: str):
-        tree: Tree = self.parser.parse(code.encode())
-        query = self.ts_language.query(query)
-        captures = query.captures(tree.root_node)
-        return [node for node, _ in captures]
-
-    def find_imports(
-        self,
-        code: str,
-    ) -> list[TS_Node]:
-        return self._query_and_captures(code, FIND_IMPORT_QUERY[self.language])
-
-    def find_module_name(self, file_path: Path) -> str:
-        """
-        Find the name of the module of the current file.
-        This term is broad enough to encompass the different ways in which these languages organize and reference code units
-        In Java, it is the name of the package.
-        In C#, it is the name of the namespace.
-        In JavaScript/TypeScript, it is the name of the file.
-        """
-        # Use read_file_to_string here to avoid non-UTF8 decoding issue
-        code = read_file_to_string(file_path)
-        match self.language:
-            case Language.Java:
-                captures = self._query_and_captures(
-                    code, FIND_PACKAGE_QUERY[self.language]
-                )
-                assert (
-                    len(captures) == 1
-                ), f"Expected 1 module in the file {file_path}, got {len(captures)}"
-                node = captures[0]
-                package_name = node.text.decode()
-                module_name = f"{package_name}.{file_path.stem}"
-                return module_name
-            case Language.CSharp:
-                captures = self._query_and_captures(
-                    code, FIND_PACKAGE_QUERY[self.language]
-                )
-                assert (
-                    len(captures) == 1
-                ), f"Expected 1 module in the file {file_path}, got {len(captures)}"
-                node = captures[0]
-                namespace_name = node.text.decode()
-                return namespace_name
-            case Language.TypeScript | Language.JavaScript | Language.Python:
-                return file_path.stem
 
 
 class ImportResolver:
@@ -171,7 +27,20 @@ class ImportResolver:
         importer_file_path: Path,
     ) -> list[Path] | None:
         match self.repo.language:
-            case Language.Java | Language.CSharp:
+            case Language.Java | Language.Kotlin:
+                import_symbol_name = import_symbol_node.text.decode()
+                # Deal with star import: `import xxx.*`
+                if b".*" in import_symbol_node.parent.text:
+                    resolved_path_list = []
+                    for module_name, path_list in module_map.items():
+                        # Use rpartition to split the string at the rightmost '.'
+                        package_name, _, _ = module_name.rpartition(".")
+                        if package_name == import_symbol_name:
+                            resolved_path_list.extend(path_list)
+                    return resolved_path_list
+                else:
+                    return module_map.get(import_symbol_name, None)
+            case Language.CSharp:
                 import_symbol_name = import_symbol_node.text.decode()
                 return module_map.get(import_symbol_name, None)
             case Language.TypeScript | Language.JavaScript:
