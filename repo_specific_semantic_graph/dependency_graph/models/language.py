@@ -10,6 +10,7 @@ class Language(str, enum.Enum):
     TypeScript = "typescript"
     PHP = "php"
     Ruby = "ruby"
+    C = "c"
 
     def __str__(self):
         return self.value

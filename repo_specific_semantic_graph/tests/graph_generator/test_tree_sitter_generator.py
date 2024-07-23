@@ -276,29 +276,43 @@ def test_php(tree_sitter_generator, php_repo_suite_path):
         for edge in edges
     ]
     assert relations == [
-        ("module", "main", "module", "greeting", "greeting.php", "'./greeting.php'"),
-        ("module", "main", "module", "config", "config.php", "'helpers/config.php'"),
         (
             "module",
-            "main",
+            "main.php",
             "module",
-            "functions",
+            "greeting.php",
+            "greeting.php",
+            "'./greeting.php'",
+        ),
+        (
+            "module",
+            "main.php",
+            "module",
+            "config.php",
+            "config.php",
+            "'helpers/config.php'",
+        ),
+        (
+            "module",
+            "main.php",
+            "module",
+            "functions.php",
             "functions.php",
             "'helpers/functions.php'",
         ),
         (
             "module",
-            "main",
+            "main.php",
             "module",
-            "constants",
+            "constants.php",
             "constants.php",
             "'helpers/constants.php'",
         ),
         (
             "module",
-            "main",
+            "main.php",
             "module",
-            "constants",
+            "constants.php",
             "constants.php",
             "'helpers/constants.php'",
         ),
@@ -350,4 +364,44 @@ def test_ruby(tree_sitter_generator, ruby_repo_suite_path):
             "constants.php",
             "'helpers/constants.php'",
         ),
+    ]
+
+
+def test_c(tree_sitter_generator, c_repo_suite_path):
+    repo_path = c_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.C)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 4
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        ("module", "main.c", "module", "utils.h", "utils.h", '"utils.h"'),
+        (
+            "module",
+            "main.c",
+            "module",
+            "net_utils.h",
+            "net_utils.h",
+            '"net/net_utils.h"',
+        ),
+        (
+            "module",
+            "net_utils.c",
+            "module",
+            "net_utils.h",
+            "net_utils.h",
+            '"net/net_utils.h"',
+        ),
+        ("module", "utils.c", "module", "utils.h", "utils.h", '"utils.h"'),
     ]

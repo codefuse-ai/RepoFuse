@@ -7,7 +7,6 @@ from tree_sitter import Node as TS_Node
 from dependency_graph.graph_generator.tree_sitter_generator.python_resolver import (
     Resolver,
 )
-from dependency_graph.models import PathLike
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
@@ -55,6 +54,8 @@ class ImportResolver:
                 return self.resolve_php_import(import_symbol_node, importer_file_path)
             case Language.Ruby:
                 return self.resolve_ruby_import(import_symbol_node, importer_file_path)
+            case Language.C:
+                return self.resolve_c_import(import_symbol_node, importer_file_path)
             case _:
                 raise NotImplementedError(
                     f"Language {self.repo.language} is not supported"
@@ -64,7 +65,7 @@ class ImportResolver:
         self,
         import_symbol_node: TS_Node,
         module_map: dict[str, list[Path]],
-        importer_file_path: PathLike,
+        importer_file_path: Path,
     ) -> list[Path] | None:
         def _search_file(search_path: Path, module_name: str) -> list[Path]:
             result_path = []
@@ -111,7 +112,7 @@ class ImportResolver:
     def resolve_python_import(
         self,
         import_symbol_node: TS_Node,
-        importer_file_path: PathLike,
+        importer_file_path: Path,
     ) -> list[Path] | None:
         assert import_symbol_node.type in (
             "import_statement",
@@ -163,7 +164,7 @@ class ImportResolver:
     def resolve_php_import(
         self,
         import_symbol_node: TS_Node,
-        importer_file_path: PathLike,
+        importer_file_path: Path,
     ) -> list[Path] | None:
         import_symbol_name = import_symbol_node.text.decode()
         # Strip double and single quote
@@ -182,7 +183,7 @@ class ImportResolver:
     def resolve_ruby_import(
         self,
         import_symbol_node: TS_Node,
-        importer_file_path: PathLike,
+        importer_file_path: Path,
     ) -> list[Path] | None:
         import_symbol_name = import_symbol_node.text.decode()
         # Strip double and single quote
@@ -201,5 +202,47 @@ class ImportResolver:
                 path = path.with_suffix(ext)
                 if path.exists():
                     result_path.append(path)
+
+        return result_path
+
+    def resolve_c_import(
+        self,
+        import_symbol_node: TS_Node,
+        importer_file_path: Path,
+    ) -> list[Path] | None:
+
+        import_symbol_name = import_symbol_node.text.decode()
+        # Strip double quote and angle bracket
+        import_symbol_name = import_symbol_name.strip('"').lstrip("<").rstrip(">")
+        import_path = Path(import_symbol_name)
+
+        # Heuristics to search for the header file
+        search_paths = [
+            # Common practice to have headers in 'include' directory
+            self.repo.repo_path / "include" / import_path,
+            # Relative path from the C file's directory
+            importer_file_path.parent / import_path,
+            # Common practice to have headers in 'src' directory
+            self.repo.repo_path / "src" / import_path,
+            # Absolute/relative path as given in the include statement
+            import_path,
+        ]
+
+        # Add parent directories of the C file path
+        for parent in importer_file_path.parents:
+            search_paths.append(parent / import_path)
+
+        # Add sibling directories of each directory component of importer_file_path
+        for parent in importer_file_path.parents:
+            for sibling in parent.iterdir():
+                if sibling.is_dir() and sibling != importer_file_path:
+                    search_paths.append(sibling / import_path)
+
+        # Find the module path
+        result_path = []
+        # Check if any of these paths exist
+        for path in search_paths:
+            if path.exists():
+                result_path.append(path)
 
         return result_path
