@@ -58,3 +58,8 @@ def c_repo_suite_path(repo_suite_path):
 @pytest.fixture
 def cpp_repo_suite_path(repo_suite_path):
     return repo_suite_path / "cpp"
+
+
+@pytest.fixture
+def go_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "go"

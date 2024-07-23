@@ -429,3 +429,36 @@ def test_cpp(tree_sitter_generator, cpp_repo_suite_path):
             '"greetings.hpp"',
         ),
     ]
+
+
+def test_go(tree_sitter_generator, go_repo_suite_path):
+    repo_path = go_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.Go)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 4
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        ("module", "main", "module", "utils", "utils.go", '"myproject/utils"'),
+        (
+            "module",
+            "main",
+            "module",
+            "anotherpackage",
+            "another.go",
+            '"myproject/anotherpackage"',
+        ),
+        ("module", "main", "module", "utils", "utils.go", '"myproject/utils"'),
+        ("module", "main", "module", "utils", "utils.go", '"myproject/utils"'),
+    ]

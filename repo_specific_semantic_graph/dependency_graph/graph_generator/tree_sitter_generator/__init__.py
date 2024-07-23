@@ -63,6 +63,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.Ruby,
         Language.C,
         Language.CPP,
+        Language.Go,
     )
 
     def generate_file(
@@ -85,8 +86,8 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
             if not file.content.strip():
                 continue
 
-            name = finder.find_module_name(file.file_path)
-            module_map[name].append(file.file_path)
+            if name := finder.find_module_name(file.file_path):
+                module_map[name].append(file.file_path)
             nodes = finder.find_imports(file.content)
             import_map[(file.file_path, name)].extend(nodes)
 

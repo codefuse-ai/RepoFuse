@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from importlab.parsepy import ImportStatement
@@ -55,7 +56,11 @@ class ImportResolver:
             case Language.Ruby:
                 return self.resolve_ruby_import(import_symbol_node, importer_file_path)
             case Language.C | Language.CPP:
-                return self.resolve_cfamily_import(import_symbol_node, importer_file_path)
+                return self.resolve_cfamily_import(
+                    import_symbol_node, importer_file_path
+                )
+            case Language.Go:
+                return self.resolve_go_import(import_symbol_node, importer_file_path)
             case _:
                 raise NotImplementedError(
                     f"Language {self.repo.language} is not supported"
@@ -246,3 +251,59 @@ class ImportResolver:
                 result_path.append(path)
 
         return result_path
+
+    def resolve_go_import(
+        self, import_symbol_node: TS_Node, importer_file_path: Path
+    ) -> list[Path] | None:
+        def parse_go_mod(go_mod_path: Path):
+            module_path = None
+            replacements = {}
+
+            with open(go_mod_path, "r") as file:
+                for line in file:
+                    line = line.strip()
+                    if line.startswith("module "):
+                        module_path = line.split()[1]
+                    elif line.startswith("replace "):
+                        parts = line.split()
+                        if len(parts) >= 4 and parts[2] == "=>":
+                            replacements[parts[1]] = parts[3]
+
+            return module_path, replacements
+
+        # Parse the go.mod file
+        go_mod_path = Path(self.repo.repo_path) / "go.mod"
+        if go_mod_path.exists():
+            module_path, replacements = parse_go_mod(go_mod_path)
+        else:
+            module_path, replacements = None, {}
+
+        # Find corresponding paths for the imported packages
+        imported_paths = []
+
+        import_stmt = import_symbol_node.text.decode()
+        import_stmt = import_stmt.strip('"')
+        # Resolve the import path using replacements or the module path
+        if import_stmt in replacements:
+            resolved_path = replacements[import_stmt]
+        elif module_path and import_stmt.startswith(module_path):
+            resolved_path = self.repo.repo_path / import_stmt[len(module_path) + 1 :]
+        else:
+            # Fallback logic: Try to resolve based on project directory structure
+            resolved_path = self.repo.repo_path / import_stmt.replace("/", os.sep)
+
+        if resolved_path:
+            resolved_path = Path(resolved_path)
+            if resolved_path.is_dir():
+                # Try to find a .go file in the directory
+                go_files = list(resolved_path.glob("*.go"))
+                if go_files:
+                    imported_paths.append(go_files[0])
+        #         else:
+        #             logger.debug(f"No .go files found in the directory: {resolved_path}")
+        #     else:
+        #         logger.debug(f"Resolved path is not a directory: {resolved_path}")
+        # else:
+        #     logger.debug(f"Could not resolve import path: {import_stmt}")
+
+        return imported_paths

@@ -125,6 +125,16 @@ FIND_IMPORT_QUERY = {
         )
         """
     ),
+    Language.Go: dedent(
+        """
+        (import_declaration
+            [
+                (import_spec path: (interpreted_string_literal) @import_name)
+                (import_spec_list (import_spec path: (interpreted_string_literal) @import_name))
+            ]
+        )
+        """
+    ),
 }
 FIND_PACKAGE_QUERY = {
     Language.Java: dedent(
@@ -145,9 +155,14 @@ FIND_PACKAGE_QUERY = {
         """
         (namespace_declaration
         [
-          (qualified_name) @namespace_name
-          (identifier) @namespace_name
+          (qualified_name) @package_name
+          (identifier) @package_name
         ])
+        """
+    ),
+    Language.Go: dedent(
+        """
+        (package_clause (package_identifier) @package_name)
         """
     ),
 }
@@ -183,7 +198,7 @@ class ImportFinder:
     ) -> list[TS_Node]:
         return self._query_and_captures(code, FIND_IMPORT_QUERY[self.language])
 
-    def find_module_name(self, file_path: Path) -> str:
+    def find_module_name(self, file_path: Path) -> str | None:
         """
         Find the name of the module of the current file.
         This term is broad enough to encompass the different ways in which these languages organize and reference code units
@@ -198,23 +213,20 @@ class ImportFinder:
                 captures = self._query_and_captures(
                     code, FIND_PACKAGE_QUERY[self.language], "package_name"
                 )
-                assert (
-                    len(captures) == 1
-                ), f"Expected 1 module in the file {file_path}, got {len(captures)}"
-                node = captures[0]
-                package_name = node.text.decode()
-                module_name = f"{package_name}.{file_path.stem}"
-                return module_name
-            case Language.CSharp:
+
+                if len(captures) > 0:
+                    node = captures[0]
+                    package_name = node.text.decode()
+                    module_name = f"{package_name}.{file_path.stem}"
+                    return module_name
+            case Language.CSharp | Language.Go:
                 captures = self._query_and_captures(
-                    code, FIND_PACKAGE_QUERY[self.language], "namespace_name"
+                    code, FIND_PACKAGE_QUERY[self.language], "package_name"
                 )
-                assert (
-                    len(captures) == 1
-                ), f"Expected 1 module in the file {file_path}, got {len(captures)}"
-                node = captures[0]
-                namespace_name = node.text.decode()
-                return namespace_name
+                if len(captures) > 0:
+                    node = captures[0]
+                    package_name = node.text.decode()
+                    return package_name
             case (
                 Language.TypeScript
                 | Language.JavaScript
