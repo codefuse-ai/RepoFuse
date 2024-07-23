@@ -8,6 +8,7 @@ class Language(str, enum.Enum):
     Kotlin = "kotlin"
     JavaScript = "javascript"
     TypeScript = "typescript"
+    PHP = "php"
 
     def __str__(self):
         return self.value

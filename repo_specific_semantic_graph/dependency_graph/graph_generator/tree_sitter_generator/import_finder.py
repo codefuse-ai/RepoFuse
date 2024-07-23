@@ -72,6 +72,15 @@ FIND_IMPORT_QUERY = {
         (import_statement (string (string_fragment) @import_name))
         """
     ),
+    Language.PHP: dedent(
+        """
+        [
+          (require_once_expression (string) @import_name)
+          (require_expression (string) @import_name)
+          (include_expression (string) @import_name)
+        ]
+        """
+    ),
 }
 FIND_PACKAGE_QUERY = {
     Language.Java: dedent(
@@ -153,7 +162,12 @@ class ImportFinder:
                 node = captures[0]
                 namespace_name = node.text.decode()
                 return namespace_name
-            case Language.TypeScript | Language.JavaScript | Language.Python:
+            case (
+                Language.TypeScript
+                | Language.JavaScript
+                | Language.Python
+                | Language.PHP
+            ):
                 return file_path.stem
             case _:
                 raise NotImplementedError(f"Language {self.language} is not supported")
