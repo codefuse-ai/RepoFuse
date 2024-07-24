@@ -470,7 +470,7 @@ def test_swift(tree_sitter_generator, swift_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 3
+    assert len(edges) == 4
     relations = [
         (
             edge[0].type.value,
@@ -486,4 +486,5 @@ def test_swift(tree_sitter_generator, swift_repo_suite_path):
         ("module", "MyApp", "module", "Utilities", "Utilities.swift", "Utilities"),
         ("module", "MyApp", "module", "Other", "Foo.swift", "Other.greet"),
         ("module", "MyAppTests", "module", "MyApp", "Foo.swift", "MyApp"),
+        ("module", "MyAppTests", "module", "MyApp", "main.swift", "MyApp"),
     ]

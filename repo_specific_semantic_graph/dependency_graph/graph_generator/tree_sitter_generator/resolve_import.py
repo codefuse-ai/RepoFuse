@@ -39,54 +39,65 @@ class ImportResolver:
         module_map: dict[str, list[Path]],
         importer_file_path: Path,
     ) -> list[Path] | None:
+        resolved_path_list = []
+
         match self.repo.language:
             case Language.Java | Language.Kotlin:
                 import_symbol_name = import_symbol_node.text.decode()
                 # Deal with star import: `import xxx.*`
                 if b".*" in import_symbol_node.parent.text:
-                    resolved_path_list = []
                     for module_name, path_list in module_map.items():
                         # Use rpartition to split the string at the rightmost '.'
                         package_name, _, _ = module_name.rpartition(".")
                         if package_name == import_symbol_name:
                             resolved_path_list.extend(path_list)
-                    return resolved_path_list
                 else:
-                    return module_map.get(import_symbol_name, None)
+                    resolved_path_list.extend(module_map.get(import_symbol_name, []))
             case Language.CSharp:
                 import_symbol_name = import_symbol_node.text.decode()
-                return module_map.get(import_symbol_name, None)
+                resolved_path_list.extend(module_map.get(import_symbol_name, []))
             case Language.TypeScript | Language.JavaScript:
-                return self.resolve_ts_js_import(
-                    import_symbol_node, module_map, importer_file_path
+                resolved_path_list.extend(
+                    self.resolve_ts_js_import(
+                        import_symbol_node, module_map, importer_file_path
+                    )
                 )
             case Language.Python:
-                return self.resolve_python_import(
-                    import_symbol_node, importer_file_path
+                resolved_path_list.extend(
+                    self.resolve_python_import(import_symbol_node, importer_file_path)
                 )
             case Language.PHP:
-                return self.resolve_php_import(import_symbol_node, importer_file_path)
+                resolved_path_list.extend(
+                    self.resolve_php_import(import_symbol_node, importer_file_path)
+                )
             case Language.Ruby:
-                return self.resolve_ruby_import(import_symbol_node, importer_file_path)
+                resolved_path_list.extend(
+                    self.resolve_ruby_import(import_symbol_node, importer_file_path)
+                )
             case Language.C | Language.CPP:
-                return self.resolve_cfamily_import(
-                    import_symbol_node, importer_file_path
+                resolved_path_list.extend(
+                    self.resolve_cfamily_import(import_symbol_node, importer_file_path)
                 )
             case Language.Go:
-                return self.resolve_go_import(import_symbol_node)
+                resolved_path_list.extend(self.resolve_go_import(import_symbol_node))
             case Language.Swift:
-                return self.resolve_swift_import(import_symbol_node, importer_file_path)
+                resolved_path_list.extend(
+                    self.resolve_swift_import(import_symbol_node, importer_file_path)
+                )
             case _:
                 raise NotImplementedError(
                     f"Language {self.repo.language} is not supported"
                 )
+
+        # De-duplicate the resolved path
+        return list(set(resolved_path_list))
 
     def resolve_ts_js_import(
         self,
         import_symbol_node: TS_Node,
         module_map: dict[str, list[Path]],
         importer_file_path: Path,
-    ) -> list[Path] | None:
+    ) -> list[Path]:
         def _search_file(search_path: Path, module_name: str) -> list[Path]:
             result_path = []
             for ext in extension_list:
@@ -113,8 +124,7 @@ class ImportResolver:
         # Find the module path
         # e.g. './Descriptor' -> './Descriptor.ts'; '../Descriptor' -> '../Descriptor.ts'
         if "." in import_symbol_name or ".." in import_symbol_name:
-
-            result_path = None
+            result_path = []
             # If there is a suffix in the name
             if suffix := self._Path(import_symbol_name).suffix:
                 # In case of '../package.json', we should filter it out
@@ -127,13 +137,13 @@ class ImportResolver:
                 )
             return result_path
         else:
-            return module_map.get(import_symbol_name, None)
+            return module_map.get(import_symbol_name, [])
 
     def resolve_python_import(
         self,
         import_symbol_node: TS_Node,
         importer_file_path: Path,
-    ) -> list[Path] | None:
+    ) -> list[Path]:
         assert import_symbol_node.type in (
             "import_statement",
             "import_from_statement",
@@ -177,15 +187,16 @@ class ImportResolver:
 
         try:
             resolved_path = resolver.resolve_import(imp)
-            return [resolved_path] if resolved_path else None
+            return [resolved_path] if resolved_path else []
         except ImportException as e:
             logger.warn(f"Failed to resolve import: {e}")
+            return []
 
     def resolve_php_import(
         self,
         import_symbol_node: TS_Node,
         importer_file_path: Path,
-    ) -> list[Path] | None:
+    ) -> list[Path]:
         import_symbol_name = import_symbol_node.text.decode()
         # Strip double and single quote
         import_symbol_name = import_symbol_name.strip('"').strip("'")
@@ -204,7 +215,7 @@ class ImportResolver:
         self,
         import_symbol_node: TS_Node,
         importer_file_path: Path,
-    ) -> list[Path] | None:
+    ) -> list[Path]:
         import_symbol_name = import_symbol_node.text.decode()
         # Strip double and single quote
         import_symbol_name = import_symbol_name.strip('"').strip("'")
@@ -229,7 +240,7 @@ class ImportResolver:
         self,
         import_symbol_node: TS_Node,
         importer_file_path: Path,
-    ) -> list[Path] | None:
+    ) -> list[Path]:
 
         import_symbol_name = import_symbol_node.text.decode()
         # Strip double quote and angle bracket
@@ -267,7 +278,7 @@ class ImportResolver:
 
         return result_path
 
-    def resolve_go_import(self, import_symbol_node: TS_Node) -> list[Path] | None:
+    def resolve_go_import(self, import_symbol_node: TS_Node) -> list[Path]:
         def parse_go_mod(go_mod_path: Path):
             module_path = None
             replacements = {}
@@ -342,7 +353,7 @@ class ImportResolver:
 
     def resolve_swift_import(
         self, import_symbol_node: TS_Node, importer_file_path: Path
-    ) -> list[Path] | None:
+    ) -> list[Path]:
         import_symbol_name = import_symbol_node.text.decode()
         if len(import_symbol_node.parent.children) > 2:
             # Handle individual declarations importing such as `import kind module.symbol`
