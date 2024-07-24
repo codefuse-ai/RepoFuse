@@ -9,6 +9,9 @@ from dependency_graph.graph_generator.tree_sitter_generator.load_lib import (
 from dependency_graph.models.language import Language
 from dependency_graph.utils.read_file import read_file_to_string
 
+"""
+Tree-sitter query to find all the imports in a code. The captured import name should be named as `import_name`.
+"""
 FIND_IMPORT_QUERY = {
     # Language.Python: dedent(
     #     """
@@ -171,6 +174,10 @@ FIND_IMPORT_QUERY = {
     ),
 }
 
+"""
+Tree-sitter query to find all the package in a code. The captured pacakge name should be named as `package_name`.
+Note that not all languages have packages declared in code.
+"""
 FIND_PACKAGE_QUERY = {
     Language.Java: dedent(
         """
