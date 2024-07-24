@@ -65,6 +65,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.CPP,
         Language.Go,
         Language.Swift,
+        Language.Rust,
     )
 
     def generate_file(
@@ -109,8 +110,12 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                             read_file_to_string(importee_file_path).encode()
                         ).root_node
 
-                        importer_module_name = finder.find_module_name(importer_file_path)
-                        importee_module_name = finder.find_module_name(importee_file_path)
+                        importer_module_name = finder.find_module_name(
+                            importer_file_path
+                        )
+                        importee_module_name = finder.find_module_name(
+                            importee_file_path
+                        )
 
                         from_node = Node(
                             type=NodeType.MODULE,
@@ -149,7 +154,8 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                                 location=import_location,
                             ),
                             Edge(
-                                relation=EdgeRelation.ImportedBy, location=import_location
+                                relation=EdgeRelation.ImportedBy,
+                                location=import_location,
                             ),
                         )
 

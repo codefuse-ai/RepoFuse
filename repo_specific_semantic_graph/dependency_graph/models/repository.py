@@ -30,6 +30,7 @@ class Repository:
         Language.CPP: (".cpp", ".hpp", ".cc", ".hh", ".cxx", ".hxx", ".c", ".h"),
         Language.Go: (".go", ".mod"),
         Language.Swift: (".swift",),
+        Language.Rust: (".rs",),
     }
 
     def __init__(self, repo_path: PathLike, language: Language) -> None:

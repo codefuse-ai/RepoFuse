@@ -84,6 +84,10 @@ class ImportResolver:
                 resolved_path_list.extend(
                     self.resolve_swift_import(import_symbol_node, importer_file_path)
                 )
+            case Language.Rust:
+                resolved_path_list.extend(
+                    self.resolve_rust_import(import_symbol_node, importer_file_path)
+                )
             case _:
                 raise NotImplementedError(
                     f"Language {self.repo.language} is not supported"
@@ -396,3 +400,75 @@ class ImportResolver:
 
         # Return list of Path objects corresponding to the imported files
         return result_files
+
+    def resolve_rust_import(
+        self, import_symbol_node: TS_Node, importer_file_path: Path
+    ) -> list[Path]:
+        def find_import_path(
+            project_root: Path, file: Path, module_path: list[str], is_absolute: bool
+        ) -> Path | None:
+            """
+            Given the project root, the file containing the import, and the module path,
+            heuristically find the corresponding file path for the imported module.
+
+            :param project_root: The root directory of the Rust project.
+            :param file: The file (pathlib.Path) containing the import statement.
+            :param module_path: A list of module components (e.g., ["my_module", "sub_module"]).
+            :param is_absolute: Boolean indicating if the import is absolute (`crate::`).
+            :return: The pathlib.Path object for the corresponding file or None if not found.
+            """
+            # Start from the project root if the path is absolute
+            current_dir = project_root / "src" if is_absolute else file.parent
+
+            for part in module_path:
+                # Check if the module is a directory with a mod.rs or a file <module_name>.rs
+                dir_path = current_dir / part
+                mod_file_path = dir_path / "mod.rs"
+                file_path = current_dir / f"{part}.rs"
+
+                if mod_file_path.exists():
+                    current_dir = dir_path
+                elif file_path.exists():
+                    return file_path
+                else:
+                    # If not found, check further up the directory hierarchy for relative imports
+                    if not is_absolute:
+                        found = False
+                        for ancestor in current_dir.parents:
+                            ancestor_dir_path = ancestor / part
+                            ancestor_mod_file_path = ancestor_dir_path / "mod.rs"
+                            ancestor_file_path = ancestor / f"{part}.rs"
+
+                            if ancestor_mod_file_path.exists():
+                                current_dir = ancestor_dir_path
+                                found = True
+                                break
+                            elif ancestor_file_path.exists():
+                                return ancestor_file_path
+
+                        if not found:
+                            return None
+                    else:
+                        return None
+
+            # If we reach here, assume the last module part is a file
+            final_file = current_dir / f"{module_path[-1]}.rs"
+            if final_file.exists():
+                return final_file
+            else:
+                return None
+
+        # Decode the symbol name and split into module path components
+        import_symbol_name = import_symbol_node.text.decode()
+        module_path = import_symbol_name.split("::")
+
+        # Determine if the import is absolute
+        is_absolute = module_path[0] == "crate"
+        if is_absolute:
+            module_path = module_path[1:]  # Remove the leading "crate"
+
+        # Attempt to find the imported file based on heuristics
+        imported_file = find_import_path(
+            self.repo.repo_path, importer_file_path, module_path, is_absolute
+        )
+        return [imported_file] if imported_file else []

@@ -68,3 +68,8 @@ def go_repo_suite_path(repo_suite_path):
 @pytest.fixture
 def swift_repo_suite_path(repo_suite_path):
     return repo_suite_path / "swift"
+
+
+@pytest.fixture
+def rust_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "rust"

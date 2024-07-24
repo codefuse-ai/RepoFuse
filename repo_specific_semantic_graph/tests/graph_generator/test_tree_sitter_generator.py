@@ -488,3 +488,42 @@ def test_swift(tree_sitter_generator, swift_repo_suite_path):
         ("module", "MyAppTests", "module", "MyApp", "Foo.swift", "MyApp"),
         ("module", "MyAppTests", "module", "MyApp", "main.swift", "MyApp"),
     ]
+
+
+def test_rust(tree_sitter_generator, rust_repo_suite_path):
+    repo_path = rust_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.Rust)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 3
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        (
+            "module",
+            "main",
+            "module",
+            "sub_module",
+            "sub_module.rs",
+            "my_module::sub_module::sub_function",
+        ),
+        (
+            "module",
+            "main",
+            "module",
+            "helper",
+            "helper.rs",
+            "my_other_module::helper::helper_function",
+        ),
+        ("module", "main", "module", "foo", "foo.rs", "crate::foo::foo"),
+    ]

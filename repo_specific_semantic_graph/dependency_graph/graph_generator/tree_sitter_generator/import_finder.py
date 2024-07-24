@@ -140,7 +140,16 @@ FIND_IMPORT_QUERY = {
         (import_declaration (identifier) @import_name)
         """
     ),
+    Language.Rust: dedent(
+        """
+        [
+            (use_declaration argument: (scoped_identifier) @import_name)
+            (use_declaration argument: (use_as_clause path: (scoped_identifier) @import_name))
+        ]
+        """
+    ),
 }
+
 FIND_PACKAGE_QUERY = {
     Language.Java: dedent(
         """
@@ -237,6 +246,7 @@ class ImportFinder:
                 | Language.JavaScript
                 | Language.Python
                 | Language.Ruby
+                | Language.Rust
             ):
                 return file_path.stem
             case Language.PHP | Language.C | Language.CPP:

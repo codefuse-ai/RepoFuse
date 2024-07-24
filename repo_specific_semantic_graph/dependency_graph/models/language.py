@@ -14,6 +14,7 @@ class Language(str, enum.Enum):
     CPP = "cpp"
     Go = "go"
     Swift = "swift"
+    Rust = "rust"
 
     def __str__(self):
         return self.value
