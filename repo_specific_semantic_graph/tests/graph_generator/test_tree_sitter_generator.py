@@ -1,4 +1,5 @@
 import pytest
+from pytest_unordered import unordered
 
 from dependency_graph import (
     TreeSitterDependencyGraphGenerator,
@@ -482,12 +483,14 @@ def test_swift(tree_sitter_generator, swift_repo_suite_path):
         )
         for edge in edges
     ]
-    assert relations == [
-        ("module", "MyApp", "module", "Utilities", "Utilities.swift", "Utilities"),
-        ("module", "MyApp", "module", "Other", "Foo.swift", "Other.greet"),
-        ("module", "MyAppTests", "module", "MyApp", "Foo.swift", "MyApp"),
-        ("module", "MyAppTests", "module", "MyApp", "main.swift", "MyApp"),
-    ]
+    assert relations == unordered(
+        [
+            ("module", "MyApp", "module", "Utilities", "Utilities.swift", "Utilities"),
+            ("module", "MyApp", "module", "Other", "Foo.swift", "Other.greet"),
+            ("module", "MyAppTests", "module", "MyApp", "Foo.swift", "MyApp"),
+            ("module", "MyAppTests", "module", "MyApp", "main.swift", "MyApp"),
+        ]
+    )
 
 
 def test_rust(tree_sitter_generator, rust_repo_suite_path):
@@ -586,4 +589,34 @@ def test_bash(tree_sitter_generator, bash_repo_suite_path):
             "./lib/source.bash",
         ),
         ("module", "main.sh", "module", "config.sh", "config.sh", "config.sh"),
+    ]
+
+
+def test_r(tree_sitter_generator, r_repo_suite_path):
+    repo_path = r_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.R)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 1
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        (
+            "module",
+            "main_script",
+            "module",
+            "external_script",
+            "external_script.R",
+            '"external_script.R"',
+        )
     ]

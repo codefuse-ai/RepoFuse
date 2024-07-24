@@ -83,3 +83,8 @@ def lua_repo_suite_path(repo_suite_path):
 @pytest.fixture
 def bash_repo_suite_path(repo_suite_path):
     return repo_suite_path / "bash"
+
+
+@pytest.fixture
+def r_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "r"

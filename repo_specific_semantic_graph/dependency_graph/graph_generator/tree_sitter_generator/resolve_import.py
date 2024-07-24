@@ -96,6 +96,10 @@ class ImportResolver:
                 resolved_path_list.extend(
                     self.resolve_bash_import(import_symbol_node, importer_file_path)
                 )
+            case Language.R:
+                resolved_path_list.extend(
+                    self.resolve_r_import(import_symbol_node, importer_file_path)
+                )
             case _:
                 raise NotImplementedError(
                     f"Language {self.repo.language} is not supported"
@@ -513,6 +517,20 @@ class ImportResolver:
         self, import_symbol_node: TS_Node, importer_file_path: Path
     ) -> list[Path]:
         import_symbol_name = import_symbol_node.text.decode()
+        if self._Path(import_symbol_name).exists():
+            return [self._Path(import_symbol_name)]
+        else:
+            resolved_path = importer_file_path.parent / import_symbol_name
+            if resolved_path.exists():
+                return [resolved_path]
+        return []
+
+    def resolve_r_import(
+        self, import_symbol_node: TS_Node, importer_file_path: Path
+    ) -> list[Path]:
+        import_symbol_name = import_symbol_node.text.decode()
+        import_symbol_name = import_symbol_name.strip('"').strip("'")
+
         if self._Path(import_symbol_name).exists():
             return [self._Path(import_symbol_name)]
         else:

@@ -172,6 +172,15 @@ FIND_IMPORT_QUERY = {
         )
         """
     ),
+    Language.R: dedent(
+        """
+        (call
+            function: ((identifier) @source_name)
+                       (#eq? @source_name "source")
+            arguments: (arguments) @import_name
+        )
+        """
+    ),
 }
 
 """
@@ -276,6 +285,7 @@ class ImportFinder:
                 | Language.Ruby
                 | Language.Rust
                 | Language.Lua
+                | Language.R
             ):
                 return file_path.stem
             case Language.PHP | Language.C | Language.CPP | Language.Bash:

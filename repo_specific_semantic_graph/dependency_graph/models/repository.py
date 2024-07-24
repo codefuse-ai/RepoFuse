@@ -33,6 +33,7 @@ class Repository:
         Language.Rust: (".rs",),
         Language.Lua: (".lua",),
         Language.Bash: (".sh", ".bash"),
+        Language.R: (".r", ".R"),
     }
 
     def __init__(self, repo_path: PathLike, language: Language) -> None:

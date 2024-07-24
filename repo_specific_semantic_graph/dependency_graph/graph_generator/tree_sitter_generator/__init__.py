@@ -68,6 +68,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.Rust,
         Language.Lua,
         Language.Bash,
+        Language.R,
     )
 
     def generate_file(
