@@ -73,7 +73,9 @@ class ImportResolver:
                     import_symbol_node, importer_file_path
                 )
             case Language.Go:
-                return self.resolve_go_import(import_symbol_node, importer_file_path)
+                return self.resolve_go_import(import_symbol_node)
+            case Language.Swift:
+                return self.resolve_swift_import(import_symbol_node, importer_file_path)
             case _:
                 raise NotImplementedError(
                     f"Language {self.repo.language} is not supported"
@@ -265,9 +267,7 @@ class ImportResolver:
 
         return result_path
 
-    def resolve_go_import(
-        self, import_symbol_node: TS_Node, importer_file_path: Path
-    ) -> list[Path] | None:
+    def resolve_go_import(self, import_symbol_node: TS_Node) -> list[Path] | None:
         def parse_go_mod(go_mod_path: Path):
             module_path = None
             replacements = {}
@@ -285,7 +285,7 @@ class ImportResolver:
 
         def search_fallback_paths(import_stmt: str, base_path: Path):
             """Searches various fallback paths within the project directory."""
-            potential_paths = [
+            search_paths = [
                 base_path / import_stmt.replace("/", os.sep),
                 base_path / "src" / import_stmt.replace("/", os.sep),
                 base_path / "vendor" / import_stmt.replace("/", os.sep),
@@ -293,7 +293,7 @@ class ImportResolver:
             ]
             found_files = []
 
-            for path in potential_paths:
+            for path in search_paths:
                 if path.is_dir():
                     go_files = list(path.glob("*.go"))
                     if go_files:
@@ -339,3 +339,49 @@ class ImportResolver:
                         imported_paths.extend(go_files)
 
         return imported_paths
+
+    def resolve_swift_import(
+        self, import_symbol_node: TS_Node, importer_file_path: Path
+    ) -> list[Path] | None:
+        import_symbol_name = import_symbol_node.text.decode()
+        if len(import_symbol_node.parent.children) > 2:
+            # Handle individual declarations importing such as `import kind module.symbol`
+            # In this case, we extract the module name from the import statement
+            import_symbol_name = (
+                ".".join(import_symbol_name.split(".")[:-1])
+                if "." in import_symbol_name
+                else import_symbol_name
+            )
+
+        import_symbol_name = import_symbol_name.replace(".", os.sep)
+        import_path = self._Path(import_symbol_name)
+
+        # Heuristic search for source files corresponding to the imported modules
+        search_paths = [
+            self.repo.repo_path / "Sources" / import_symbol_name,
+            self.repo.repo_path / "Tests" / import_symbol_name,
+            self.repo.repo_path / "Modules" / import_symbol_name,
+        ]
+
+        # Add parent directories of the Swift file path
+        for parent in importer_file_path.parents:
+            search_paths.append(parent / import_path)
+
+        # Add sibling directories of each directory component of importer_file_path
+        for parent in importer_file_path.parents:
+            for sibling in parent.iterdir():
+                if sibling.is_dir() and sibling != importer_file_path:
+                    search_paths.append(sibling / import_path)
+
+        # Heuristic search for source files corresponding to the imported modules
+        result_files = []
+
+        for path in search_paths:
+            extension_list = Repository.code_file_extensions[Language.Swift]
+            if path.exists() and path.is_dir():
+                for ext in extension_list:
+                    for swift_file in path.glob(f"**/*{ext}"):
+                        result_files.append(swift_file)
+
+        # Return list of Path objects corresponding to the imported files
+        return result_files

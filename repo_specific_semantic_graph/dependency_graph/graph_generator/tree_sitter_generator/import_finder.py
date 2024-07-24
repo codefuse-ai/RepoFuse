@@ -135,6 +135,11 @@ FIND_IMPORT_QUERY = {
         )
         """
     ),
+    Language.Swift: dedent(
+        """
+        (import_declaration (identifier) @import_name)
+        """
+    ),
 }
 FIND_PACKAGE_QUERY = {
     Language.Java: dedent(
@@ -236,5 +241,8 @@ class ImportFinder:
                 return file_path.stem
             case Language.PHP | Language.C | Language.CPP:
                 return file_path.name
+            case Language.Swift:
+                # Swift module name is its parent directory
+                return file_path.parent.name
             case _:
                 raise NotImplementedError(f"Language {self.language} is not supported")

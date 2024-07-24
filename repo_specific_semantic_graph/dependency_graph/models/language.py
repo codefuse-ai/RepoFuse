@@ -13,6 +13,7 @@ class Language(str, enum.Enum):
     C = "c"
     CPP = "cpp"
     Go = "go"
+    Swift = "swift"
 
     def __str__(self):
         return self.value

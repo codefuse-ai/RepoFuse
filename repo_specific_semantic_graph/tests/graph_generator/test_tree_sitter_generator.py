@@ -462,3 +462,28 @@ def test_go(tree_sitter_generator, go_repo_suite_path):
         ("module", "main", "module", "utils", "utils.go", '"myproject/utils"'),
         ("module", "main", "module", "utils", "utils.go", '"myproject/utils"'),
     ]
+
+
+def test_swift(tree_sitter_generator, swift_repo_suite_path):
+    repo_path = swift_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.Swift)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 3
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        ("module", "MyApp", "module", "Utilities", "Utilities.swift", "Utilities"),
+        ("module", "MyApp", "module", "Other", "Foo.swift", "Other.greet"),
+        ("module", "MyAppTests", "module", "MyApp", "Foo.swift", "MyApp"),
+    ]

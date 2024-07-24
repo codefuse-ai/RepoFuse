@@ -64,6 +64,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.C,
         Language.CPP,
         Language.Go,
+        Language.Swift,
     )
 
     def generate_file(
