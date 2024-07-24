@@ -16,6 +16,7 @@ class Language(str, enum.Enum):
     Swift = "swift"
     Rust = "rust"
     Lua = "lua"
+    Bash = "bash"
 
     def __str__(self):
         return self.value

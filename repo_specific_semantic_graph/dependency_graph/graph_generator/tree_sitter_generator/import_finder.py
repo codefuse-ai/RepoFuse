@@ -160,6 +160,15 @@ FIND_IMPORT_QUERY = {
         )
         """
     ),
+    Language.Bash: dedent(
+        """
+        (command
+            name: ((command_name) @command_name
+                    (#match? @command_name "\\\\.|source|bash|zsh|ksh|zsh|csh|dash"))
+            argument: (word) @import_name
+        )
+        """
+    ),
 }
 
 FIND_PACKAGE_QUERY = {
@@ -262,7 +271,7 @@ class ImportFinder:
                 | Language.Lua
             ):
                 return file_path.stem
-            case Language.PHP | Language.C | Language.CPP:
+            case Language.PHP | Language.C | Language.CPP | Language.Bash:
                 return file_path.name
             case Language.Swift:
                 # Swift module name is its parent directory

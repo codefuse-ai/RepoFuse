@@ -553,3 +553,37 @@ def test_lua(tree_sitter_generator, lua_repo_suite_path):
         ("module", "init", "module", "module3", "module3.lua", '"module3"'),
         ("module", "init", "module", "module4", "module4.lua", '"module4.lua"'),
     ]
+
+
+def test_bash(tree_sitter_generator, bash_repo_suite_path):
+    repo_path = bash_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.Bash)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 5
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        ("module", "main.sh", "module", "script.sh", "script.sh", "script.sh"),
+        ("module", "main.sh", "module", "utils.sh", "utils.sh", "./lib/utils.sh"),
+        ("module", "main.sh", "module", "hello.bash", "hello.bash", "./lib/hello.bash"),
+        (
+            "module",
+            "main.sh",
+            "module",
+            "source.bash",
+            "source.bash",
+            "./lib/source.bash",
+        ),
+        ("module", "main.sh", "module", "config.sh", "config.sh", "config.sh"),
+    ]
