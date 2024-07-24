@@ -283,6 +283,26 @@ class ImportResolver:
 
             return module_path, replacements
 
+        def search_fallback_paths(import_stmt: str, base_path: Path):
+            """Searches various fallback paths within the project directory."""
+            potential_paths = [
+                base_path / import_stmt.replace("/", os.sep),
+                base_path / "src" / import_stmt.replace("/", os.sep),
+                base_path / "vendor" / import_stmt.replace("/", os.sep),
+                base_path / "pkg" / import_stmt.replace("/", os.sep),
+            ]
+            found_files = []
+
+            for path in potential_paths:
+                if path.is_dir():
+                    go_files = list(path.glob("*.go"))
+                    if go_files:
+                        found_files.extend(go_files)
+                elif path.with_suffix(".go").is_file():
+                    found_files.append(path.with_suffix(".go"))
+
+            return found_files
+
         # Parse the go.mod file
         go_mod_path = self.repo.repo_path / "go.mod"
         if go_mod_path.exists():
@@ -295,26 +315,27 @@ class ImportResolver:
 
         import_stmt = import_symbol_node.text.decode()
         import_stmt = import_stmt.strip('"')
+
         # Resolve the import path using replacements or the module path
+        resolved_paths = []
         if import_stmt in replacements:
             resolved_path = replacements[import_stmt]
+            resolved_paths.append(resolved_path)
         elif module_path and import_stmt.startswith(module_path):
             resolved_path = self.repo.repo_path / import_stmt[len(module_path) + 1 :]
+            resolved_paths.append(resolved_path)
         else:
             # Fallback logic: Try to resolve based on project directory structure
-            resolved_path = self.repo.repo_path / import_stmt.replace("/", os.sep)
+            resolved_paths.extend(
+                search_fallback_paths(import_stmt, self.repo.repo_path)
+            )
 
-        if resolved_path:
-            if resolved_path.is_dir():
-                # Try to find a .go file in the directory
-                go_files = list(resolved_path.glob("*.go"))
-                if go_files:
-                    imported_paths.extend(go_files)
-        #         else:
-        #             logger.debug(f"No .go files found in the directory: {resolved_path}")
-        #     else:
-        #         logger.debug(f"Resolved path is not a directory: {resolved_path}")
-        # else:
-        #     logger.debug(f"Could not resolve import path: {import_stmt}")
+        for resolved_path in resolved_paths:
+            if resolved_path:
+                if resolved_path.is_dir():
+                    # Try to find a .go file in the directory
+                    go_files = list(resolved_path.glob("*.go"))
+                    if go_files:
+                        imported_paths.extend(go_files)
 
         return imported_paths
