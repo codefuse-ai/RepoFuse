@@ -527,3 +527,29 @@ def test_rust(tree_sitter_generator, rust_repo_suite_path):
         ),
         ("module", "main", "module", "foo", "foo.rs", "crate::foo::foo"),
     ]
+
+
+def test_lua(tree_sitter_generator, lua_repo_suite_path):
+    repo_path = lua_repo_suite_path
+    repository = Repository(repo_path=repo_path, language=Language.Lua)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges
+    assert len(edges) == 4
+    relations = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[1].location.file_path.name,
+            edge[2].get_text(),
+        )
+        for edge in edges
+    ]
+    assert relations == [
+        ("module", "init", "module", "module1", "module1.lua", "'module1'"),
+        ("module", "init", "module", "module2", "module2.lua", '"submodule.module2"'),
+        ("module", "init", "module", "module3", "module3.lua", '"module3"'),
+        ("module", "init", "module", "module4", "module4.lua", '"module4.lua"'),
+    ]

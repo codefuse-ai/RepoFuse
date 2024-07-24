@@ -88,6 +88,10 @@ class ImportResolver:
                 resolved_path_list.extend(
                     self.resolve_rust_import(import_symbol_node, importer_file_path)
                 )
+            case Language.Lua:
+                resolved_path_list.extend(
+                    self.resolve_lua_import(import_symbol_node, importer_file_path)
+                )
             case _:
                 raise NotImplementedError(
                     f"Language {self.repo.language} is not supported"
@@ -472,3 +476,31 @@ class ImportResolver:
             self.repo.repo_path, importer_file_path, module_path, is_absolute
         )
         return [imported_file] if imported_file else []
+
+    def resolve_lua_import(
+        self, import_symbol_node: TS_Node, importer_file_path: Path
+    ) -> list[Path]:
+        import_symbol_name = import_symbol_node.text.decode()
+        import_symbol_name = import_symbol_name.strip('"').strip("'")
+
+        extension_list = Repository.code_file_extensions[Language.Lua]
+
+        # Here, we make sure in case of `dofile("module4.lua")`, the `.lua` suffix is preserved.
+        if all(ext not in import_symbol_name for ext in extension_list):
+            """
+            In case of `require("submodule.module2")`, the Lua file is expected to be located at
+            `submodule/module2.lua`. But before replacing the `.` with `/`, we need to make sure in case of
+            `dofile("module4.lua")`, the `.lua` suffix is preserved.
+            """
+            import_symbol_name = import_symbol_name.replace(".", os.sep)
+
+        resolved_path = importer_file_path.parent / import_symbol_name
+
+        if resolved_path.exists():
+            return [resolved_path]
+
+        for ext in extension_list:
+            path = resolved_path.with_suffix(ext)
+            if path.exists():
+                return [resolved_path.with_suffix(ext)]
+        return []

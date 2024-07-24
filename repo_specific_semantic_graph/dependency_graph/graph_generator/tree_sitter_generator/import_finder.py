@@ -148,6 +148,18 @@ FIND_IMPORT_QUERY = {
         ]
         """
     ),
+    Language.Lua: dedent(
+        """
+        (call
+            function:
+                (variable
+                    name: ((identifier) @require_name)
+                            (#match? @require_name "require|dofile|loadfile"))
+            arguments:
+                (argument_list [(expression_list)(string)] @import_name)
+        )
+        """
+    ),
 }
 
 FIND_PACKAGE_QUERY = {
@@ -247,6 +259,7 @@ class ImportFinder:
                 | Language.Python
                 | Language.Ruby
                 | Language.Rust
+                | Language.Lua
             ):
                 return file_path.stem
             case Language.PHP | Language.C | Language.CPP:
