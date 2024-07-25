@@ -34,6 +34,57 @@ def javascript_repo_suite_path(repo_suite_path):
 def typescript_repo_suite_path(repo_suite_path):
     return repo_suite_path / "typescript"
 
+
 @pytest.fixture
 def kotlin_repo_suite_path(repo_suite_path):
     return repo_suite_path / "kotlin"
+
+
+@pytest.fixture
+def php_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "php"
+
+
+@pytest.fixture
+def ruby_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "ruby"
+
+
+@pytest.fixture
+def c_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "c"
+
+
+@pytest.fixture
+def cpp_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "cpp"
+
+
+@pytest.fixture
+def go_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "go"
+
+
+@pytest.fixture
+def swift_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "swift"
+
+
+@pytest.fixture
+def rust_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "rust"
+
+
+@pytest.fixture
+def lua_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "lua"
+
+
+@pytest.fixture
+def bash_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "bash"
+
+
+@pytest.fixture
+def r_repo_suite_path(repo_suite_path):
+    return repo_suite_path / "r"

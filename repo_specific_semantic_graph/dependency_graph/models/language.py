@@ -8,6 +8,16 @@ class Language(str, enum.Enum):
     Kotlin = "kotlin"
     JavaScript = "javascript"
     TypeScript = "typescript"
+    PHP = "php"
+    Ruby = "ruby"
+    C = "c"
+    CPP = "cpp"
+    Go = "go"
+    Swift = "swift"
+    Rust = "rust"
+    Lua = "lua"
+    Bash = "bash"
+    R = "r"
 
     def __str__(self):
         return self.value
