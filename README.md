@@ -11,7 +11,6 @@ RepoFuse is a pioneering solution designed to enhance repository-level code comp
 ![img.jpg](./assets/workflow.png)
 
 **Figure: The workflow of RepoFuse**
-
 ### Repo-specific semantic graph
 
 The Repo-specific semantic graph is a tool that can construct the dependency relationships between entities in the code and store this information in the form of a multi-directed graph. We use this graph to construct the context for code completion.
@@ -33,6 +32,11 @@ See [repo_specific_semantic_graph/README.md](repo_specific_semantic_graph/README
    ```
 
 ## Evaluate
+The following figure demonstrates the overall performance of RepoFuse:
+![img.jpg](./assets/evaluation.png)
+
+We conducted experiments on DeepSeek and StarCoder models with varying parameter sizes, comparing the performance of using only Similar context, only Semantic context, and using Optimal Dual Context (ODC) under different Token Window sizes. The results show that ODC achieves the best performance across different models and Token Window sizes. To reproduce the results of this experiment, please follow these steps:
+
 
 After data generation by codegraph, you can start your evaluation by the following step:
 
