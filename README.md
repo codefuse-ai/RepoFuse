@@ -37,9 +37,6 @@ The following figure demonstrates the overall performance of RepoFuse:
 
 We conducted experiments on DeepSeek and StarCoder models with varying parameter sizes, comparing the performance of using only Similar context, only Semantic context, and using Optimal Dual Context (ODC) under different Token Window sizes. The results show that ODC achieves the best performance across different models and Token Window sizes. To reproduce the results of this experiment, please follow these steps:
 
-
-After data generation by codegraph, you can start your evaluation by the following step:
-
 1. run `cd eval && pip install -r requirements.txt` to install evaluation environment.
 2. You need to modify the configuration in `eval.sh`, specifically including the following:
 
