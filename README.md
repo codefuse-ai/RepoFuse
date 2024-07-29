@@ -31,7 +31,7 @@ See [repo_specific_semantic_graph/README.md](repo_specific_semantic_graph/README
    python retrieval/construct_cceval_data.py -d <path/to/CrossCodeEval>/crosscodeeval_data/python/line_completion_oracle_bm25.jsonl -o <path/to/output_dir>/line_completion_dependency_graph.jsonl -r <path/to/CrossCodeEval>/crosscodeeval_rawdata -j 10 -l python
    ```
 
-## Evaluate
+## Evaluation
 The following figure demonstrates the overall performance of RepoFuse:
 ![img.jpg](./assets/evaluation.png)
 
