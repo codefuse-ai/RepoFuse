@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dependency-graph"
-version = "0.0.1"
+version = "0.1.0"
 description = "Construct a Repo-Specific Semantic Graph of a project. For simplicity, the Python package name is called `dependency_graph`."
 authors = []
 readme = "README.md"
