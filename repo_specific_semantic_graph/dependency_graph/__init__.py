@@ -31,7 +31,6 @@ def construct_dependency_graph(
             raise ValueError("language is required when repo is a PathLike")
         repo = Repository(repo, language)
 
-    language = repo.language
     if dependency_graph_generator == GraphGeneratorType.JEDI:
         return JediDependencyGraphGenerator().generate(repo)
     elif dependency_graph_generator == GraphGeneratorType.TREE_SITTER:

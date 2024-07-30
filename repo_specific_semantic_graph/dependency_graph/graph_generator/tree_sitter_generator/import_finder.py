@@ -177,7 +177,7 @@ FIND_IMPORT_QUERY = {
         (call
             function: ((identifier) @source_name)
                        (#eq? @source_name "source")
-            arguments: (arguments) @import_name
+            arguments: (arguments (argument) @import_name)
         )
         """
     ),
