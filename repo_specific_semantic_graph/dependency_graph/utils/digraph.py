@@ -112,6 +112,11 @@ def lexicographical_cyclic_topological_sort(G: nx.DiGraph, key=None) -> Iterable
         ]
 
         heapq.heapify(min_indegree_heap)
+        # If min indegree is greater than 0, it means the graph contains cycles
+        # We should just try to take the first node on the heap to break the cycle
+        if min_indegree > 0:
+            _, _, node = heapq.heappop(min_indegree_heap)
+            min_indegree_heap = [create_tuple(node)]
 
         while min_indegree_heap:
             _, _, node = heapq.heappop(min_indegree_heap)
