@@ -52,3 +52,39 @@ def test_lexicographical_cyclic_topological_sort3():
     DG = nx.DiGraph([("A", "B"), ("B", "C"), ("C", "D"), ("D", "A")])
 
     assert list(lexicographical_cyclic_topological_sort(DG)) == ["A", "B", "C", "D"]
+
+
+def test_lexicographical_cyclic_topological_sort4():
+    """
+        2
+      / \
+     /   \
+    1     5
+    | \   |
+    |  \  |
+    3    4
+    """
+    DG = nx.DiGraph([(2, 1), (2, 5), (1, 3), (1, 4), (5, 4)])
+
+    assert list(lexicographical_cyclic_topological_sort(DG)) == [2, 1, 3, 5, 4]
+    assert list(lexicographical_cyclic_topological_sort(DG, key=lambda x: -x)) == [
+        2,
+        5,
+        1,
+        4,
+        3,
+    ]
+
+
+def test_lexicographical_cyclic_topological_sort5():
+    DG = nx.DiGraph([(1, "red"), (3, "red"), (1, "green"), (2, "blue")])
+
+    key = lambda node: (isinstance(node, str), node)
+    assert list(lexicographical_cyclic_topological_sort(DG, key=key)) == [
+        1,
+        2,
+        3,
+        "blue",
+        "green",
+        "red",
+    ]
