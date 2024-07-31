@@ -14,6 +14,8 @@ called `dependency_graph`.
 5. Analyze on virtual file system: the graph can be constructed from a virtual file system, which is useful for
    real-time analysis when the codebase originates from a dataset and the original file structure is either
    unavailable or cannot be restored.
+6. The graph supports topological sorting, allowing the graph to be ordered according to specific relationships. This
+   feature is particularly useful for sorting project files based on import dependencies.
 
 Currently, the following Repo-Specific Semantic Graph generator types are supported, with the corresponding languages
 and dependency relations:
@@ -166,5 +168,30 @@ repo = VirtualRepository(
     ],
 )
 graph = construct_dependency_graph(repo, dependency_graph_generator)
+
+```
+
+#### Topological sorting
+
+The graph supports topological sorting, allowing the graph to be ordered according to specific relationships. This
+feature is particularly useful for sorting project files based on import dependencies. Notably, even if the import graph
+is cyclic, the graph can still perform the sorting. Furthermore, the sorting process is unique, stable, and consistent.
+
+```python
+from dependency_graph import (
+    construct_dependency_graph,
+    GraphGeneratorType,
+)
+from dependency_graph.models.language import Language
+from dependency_graph.models.graph_data import EdgeRelation
+
+
+repo_path = "/path/to/repo"
+graph = construct_dependency_graph(
+    repo_path,
+    GraphGeneratorType.TREE_SITTER,
+    Language.Python,
+)
+sorted_nodes = list(graph.get_topological_sorting(EdgeRelation.ImportedBy))
 
 ```
