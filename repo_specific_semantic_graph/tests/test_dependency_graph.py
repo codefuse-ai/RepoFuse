@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from networkx.utils import graphs_equal
+import networkx as nx
 
 from dependency_graph import (
     construct_dependency_graph,
@@ -66,6 +66,50 @@ def test_get_related_subgraph(sample_graph):
 def test_serialization_and_deserialization(sample_graph):
     json_str = sample_graph.to_json()
     graph = DependencyGraph.from_json(json_str)
-    assert graphs_equal(sample_graph.graph, graph.graph)
+    assert nx.utils.graphs_equal(sample_graph.graph, graph.graph)
     assert sample_graph.repo_path == graph.repo_path
     assert sample_graph.language == graph.language
+
+
+def test_get_topological_sorting(sample_graph):
+    sorted_nodes = list(sample_graph.get_topological_sorting())
+    assert len(sorted_nodes) == sample_graph.graph.number_of_nodes()
+
+
+def test_get_topological_sorting_to_deal_with_cyclic_import(python_repo_suite_path):
+    """
+    a -> b means a is imported by b
+    For the following dependency graph:
+
+      a.py <---- b.py
+        /         ^
+       v          |
+      d.py ----> c.py
+        |
+        v
+      e.py
+
+     x.py <---- y.py <---- z.py
+    """
+    repo_path = python_repo_suite_path / "cyclic_import"
+    graph = construct_dependency_graph(
+        repo_path,
+        GraphGeneratorType.TREE_SITTER,
+        Language.Python,
+    )
+    sorted_nodes = list(graph.get_topological_sorting(EdgeRelation.ImportedBy))
+    sorted_files = [
+        str(node.location.file_path.relative_to(repo_path)) for node in sorted_nodes
+    ]
+    # The graph should be cyclic
+    assert not nx.is_directed_acyclic_graph(graph.graph)
+    assert sorted_files == [
+        "z.py",
+        "y.py",
+        "x.py",
+        "a.py",
+        "d.py",
+        "c.py",
+        "b.py",
+        "e.py",
+    ]

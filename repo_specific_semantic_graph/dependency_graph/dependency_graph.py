@@ -8,6 +8,7 @@ import networkx as nx
 from dependency_graph.models.language import Language
 from dependency_graph.models import PathLike, VirtualPath
 from dependency_graph.models.graph_data import Node, Edge, EdgeRelation, NodeType
+from dependency_graph.utils.digraph import lexicographical_cyclic_topological_sort
 from dependency_graph.utils.intervals import find_innermost_interval
 
 
@@ -122,6 +123,16 @@ class DependencyGraph:
     def get_edge(self, n1: Node, n2: Node) -> list[Edge] | None:
         if self.graph.has_edge(n1, n2):
             return [data["relation"] for data in self.graph[n1][n2].values()]
+
+    def get_topological_sorting(self, relation: EdgeRelation = None) -> Iterable[Node]:
+        """
+        Get the topological sorting of the graph.
+        """
+        if relation is None:
+            G = self.graph
+        else:
+            G = self.get_related_subgraph(relation).graph
+        yield from lexicographical_cyclic_topological_sort(G, key=lambda n: str(n))
 
     def to_dict(self) -> dict:
         edge_list = self.get_edges()
