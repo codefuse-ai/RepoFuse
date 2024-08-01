@@ -204,8 +204,7 @@ class ImportResolver:
         try:
             resolved_path = resolver.resolve_import(imp)
             return [resolved_path] if resolved_path else []
-        except ImportException as e:
-            logger.warn(f"Failed to resolve import: {e}")
+        except ImportException:
             return []
 
     def resolve_php_import(

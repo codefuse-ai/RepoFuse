@@ -1,4 +1,4 @@
-from dependency_graph.models.file_node import FileNode, logger
+from dependency_graph.models.file_node import FileNode
 from dependency_graph.models.virtual_fs.virtual_path import VirtualPath
 
 
@@ -12,5 +12,6 @@ class VirtualFileNode(FileNode):
         return self.file_path.read_text()
 
     def write_content(self, content: str) -> None:
-        logger.warn(f"Write operation is not permitted for VirtualFileNode.")
-        raise NotImplementedError("Cannot write content to a VirtualFileNode.")
+        raise NotImplementedError(
+            "Write operation is not permitted for VirtualFileNode."
+        )
