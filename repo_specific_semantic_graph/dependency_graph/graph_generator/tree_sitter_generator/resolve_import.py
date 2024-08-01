@@ -294,7 +294,12 @@ class ImportResolver:
         return result_path
 
     def resolve_go_import(self, import_symbol_node: TS_Node) -> list[Path]:
-        def parse_go_mod(go_mod_path: Path):
+        def parse_go_mod(go_mod_path: Path) -> tuple[str, dict[str, Path]]:
+            """
+            Parses the go.mod file and returns the module path and replacements.
+            :param go_mod_path: The path to the go.mod file.
+            :return: A tuple containing the module path and replacements.
+            """
             module_path = None
             replacements = {}
 
@@ -305,7 +310,7 @@ class ImportResolver:
                 elif line.startswith("replace "):
                     parts = line.split()
                     if len(parts) >= 4 and parts[2] == "=>":
-                        replacements[parts[1]] = parts[3]
+                        replacements[parts[1]] = self._Path(parts[3])
 
             return module_path, replacements
 
