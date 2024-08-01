@@ -242,7 +242,7 @@ class VirtualPath(pathlib.PosixPath):
         try:
             return self._hash
         except AttributeError:
-            self._hash = hash(self._str_normcase) ^ hash(self.fs)
+            self._hash = hash(self.relative_fs_path) ^ hash(self.fs)
             return self._hash
 
     def as_uri(self):
