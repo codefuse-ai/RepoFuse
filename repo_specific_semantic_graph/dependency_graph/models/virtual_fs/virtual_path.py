@@ -5,8 +5,8 @@ import sys
 import fs.osfs
 import fs.path
 import fs.permissions
-from fs.enums import ResourceType
 from fs.base import FS
+from fs.enums import ResourceType
 
 
 class VirtualPath(pathlib.PosixPath):
@@ -102,7 +102,10 @@ class VirtualPath(pathlib.PosixPath):
         )
 
     def exists(self):
-        return self.fs.exists(self.relative_fs_path)
+        try:
+            return self.fs.exists(self.relative_fs_path)
+        except Exception:
+            return False
 
     def is_block_device(self):
         return self.fs.gettype(self.relative_fs_path) == ResourceType.block_special_file
