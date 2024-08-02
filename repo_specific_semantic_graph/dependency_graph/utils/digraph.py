@@ -122,7 +122,8 @@ def lexicographical_cyclic_topological_sort(G: nx.DiGraph, key=None) -> Iterable
             _, _, node = heapq.heappop(min_indegree_heap)
 
             if node not in G_copy:
-                raise RuntimeError("Graph changed during iteration")
+                # If node is not in the graph, it means the node pointed to itself.
+                continue
             for _, child in G_copy.edges(node):
                 try:
                     indegree_map[child] -= 1
