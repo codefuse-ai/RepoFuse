@@ -129,7 +129,12 @@ class VirtualPath(pathlib.PosixPath):
         return self.exists() and self.fs.islink(self.relative_fs_path)
 
     def iterdir(self):
-        return self.fs.listdir(self.relative_fs_path)
+        for d in self.fs.listdir(self.relative_fs_path):
+            yield self.__class__(
+                self.fs,
+                fs.path.join(self.relative_fs_path, d),
+                disallow_str=self.disallow_str,
+            )
 
     def glob(self, pattern):
         for match in self.fs.glob(fs.path.join(self.relative_fs_path, pattern)):

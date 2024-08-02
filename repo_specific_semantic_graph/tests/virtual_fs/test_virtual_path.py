@@ -155,8 +155,8 @@ def test_virtualpath_iterdir():
     vpath = VirtualPath(mem_fs, "dir")
     items = list(vpath.iterdir())
     assert len(items) == 2
-    assert "file1" in items
-    assert "file2" in items
+    assert VirtualPath(mem_fs, "dir/file1") in items
+    assert VirtualPath(mem_fs, "dir/file1") in items
 
 
 def test_virtualpath_glob():
