@@ -93,7 +93,15 @@ def test_virtualpath_relative_to():
     vpath = VirtualPath(mem_fs, "dir", "subdir", "file")
     base_vpath = VirtualPath(mem_fs, "dir")
     relative_path = vpath.relative_to(base_vpath)
-    assert relative_path == pathlib.PurePath("subdir/file")
+    assert relative_path == VirtualPath(mem_fs, "subdir/file")
+
+
+def test_virtualpath_relative_to_a_string():
+    mem_fs = MemoryFS()
+    vpath = VirtualPath(mem_fs, "dir", "subdir", "file")
+    base_vpath_str = "dir"
+    relative_path = vpath.relative_to(base_vpath_str)
+    assert relative_path == VirtualPath(mem_fs, "subdir/file")
 
 
 def test_virtualpath_chmod():
@@ -286,3 +294,18 @@ def test_virtualpath_is_relative_to():
     assert vpath.is_relative_to(base_vpath)
     unrelated_vpath = VirtualPath(mem_fs, "otherdir")
     assert not vpath.is_relative_to(unrelated_vpath)
+
+
+def test_virtualpath_is_relative_to_a_string():
+    mem_fs = MemoryFS()
+    vpath = VirtualPath(mem_fs, "dir/subdir/file")
+    base_vpath_str = "dir"
+    assert vpath.is_relative_to(base_vpath_str)
+    unrelated_vpath_str = "otherdir"
+    assert not vpath.is_relative_to(unrelated_vpath_str)
+
+
+def test_virtualpath_absolute():
+    mem_fs = MemoryFS()
+    vpath = VirtualPath(mem_fs, "dir/subdir/file")
+    assert vpath.absolute()

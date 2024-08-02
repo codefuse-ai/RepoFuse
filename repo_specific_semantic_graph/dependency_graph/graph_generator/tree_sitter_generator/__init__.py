@@ -109,6 +109,9 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         importer_node = finder.parser.parse(
                             read_file_to_string(importer_file_path).encode()
                         ).root_node
+
+                        if not importee_file_path.exists() or not importee_file_path.is_file():
+                            continue
                         importee_node = finder.parser.parse(
                             read_file_to_string(importee_file_path).encode()
                         ).root_node

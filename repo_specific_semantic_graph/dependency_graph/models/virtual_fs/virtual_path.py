@@ -300,7 +300,7 @@ class VirtualPath(pathlib.PosixPath):
                     "on the same PyFilesystem object".format(self.__class__.__name__)
                 )
         else:
-            raise NotImplementedError("no idea what should happen here...")
+            other = self.with_segments(other)
         return self.__class__(self.fs, *(super().relative_to(other).parts))
 
     def expanduser(self):
