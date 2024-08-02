@@ -88,3 +88,19 @@ def test_lexicographical_cyclic_topological_sort5():
         "green",
         "red",
     ]
+
+
+def test_lexicographical_cyclic_topological_sort6():
+    """
+    Self-referencing nodes
+    +---+
+    | 1 |
+    +---+
+    ^ |
+    | |
+    +-+
+    """
+    DG = nx.DiGraph([(1, 1)])
+
+    key = lambda node: (isinstance(node, str), node)
+    assert list(lexicographical_cyclic_topological_sort(DG, key=key)) == [1]
