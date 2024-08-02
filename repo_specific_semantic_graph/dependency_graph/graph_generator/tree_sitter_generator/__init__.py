@@ -1,23 +1,17 @@
-import ast
 import traceback
 from collections import defaultdict
 from pathlib import Path
 
-from importlab.import_finder import (
-    resolve_import as importlab_resolve_import,
-    ImportFinder as importlab_ImportFinder,
-)
-from importlab.parsepy import ImportStatement
 from tqdm import tqdm
 from tree_sitter import Node as TS_Node
 
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import BaseDependencyGraphGenerator
-from dependency_graph.graph_generator.tree_sitter_generator.resolve_import import (
-    ImportResolver,
-)
 from dependency_graph.graph_generator.tree_sitter_generator.import_finder import (
     ImportFinder,
+)
+from dependency_graph.graph_generator.tree_sitter_generator.resolve_import import (
+    ImportResolver,
 )
 from dependency_graph.models import PathLike
 from dependency_graph.models.graph_data import (
@@ -34,22 +28,6 @@ from dependency_graph.utils.read_file import read_file_to_string
 
 # Initialize logging
 logger = setup_logger()
-
-
-def get_imports_from_file(src: str, filename: str) -> list[ImportStatement]:
-    """Get all the imports in a file.
-
-    Each import is a named tuple of:
-      (name, alias, is_from, is_star, source_file)
-    """
-    finder = importlab_ImportFinder()
-    finder.visit(ast.parse(src, filename=filename))
-    imports = []
-    for i in finder.imports:
-        name, _, is_from, is_star = i
-        imports.append(i + (importlab_resolve_import(name, is_from, is_star),))
-
-    return [ImportStatement(*imp) for imp in imports]
 
 
 class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
