@@ -129,19 +129,20 @@ class VirtualPath(pathlib.PosixPath):
         return self.exists() and self.fs.islink(self.relative_fs_path)
 
     def iterdir(self):
-        return self.fs.listdir(self.relative_fs_path)
+        for d in self.fs.listdir(self.relative_fs_path):
+            yield self.__class__(
+                self.fs,
+                fs.path.join(self.relative_fs_path, d),
+                disallow_str=self.disallow_str,
+            )
 
     def glob(self, pattern):
         for match in self.fs.glob(fs.path.join(self.relative_fs_path, pattern)):
-            yield self.__class__(
-                self.fs, fs.path.relpath(match.path), disallow_str=self.disallow_str
-            )
+            yield self.__class__(self.fs, match.path, disallow_str=self.disallow_str)
 
     def rglob(self, pattern):
         for match in self.fs.glob(fs.path.join(self.relative_fs_path, "**", pattern)):
-            yield self.__class__(
-                self.fs, fs.path.relpath(match.path), disallow_str=self.disallow_str
-            )
+            yield self.__class__(self.fs, match.path, disallow_str=self.disallow_str)
 
     def __eq__(self, other):
         if not isinstance(other, VirtualPath):
@@ -295,7 +296,7 @@ class VirtualPath(pathlib.PosixPath):
                     "on the same PyFilesystem object".format(self.__class__.__name__)
                 )
         else:
-            raise NotImplementedError("no idea what should happen here...")
+            other = self.with_segments(other)
         return self.__class__(self.fs, *(super().relative_to(other).parts))
 
     def expanduser(self):
@@ -304,4 +305,4 @@ class VirtualPath(pathlib.PosixPath):
 
     def absolute(self):
         # FS objects have no concept of a current directory
-        return self
+        return self.with_segments(fs.path.abspath(self.relative_fs_path))

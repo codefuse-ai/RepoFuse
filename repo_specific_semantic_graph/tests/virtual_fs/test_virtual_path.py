@@ -93,7 +93,15 @@ def test_virtualpath_relative_to():
     vpath = VirtualPath(mem_fs, "dir", "subdir", "file")
     base_vpath = VirtualPath(mem_fs, "dir")
     relative_path = vpath.relative_to(base_vpath)
-    assert relative_path == pathlib.PurePath("subdir/file")
+    assert relative_path == VirtualPath(mem_fs, "subdir/file")
+
+
+def test_virtualpath_relative_to_a_string():
+    mem_fs = MemoryFS()
+    vpath = VirtualPath(mem_fs, "dir", "subdir", "file")
+    base_vpath_str = "dir"
+    relative_path = vpath.relative_to(base_vpath_str)
+    assert relative_path == VirtualPath(mem_fs, "subdir/file")
 
 
 def test_virtualpath_chmod():
@@ -155,8 +163,8 @@ def test_virtualpath_iterdir():
     vpath = VirtualPath(mem_fs, "dir")
     items = list(vpath.iterdir())
     assert len(items) == 2
-    assert "file1" in items
-    assert "file2" in items
+    assert VirtualPath(mem_fs, "dir/file1") in items
+    assert VirtualPath(mem_fs, "dir/file1") in items
 
 
 def test_virtualpath_glob():
@@ -167,8 +175,19 @@ def test_virtualpath_glob():
     vpath = VirtualPath(mem_fs, "dir")
     matches = list(vpath.glob("file*"))
     assert len(matches) == 2
-    assert VirtualPath(mem_fs, "dir/file1") in matches
-    assert VirtualPath(mem_fs, "dir/file2") in matches
+    assert VirtualPath(mem_fs, "/dir/file1") in matches
+    assert VirtualPath(mem_fs, "/dir/file2") in matches
+
+def test_virtualpath_glob_1():
+    mem_fs = MemoryFS()
+    mem_fs.makedir("/dir")
+    mem_fs.touch("/dir/file1")
+    mem_fs.touch("/dir/file2")
+    vpath = VirtualPath(mem_fs, "/dir")
+    matches = list(vpath.glob("file*"))
+    assert len(matches) == 2
+    assert VirtualPath(mem_fs, "/dir/file1") in matches
+    assert VirtualPath(mem_fs, "/dir/file2") in matches
 
 
 def test_virtualpath_rglob():
@@ -179,8 +198,8 @@ def test_virtualpath_rglob():
     vpath = VirtualPath(mem_fs, "dir")
     matches = list(vpath.rglob("file*"))
     assert len(matches) == 2
-    assert VirtualPath(mem_fs, "dir/file2") in matches
-    assert VirtualPath(mem_fs, "dir/subdir/file1") in matches
+    assert VirtualPath(mem_fs, "/dir/file2") in matches
+    assert VirtualPath(mem_fs, "/dir/subdir/file1") in matches
 
 
 def test_virtualpath_owner():
@@ -286,3 +305,18 @@ def test_virtualpath_is_relative_to():
     assert vpath.is_relative_to(base_vpath)
     unrelated_vpath = VirtualPath(mem_fs, "otherdir")
     assert not vpath.is_relative_to(unrelated_vpath)
+
+
+def test_virtualpath_is_relative_to_a_string():
+    mem_fs = MemoryFS()
+    vpath = VirtualPath(mem_fs, "dir/subdir/file")
+    base_vpath_str = "dir"
+    assert vpath.is_relative_to(base_vpath_str)
+    unrelated_vpath_str = "otherdir"
+    assert not vpath.is_relative_to(unrelated_vpath_str)
+
+
+def test_virtualpath_absolute():
+    mem_fs = MemoryFS()
+    vpath = VirtualPath(mem_fs, "dir/subdir/file")
+    assert vpath.absolute() == VirtualPath(mem_fs, '/dir/subdir/file')

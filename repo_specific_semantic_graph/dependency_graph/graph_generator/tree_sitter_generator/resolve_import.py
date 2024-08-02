@@ -362,12 +362,11 @@ class ImportResolver:
             )
 
         for resolved_path in resolved_paths:
-            if resolved_path:
-                if resolved_path.is_dir():
-                    # Try to find a .go file in the directory
-                    go_files = list(resolved_path.glob("*.go"))
-                    if go_files:
-                        imported_paths.extend(go_files)
+            if resolved_path and resolved_path.is_dir():
+                # Try to find a .go file in the directory
+                go_files = list(resolved_path.glob("*.go"))
+                if go_files:
+                    imported_paths.extend(go_files)
 
         return imported_paths
 
