@@ -108,24 +108,38 @@ class VirtualPath(pathlib.PosixPath):
             return False
 
     def is_block_device(self):
+        if not self.exists():
+            return False
         return self.fs.gettype(self.relative_fs_path) == ResourceType.block_special_file
 
     def is_char_device(self):
+        if not self.exists():
+            return False
         return self.fs.gettype(self.relative_fs_path) == ResourceType.character
 
     def is_dir(self):
+        if not self.exists():
+            return False
         return self.fs.isdir(self.relative_fs_path)
 
     def is_file(self):
+        if not self.exists():
+            return False
         return self.fs.isfile(self.relative_fs_path)
 
     def is_fifo(self):
+        if not self.exists():
+            return False
         return self.fs.gettype(self.relative_fs_path) == ResourceType.fifo
 
     def is_socket(self):
+        if not self.exists():
+            return False
         return self.fs.gettype(self.relative_fs_path) == ResourceType.socket
 
     def is_symlink(self):
+        if not self.exists():
+            return False
         # TODO report this to PyFilesystem... islink should just return False if
         # the path doesn't exist, because isfile and isdir do the same; but right
         # now it raises an exception, so we have to do this roundabout thing
