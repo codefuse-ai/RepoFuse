@@ -240,7 +240,11 @@ class ImportResolver:
         # Find the module path
         result_path = []
         for ext in extension_list:
-            import_path = self._Path(import_symbol_name).with_suffix(ext)
+            try:
+                import_path = self._Path(import_symbol_name).with_suffix(ext)
+            except ValueError:
+                continue
+
             if import_path.is_absolute() and import_path.exists():
                 result_path.append(import_path)
             else:

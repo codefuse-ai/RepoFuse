@@ -1,4 +1,5 @@
 import ast
+import traceback
 from collections import defaultdict
 from pathlib import Path
 
@@ -101,68 +102,75 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
             importer_module_name,
         ), import_symbol_nodes in import_map.items():
             for import_symbol_node in import_symbol_nodes:
-                if resolved := resolver.resolve_import(
-                    import_symbol_node, module_map, importer_file_path
-                ):
-                    for importee_file_path in resolved:
-                        # Use read_file_to_string here to avoid non-UTF8 decoding issue
-                        importer_node = finder.parser.parse(
-                            read_file_to_string(importer_file_path).encode()
-                        ).root_node
+                resolved = []
+                try:
+                    resolved = resolver.resolve_import(
+                        import_symbol_node, module_map, importer_file_path
+                    )
+                except Exception as e:
+                    tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                    logger.error(
+                        f"Error {e} resolving import {import_symbol_node.text} in {importer_file_path}, will ignore: {tb_str}"
+                    )
 
-                        if not importee_file_path.exists() or not importee_file_path.is_file():
-                            continue
-                        importee_node = finder.parser.parse(
-                            read_file_to_string(importee_file_path).encode()
-                        ).root_node
+                for importee_file_path in resolved:
+                    # Use read_file_to_string here to avoid non-UTF8 decoding issue
+                    importer_node = finder.parser.parse(
+                        read_file_to_string(importer_file_path).encode()
+                    ).root_node
 
-                        importer_module_name = finder.find_module_name(
-                            importer_file_path
-                        )
-                        importee_module_name = finder.find_module_name(
-                            importee_file_path
-                        )
+                    if (
+                        not importee_file_path.exists()
+                        or not importee_file_path.is_file()
+                    ):
+                        continue
+                    importee_node = finder.parser.parse(
+                        read_file_to_string(importee_file_path).encode()
+                    ).root_node
 
-                        from_node = Node(
-                            type=NodeType.MODULE,
-                            name=importer_module_name,
-                            location=Location(
-                                file_path=importer_file_path,
-                                start_line=importer_node.start_point[0] + 1,
-                                start_column=importer_node.start_point[1] + 1,
-                                end_line=importer_node.end_point[0] + 1,
-                                end_column=importer_node.end_point[1] + 1,
-                            ),
-                        )
-                        to_node = Node(
-                            type=NodeType.MODULE,
-                            name=importee_module_name,
-                            location=Location(
-                                file_path=importee_file_path,
-                                start_line=importee_node.start_point[0] + 1,
-                                start_column=importee_node.start_point[1] + 1,
-                                end_line=importee_node.end_point[0] + 1,
-                                end_column=importee_node.end_point[1] + 1,
-                            ),
-                        )
-                        import_location = Location(
+                    importer_module_name = finder.find_module_name(importer_file_path)
+                    importee_module_name = finder.find_module_name(importee_file_path)
+
+                    from_node = Node(
+                        type=NodeType.MODULE,
+                        name=importer_module_name,
+                        location=Location(
                             file_path=importer_file_path,
-                            start_line=import_symbol_node.start_point[0] + 1,
-                            start_column=import_symbol_node.start_point[1] + 1,
-                            end_line=import_symbol_node.end_point[0] + 1,
-                            end_column=import_symbol_node.end_point[1] + 1,
-                        )
-                        D.add_relational_edge(
-                            from_node,
-                            to_node,
-                            Edge(
-                                relation=EdgeRelation.Imports,
-                                location=import_location,
-                            ),
-                            Edge(
-                                relation=EdgeRelation.ImportedBy,
-                                location=import_location,
-                            ),
-                        )
+                            start_line=importer_node.start_point[0] + 1,
+                            start_column=importer_node.start_point[1] + 1,
+                            end_line=importer_node.end_point[0] + 1,
+                            end_column=importer_node.end_point[1] + 1,
+                        ),
+                    )
+                    to_node = Node(
+                        type=NodeType.MODULE,
+                        name=importee_module_name,
+                        location=Location(
+                            file_path=importee_file_path,
+                            start_line=importee_node.start_point[0] + 1,
+                            start_column=importee_node.start_point[1] + 1,
+                            end_line=importee_node.end_point[0] + 1,
+                            end_column=importee_node.end_point[1] + 1,
+                        ),
+                    )
+                    import_location = Location(
+                        file_path=importer_file_path,
+                        start_line=import_symbol_node.start_point[0] + 1,
+                        start_column=import_symbol_node.start_point[1] + 1,
+                        end_line=import_symbol_node.end_point[0] + 1,
+                        end_column=import_symbol_node.end_point[1] + 1,
+                    )
+                    D.add_relational_edge(
+                        from_node,
+                        to_node,
+                        Edge(
+                            relation=EdgeRelation.Imports,
+                            location=import_location,
+                        ),
+                        Edge(
+                            relation=EdgeRelation.ImportedBy,
+                            location=import_location,
+                        ),
+                    )
 
         return D
