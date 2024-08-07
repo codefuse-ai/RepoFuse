@@ -8,7 +8,7 @@
 
 RepoFuse is a pioneering solution designed to enhance repository-level code completion without the latency trade-off. RepoFuse uniquely fuses two types of context: the analogy context, rooted in code analogies, and the rationale context, which encompasses in-depth semantic relationships. We propose a novel rank truncated generation (RTG) technique that efficiently condenses these contexts into prompts with restricted size. This enables RepoFuse to deliver precise code completions while maintaining inference efficiency. Our evaluations using the CrossCodeEval suite reveal that RepoFuse outperforms common open-source methods, achieving an average improvement of 3.97 in code exact match score for the Python dataset and 3.01 for the Java dataset compared to state-of-the-art baseline methods.
 
-![img.jpg](./assets/workflow_new.png)
+![img.jpg](./assets/workflow.png)
 
 **Figure: The workflow of RepoFuse**
 ### Repo-specific semantic graph
