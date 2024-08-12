@@ -78,7 +78,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         for (
             importer_file_path,
             importer_module_name,
-        ), import_symbol_nodes in import_map.items():
+        ), import_symbol_nodes in tqdm(import_map.items(), desc="Resolving imports"):
             for import_symbol_node in import_symbol_nodes:
                 resolved = []
                 try:
