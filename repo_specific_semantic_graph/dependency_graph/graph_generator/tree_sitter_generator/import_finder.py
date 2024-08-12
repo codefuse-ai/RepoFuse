@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
 
@@ -243,12 +244,14 @@ class ImportFinder:
         captures = query.captures(tree.root_node)
         return [node for node, captured in captures if captured == capture_name]
 
+    @lru_cache(maxsize=256)
     def find_imports(
         self,
         code: str,
     ) -> list[TS_Node]:
         return self._query_and_captures(code, FIND_IMPORT_QUERY[self.language])
 
+    @lru_cache(maxsize=256)
     def find_module_name(self, file_path: Path) -> str | None:
         """
         Find the name of the module of the current file.
