@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import json
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, Callable
@@ -175,13 +178,26 @@ class DependencyGraphContextRetriever:
         self.graph = graph
 
     def _Path(self, file_path: PathLike) -> Path:
-        match self.graph.repo_path:
-            case Path():
-                return Path(file_path)
-            case VirtualPath():
-                return VirtualPath(self.graph.repo_path.fs, file_path)
-            case _:
-                return Path(file_path)
+        from pathlib import Path
+
+        if sys.version_info < (3, 9):
+
+            def is_relative_to(self, *other):
+                try:
+                    self.relative_to(*other)
+                    return True
+                except ValueError:
+                    return False
+
+            # Patch the method in OriginalPath
+            Path.is_relative_to = is_relative_to
+
+        if isinstance(self.graph.repo_path, Path):
+            return Path(file_path)
+        elif isinstance(self.graph.repo_path, VirtualPath):
+            return VirtualPath(self.repo.repo_path.fs, file_path)
+        else:
+            return Path(file_path)
 
     def _get_innermost_node_by_line(
         self,

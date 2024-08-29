@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
@@ -25,13 +27,12 @@ class ImportResolver:
         """
         Convert the str file path to handle both physical and virtual paths
         """
-        match self.repo.repo_path:
-            case Path():
-                return Path(file_path)
-            case VirtualPath():
-                return VirtualPath(self.repo.repo_path.fs, file_path)
-            case _:
-                return Path(file_path)
+        if isinstance(self.repo.repo_path, Path):
+            return Path(file_path)
+        elif isinstance(self.repo.repo_path, VirtualPath):
+            return VirtualPath(self.repo.repo_path.fs, file_path)
+        else:
+            return Path(file_path)
 
     def resolve_import(
         self,
@@ -41,69 +42,66 @@ class ImportResolver:
     ) -> list[Path]:
         resolved_path_list = []
 
-        match self.repo.language:
-            case Language.Java | Language.Kotlin:
-                import_symbol_name = import_symbol_node.text.decode()
-                # Deal with star import: `import xxx.*`
-                if b".*" in import_symbol_node.parent.text:
-                    for module_name, path_list in module_map.items():
-                        # Use rpartition to split the string at the rightmost '.'
-                        package_name, _, _ = module_name.rpartition(".")
-                        if package_name == import_symbol_name:
-                            resolved_path_list.extend(path_list)
-                else:
-                    resolved_path_list.extend(module_map.get(import_symbol_name, []))
-            case Language.CSharp:
-                import_symbol_name = import_symbol_node.text.decode()
+        if self.repo.language in (Language.Java, Language.Kotlin):
+            import_symbol_name = import_symbol_node.text.decode()
+            # Deal with star import: `import xxx.*`
+            if b".*" in import_symbol_node.parent.text:
+                for module_name, path_list in module_map.items():
+                    # Use rpartition to split the string at the rightmost '.'
+                    package_name, _, _ = module_name.rpartition(".")
+                    if package_name == import_symbol_name:
+                        resolved_path_list.extend(path_list)
+            else:
                 resolved_path_list.extend(module_map.get(import_symbol_name, []))
-            case Language.TypeScript | Language.JavaScript:
-                resolved_path_list.extend(
-                    self.resolve_ts_js_import(
-                        import_symbol_node, module_map, importer_file_path
-                    )
+        elif self.repo.language == Language.CSharp:
+            import_symbol_name = import_symbol_node.text.decode()
+            resolved_path_list.extend(module_map.get(import_symbol_name, []))
+        elif self.repo.language in (Language.TypeScript, Language.JavaScript):
+            resolved_path_list.extend(
+                self.resolve_ts_js_import(
+                    import_symbol_node, module_map, importer_file_path
                 )
-            case Language.Python:
-                resolved_path_list.extend(
-                    self.resolve_python_import(import_symbol_node, importer_file_path)
-                )
-            case Language.PHP:
-                resolved_path_list.extend(
-                    self.resolve_php_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Ruby:
-                resolved_path_list.extend(
-                    self.resolve_ruby_import(import_symbol_node, importer_file_path)
-                )
-            case Language.C | Language.CPP:
-                resolved_path_list.extend(
-                    self.resolve_cfamily_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Go:
-                resolved_path_list.extend(self.resolve_go_import(import_symbol_node))
-            case Language.Swift:
-                resolved_path_list.extend(
-                    self.resolve_swift_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Rust:
-                resolved_path_list.extend(
-                    self.resolve_rust_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Lua:
-                resolved_path_list.extend(
-                    self.resolve_lua_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Bash:
-                resolved_path_list.extend(
-                    self.resolve_bash_import(import_symbol_node, importer_file_path)
-                )
-            case Language.R:
-                resolved_path_list.extend(
-                    self.resolve_r_import(import_symbol_node, importer_file_path)
-                )
-            case _:
-                raise NotImplementedError(
-                    f"Language {self.repo.language} is not supported"
-                )
+            )
+        elif self.repo.language == Language.Python:
+            resolved_path_list.extend(
+                self.resolve_python_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.PHP:
+            resolved_path_list.extend(
+                self.resolve_php_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Ruby:
+            resolved_path_list.extend(
+                self.resolve_ruby_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language in (Language.C, Language.CPP):
+            resolved_path_list.extend(
+                self.resolve_cfamily_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Go:
+            resolved_path_list.extend(self.resolve_go_import(import_symbol_node))
+        elif self.repo.language == Language.Swift:
+            resolved_path_list.extend(
+                self.resolve_swift_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Rust:
+            resolved_path_list.extend(
+                self.resolve_rust_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Lua:
+            resolved_path_list.extend(
+                self.resolve_lua_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Bash:
+            resolved_path_list.extend(
+                self.resolve_bash_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.R:
+            resolved_path_list.extend(
+                self.resolve_r_import(import_symbol_node, importer_file_path)
+            )
+        else:
+            raise NotImplementedError(f"Language {self.repo.language} is not supported")
 
         # De-duplicate the resolved path
         return list(set(resolved_path_list))
@@ -142,7 +140,8 @@ class ImportResolver:
         if "." in import_symbol_name or ".." in import_symbol_name:
             result_path = []
             # If there is a suffix in the name
-            if suffix := self._Path(import_symbol_name).suffix:
+            suffix = self._Path(import_symbol_name).suffix
+            if suffix:
                 # In case of '../package.json', we should filter it out
                 path = importer_file_path.parent / import_symbol_name
                 if suffix in extension_list and path.exists():
@@ -172,7 +171,8 @@ class ImportResolver:
                 "module_name"
             ).text.decode()
             asname = None
-            if asname_node := import_symbol_node.child_by_field_name("name"):
+            asname_node = import_symbol_node.child_by_field_name("name")
+            if asname_node:
                 if (
                     asname_node.type == "aliased_import"
                     and asname_node.child_by_field_name("name")
@@ -188,7 +188,8 @@ class ImportResolver:
         else:
             name = None
             asname = None
-            if name_node := import_symbol_node.child_by_field_name("name"):
+            name_node = import_symbol_node.child_by_field_name("name")
+            if name_node:
                 if (
                     name_node.type == "aliased_import"
                     and name_node.child_by_field_name("name")

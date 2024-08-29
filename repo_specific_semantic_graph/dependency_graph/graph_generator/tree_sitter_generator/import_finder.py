@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
@@ -262,39 +264,44 @@ class ImportFinder:
         """
         # Use read_file_to_string here to avoid non-UTF8 decoding issue
         code = read_file_to_string(file_path)
-        match self.language:
-            case Language.Java | Language.Kotlin:
-                captures = self._query_and_captures(
-                    code, FIND_PACKAGE_QUERY[self.language], "package_name"
-                )
+        if self.language in (Language.Java, Language.Kotlin):
+            captures = self._query_and_captures(
+                code, FIND_PACKAGE_QUERY[self.language], "package_name"
+            )
 
-                if len(captures) > 0:
-                    node = captures[0]
-                    package_name = node.text.decode()
-                    module_name = f"{package_name}.{file_path.stem}"
-                    return module_name
-            case Language.CSharp | Language.Go:
-                captures = self._query_and_captures(
-                    code, FIND_PACKAGE_QUERY[self.language], "package_name"
-                )
-                if len(captures) > 0:
-                    node = captures[0]
-                    package_name = node.text.decode()
-                    return package_name
-            case (
-                Language.TypeScript
-                | Language.JavaScript
-                | Language.Python
-                | Language.Ruby
-                | Language.Rust
-                | Language.Lua
-                | Language.R
-            ):
-                return file_path.stem
-            case Language.PHP | Language.C | Language.CPP | Language.Bash:
-                return file_path.name
-            case Language.Swift:
-                # Swift module name is its parent directory
-                return file_path.parent.name
-            case _:
-                raise NotImplementedError(f"Language {self.language} is not supported")
+            if len(captures) > 0:
+                node = captures[0]
+                package_name = node.text.decode()
+                module_name = f"{package_name}.{file_path.stem}"
+                return module_name
+
+        elif self.language in (Language.CSharp, Language.Go):
+            captures = self._query_and_captures(
+                code, FIND_PACKAGE_QUERY[self.language], "package_name"
+            )
+
+            if len(captures) > 0:
+                node = captures[0]
+                package_name = node.text.decode()
+                return package_name
+
+        elif self.language in (
+            Language.TypeScript,
+            Language.JavaScript,
+            Language.Python,
+            Language.Ruby,
+            Language.Rust,
+            Language.Lua,
+            Language.R,
+        ):
+            return file_path.stem
+
+        elif self.language in (Language.PHP, Language.C, Language.CPP, Language.Bash):
+            return file_path.name
+
+        elif self.language == Language.Swift:
+            # Swift module name is its parent directory
+            return file_path.parent.name
+
+        else:
+            raise NotImplementedError(f"Language {self.language} is not supported")

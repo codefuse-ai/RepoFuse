@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -5,9 +7,8 @@ from typing import Optional
 
 from dataclasses_json import dataclass_json, config
 
-from dependency_graph.utils.log import setup_logger
 from dependency_graph.models.language import Language
-from dependency_graph.utils.mypy_stub import generate_python_stub
+from dependency_graph.utils.log import setup_logger
 from dependency_graph.utils.text import slice_text
 
 # Initialize logging
@@ -135,34 +136,35 @@ class Node:
     def get_stub(
         self, language: Language, include_comments: bool = False
     ) -> str | None:
-        match language:
-            case Language.Python:
-                return generate_python_stub(self.get_text())
-            case Language.Java:
-                from dependency_graph.utils.tree_sitter_stub import generate_java_stub
+        if language == Language.Python:
+            from dependency_graph.utils.mypy_stub import generate_python_stub
 
-                return generate_java_stub(
-                    self.get_text(), include_comments=include_comments
-                )
-            case Language.CSharp:
-                from dependency_graph.utils.tree_sitter_stub import (
-                    generate_c_sharp_stub,
-                )
+            return generate_python_stub(self.get_text())
+        elif language == Language.Java:
+            from dependency_graph.utils.tree_sitter_stub import generate_java_stub
 
-                return generate_c_sharp_stub(
-                    self.get_text(), include_comments=include_comments
-                )
-            case Language.TypeScript | Language.JavaScript:
-                from dependency_graph.utils.tree_sitter_stub import (
-                    generate_ts_js_stub,
-                )
+            return generate_java_stub(
+                self.get_text(), include_comments=include_comments
+            )
+        elif language == Language.CSharp:
+            from dependency_graph.utils.tree_sitter_stub import (
+                generate_c_sharp_stub,
+            )
 
-                return generate_ts_js_stub(
-                    self.get_text(), include_comments=include_comments
-                )
-            case _:
-                logger.warning(f"Stub generation is not supported for {language}")
-                return None
+            return generate_c_sharp_stub(
+                self.get_text(), include_comments=include_comments
+            )
+        elif language in (Language.TypeScript, Language.JavaScript):
+            from dependency_graph.utils.tree_sitter_stub import (
+                generate_ts_js_stub,
+            )
+
+            return generate_ts_js_stub(
+                self.get_text(), include_comments=include_comments
+            )
+        else:
+            logger.warning(f"Stub generation is not supported for {language}")
+            return None
 
     type: NodeType = field(
         metadata=config(

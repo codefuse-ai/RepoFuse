@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 from importlab.import_finder import is_builtin

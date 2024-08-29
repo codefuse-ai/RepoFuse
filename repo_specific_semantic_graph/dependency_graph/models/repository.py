@@ -1,7 +1,8 @@
-from functools import cached_property
+import functools
 from pathlib import Path
 
 from git import Repo, InvalidGitRepositoryError, GitCommandError, NoSuchPathError
+from typing import Set, Tuple, Dict
 
 from dependency_graph.models import PathLike
 from dependency_graph.models.file_node import FileNode
@@ -17,7 +18,7 @@ class Repository:
     repo_path: Path = None
     language: Language
 
-    code_file_extensions: dict[Language, tuple[str]] = {
+    code_file_extensions: Dict[Language, Tuple[str]] = {
         Language.CSharp: (".cs", ".csx"),
         Language.Python: (".py", ".pyi"),
         Language.Java: (".java",),
@@ -61,9 +62,10 @@ class Repository:
             # The repo is not a git repo, just ignore
             pass
 
-    @cached_property
-    def files(self) -> set[FileNode]:
-        files: set[FileNode] = set()
+    @property
+    @functools.lru_cache()
+    def files(self) -> Set[FileNode]:
+        files: Set[FileNode] = set()
         # Loop through the file extensions
         for extension in self.code_file_extensions[self.language]:
             # Use rglob() with a pattern to match the file extension

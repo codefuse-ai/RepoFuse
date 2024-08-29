@@ -2,7 +2,6 @@ import sys
 
 from mypy.modulefinder import BuildSource
 from mypy.stubgen import (
-    ASTStubGenerator,
     StubSource,
     generate_asts_for_modules,
     mypy_options,
@@ -20,6 +19,11 @@ def generate_python_stub(code: str, include_docstrings: bool = False) -> str:
     Generate a python stub from a python code string. This is a wrapper around mypy's stubgen
     If an error occurs, the original code is returned
     """
+    try:
+        from mypy.stubgen import ASTStubGenerator
+    except ImportError:
+        raise ImportError("mypy version is too old, generating stub is not supported")
+
     try:
         options = Options(
             pyversion=sys.version_info[:2],

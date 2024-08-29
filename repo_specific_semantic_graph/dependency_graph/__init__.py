@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from textwrap import dedent
 
@@ -11,7 +13,7 @@ from dependency_graph.graph_generator.jedi_generator import JediDependencyGraphG
 from dependency_graph.graph_generator.tree_sitter_generator import (
     TreeSitterDependencyGraphGenerator,
 )
-from dependency_graph.models import PathLike
+from dependency_graph.models import PathLike, VirtualPath
 from dependency_graph.models.graph_data import EdgeRelation
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
@@ -26,7 +28,7 @@ def construct_dependency_graph(
     dependency_graph_generator: GraphGeneratorType,
     language: Language | None = None,
 ) -> DependencyGraph:
-    if isinstance(repo, PathLike):
+    if isinstance(repo, str) or isinstance(repo, Path) or isinstance(repo, VirtualPath):
         if language is None:
             raise ValueError("language is required when repo is a PathLike")
         repo = Repository(repo, language)
@@ -199,21 +201,18 @@ def output_dependency_graph(
         f"Outputting the Repo-Specific Semantic Graph in {output_file if output_file else 'stdout'} with format {output_format}"
     )
 
-    match output_format:
-        case "edgelist":
-            data = graph.to_json()
-            if output_file:
-                output_file = Path(output_file)
-                output_file.write_text(data)
-            else:
-                print(data)
-        case "pyvis":
-            if output_file is None:
-                raise ValueError(
-                    "You must specify an output file for the pyvis format."
-                )
-            dump_graph_as_pyvis_graph(graph, output_file)
-        case "ipysigma":
-            dump_graph_as_ipysigma_graph(graph, output_file)
-        case _:
-            raise ValueError(f"Unknown output format: {output_format}")
+    if output_format == "edgelist":
+        data = graph.to_json()
+        if output_file:
+            output_file = Path(output_file)
+            output_file.write_text(data)
+        else:
+            print(data)
+    elif output_format == "pyvis":
+        if output_file is None:
+            raise ValueError("You must specify an output file for the pyvis format.")
+        dump_graph_as_pyvis_graph(graph, output_file)
+    elif output_format == "ipysigma":
+        dump_graph_as_ipysigma_graph(graph, output_file)
+    else:
+        raise ValueError(f"Unknown output format: {output_format}")
