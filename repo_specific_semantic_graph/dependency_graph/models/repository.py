@@ -1,7 +1,7 @@
 import functools
 from pathlib import Path
 
-from git import Repo, InvalidGitRepositoryError, GitCommandError, NoSuchPathError
+# from git import Repo, InvalidGitRepositoryError, GitCommandError, NoSuchPathError
 from typing import Set, Tuple, Dict
 
 from dependency_graph.models import PathLike
@@ -14,7 +14,7 @@ logger = setup_logger()
 
 
 class Repository:
-    _git_repo: Repo = None
+    # _git_repo: Repo = None
     repo_path: Path = None
     language: Language
 
@@ -37,7 +37,11 @@ class Repository:
         Language.R: (".r", ".R"),
     }
 
-    def __init__(self, repo_path: PathLike, language: Language) -> None:
+    def __init__(
+        self,
+        repo_path: PathLike,
+        language: Language,
+    ) -> None:
         if isinstance(repo_path, str):
             self.repo_path = Path(repo_path).expanduser().absolute()
         else:
@@ -56,11 +60,11 @@ class Repository:
                 f"Language {self.language} is not supported to get code files"
             )
 
-        try:
-            self._git_repo = Repo(repo_path)
-        except (InvalidGitRepositoryError, NoSuchPathError):
-            # The repo is not a git repo, just ignore
-            pass
+        # try:
+        #     self._git_repo = Repo(repo_path)
+        # except (InvalidGitRepositoryError, NoSuchPathError):
+        #     # The repo is not a git repo, just ignore
+        #     pass
 
     @property
     @functools.lru_cache()
@@ -74,21 +78,21 @@ class Repository:
             # Get the git-ignored files
             ignored_files = []
 
-            if self._git_repo:
-                try:
-                    ignored_files = self._git_repo.ignored(
-                        *list(self.repo_path.rglob(f"*{extension}"))
-                    )
-                except OSError:
-                    # If the git command argument list is too long, it will raise an OSError.
-                    # In this case, we will invoke the API by iterating through the files one by one
-                    logger.warn(
-                        f"git command argument list is too long, invoking the API by iterating through the files one by one"
-                    )
-                    for file in rglob_file_list:
-                        ignored_files.extend(self._git_repo.ignored(file))
-                except GitCommandError:
-                    pass
+            # if self._git_repo:
+            #     try:
+            #         ignored_files = self._git_repo.ignored(
+            #             *list(self.repo_path.rglob(f"*{extension}"))
+            #         )
+            #     except OSError:
+            #         # If the git command argument list is too long, it will raise an OSError.
+            #         # In this case, we will invoke the API by iterating through the files one by one
+            #         logger.warn(
+            #             f"git command argument list is too long, invoking the API by iterating through the files one by one"
+            #         )
+            #         for file in rglob_file_list:
+            #             ignored_files.extend(self._git_repo.ignored(file))
+            #     except GitCommandError:
+            #         pass
 
             # Add the files to the set filtering out git-ignored files
             files.update(
