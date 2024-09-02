@@ -131,7 +131,7 @@ def test_merge_graph(sample_graph: DependencyGraph, sample_java_graph: Dependenc
     all_edages = (
         sample_graph.graph.number_of_edges() + sample_java_graph.graph.number_of_edges()
     )
-    sample_graph.union_all(sample_java_graph)
+    sample_graph.compose_all(sample_java_graph)
     assert sample_graph.languages == unordered((Language.Python, Language.Java))
     assert sample_graph.graph.number_of_nodes() == all_nodes
     assert sample_graph.graph.number_of_edges() == all_edages

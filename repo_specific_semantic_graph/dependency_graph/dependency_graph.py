@@ -135,10 +135,10 @@ class DependencyGraph:
             G = self.get_related_subgraph(relation).graph
         yield from lexicographical_cyclic_topological_sort(G, key=lambda n: str(n))
 
-    def union_all(self, *graphs: "DependencyGraph"):
+    def compose_all(self, *graphs: "DependencyGraph"):
         """Merge the given graphs into this graph and return ."""
         all_graphs = [self.graph] + [graph.graph for graph in graphs]
-        self.graph = nx.union_all(all_graphs)
+        self.graph = nx.compose_all(all_graphs)
 
         language_set = set(self.languages)
         for graph in graphs:
