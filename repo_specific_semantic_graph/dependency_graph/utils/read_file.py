@@ -38,7 +38,7 @@ def read_file_with_encodings(file_path: Path, encodings: tuple[str]) -> tuple[st
         try:
             content = file_path.read_text(encoding=encoding)
             return content, encoding
-        except (UnicodeDecodeError, TypeError):
+        except (UnicodeDecodeError, TypeError, ValueError, UnicodeError):
             continue
     raise ValueError(
         f"Could not read file with any of the provided encodings: {encodings}"
@@ -68,4 +68,6 @@ def read_file_to_string(file_path: PathLike) -> str:
         content, _ = read_file_with_encodings(file_path, common_encodings)
         return content
     except ValueError:
-        raise ValueError(f"Could not read file: {file_path}")
+        pass
+
+    raise ValueError(f"Could not read file: {file_path}")
