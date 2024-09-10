@@ -139,13 +139,21 @@ class ImportResolver:
 
         # Find the module path
         # e.g. './Descriptor' -> './Descriptor.ts'; '../Descriptor' -> '../Descriptor.ts'
-        if "." in import_symbol_name or ".." in import_symbol_name:
+        if import_symbol_name == "./utils/util.C":
+            pass
+        if (
+            import_symbol_name.startswith("./")
+            or ".." in Path(import_symbol_name).parts
+            or "." in Path(import_symbol_name).parts
+        ):
+            """If the path is relative, then search in the filesystem"""
             result_path = []
             # If there is a suffix in the name
-            if suffix := self._Path(import_symbol_name).suffix:
+            suffix = self._Path(import_symbol_name).suffix
+            if suffix and suffix in extension_list:
                 # In case of '../package.json', we should filter it out
                 path = importer_file_path.parent / import_symbol_name
-                if suffix in extension_list and path.exists():
+                if path.exists():
                     result_path = [path]
             else:
                 result_path = _search_file(
