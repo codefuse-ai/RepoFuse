@@ -500,7 +500,7 @@ def test_rust(tree_sitter_generator, rust_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 3
+    assert len(edges) == 7
     relations = [
         (
             edge[0].type.value,
@@ -512,25 +512,52 @@ def test_rust(tree_sitter_generator, rust_repo_suite_path):
         )
         for edge in edges
     ]
-    assert relations == [
-        (
-            "module",
-            "main",
-            "module",
-            "sub_module",
-            "sub_module.rs",
-            "my_module::sub_module::sub_function",
-        ),
-        (
-            "module",
-            "main",
-            "module",
-            "helper",
-            "helper.rs",
-            "my_other_module::helper::helper_function",
-        ),
-        ("module", "main", "module", "foo", "foo.rs", "crate::foo::foo"),
-    ]
+    assert relations == unordered(
+        [
+            (
+                "module",
+                "main",
+                "module",
+                "bar",
+                "bar.rs",
+                "my_module::bar::bar_function",
+            ),
+            (
+                "module",
+                "main",
+                "module",
+                "sub_module",
+                "sub_module.rs",
+                "my_module::sub_module::sub_function",
+            ),
+            (
+                "module",
+                "main",
+                "module",
+                "helper",
+                "helper.rs",
+                "my_other_module::helper::helper_function",
+            ),
+            ("module", "main", "module", "foo", "foo.rs", "crate::foo::foo"),
+            (
+                "module",
+                "utils",
+                "module",
+                "sub_module",
+                "sub_module.rs",
+                "super::{sub_module::sub_function as sub, bar::*}",
+            ),
+            (
+                "module",
+                "utils",
+                "module",
+                "bar",
+                "bar.rs",
+                "super::{sub_module::sub_function as sub, bar::*}",
+            ),
+            ("module", "utils", "module", "mod", "mod.rs", "crate::my_other_module::*"),
+        ]
+    )
 
 
 def test_lua(tree_sitter_generator, lua_repo_suite_path):
