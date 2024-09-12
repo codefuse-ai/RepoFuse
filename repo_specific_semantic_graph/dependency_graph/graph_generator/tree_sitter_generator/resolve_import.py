@@ -432,7 +432,9 @@ class ImportResolver:
         self, import_symbol_node: TS_Node, importer_file_path: Path
     ) -> list[Path]:
         def find_import_path(
-            project_root: Path, file: Path, module_path: list[str], is_absolute: bool
+            project_root: Path,
+            file: Path,
+            module_path: list[str],
         ) -> Path | None:
             """
             Given the project root, the file containing the import, and the module path,
@@ -441,13 +443,26 @@ class ImportResolver:
             :param project_root: The root directory of the Rust project.
             :param file: The file (pathlib.Path) containing the import statement.
             :param module_path: A list of module components (e.g., ["my_module", "sub_module"]).
-            :param is_absolute: Boolean indicating if the import is absolute (`crate::`).
             :return: The pathlib.Path object for the corresponding file or None if not found.
             """
-            # Start from the project root if the path is absolute
-            current_dir = project_root / "src" if is_absolute else file.parent
+            # Determine if the import is absolute
+            is_absolute = module_path[0] == "crate"
 
-            for part in module_path:
+            if is_absolute:
+                module_path = module_path[1:]  # Remove the leading "crate"
+                # Start from the project root if the path is absolute
+                current_dir = project_root / "src"
+            elif module_path[0] == "super":
+                module_path = module_path[1:]  # Remove the leading "super"
+                # Start from the file's parent if the path is super
+                current_dir = file.parent
+            else:
+                current_dir = file.parent
+
+            for i, part in enumerate(module_path):
+                if part == "*":
+                    break
+
                 # Check if the module is a directory with a mod.rs or a file <module_name>.rs
                 dir_path = current_dir / part
                 mod_file_path = dir_path / "mod.rs"
@@ -455,8 +470,13 @@ class ImportResolver:
 
                 if mod_file_path.exists():
                     current_dir = dir_path
+                    # If it is the last part or the next part is star, return the mod.rs
+                    if i == len(module_path) - 1 or module_path[i + 1] == "*":
+                        return mod_file_path
+
                 elif file_path.exists():
                     return file_path
+
                 else:
                     # If not found, check further up the directory hierarchy for relative imports
                     if not is_absolute:
@@ -467,6 +487,13 @@ class ImportResolver:
                             ancestor_file_path = ancestor / f"{part}.rs"
 
                             if ancestor_mod_file_path.exists():
+                                # If it is the last part or the next part is star, return the mod.rs
+                                if (
+                                    i == len(module_path) - 1
+                                    or module_path[i + 1] == "*"
+                                ):
+                                    return mod_file_path
+
                                 current_dir = ancestor_dir_path
                                 found = True
                                 break
@@ -478,27 +505,59 @@ class ImportResolver:
                     else:
                         return None
 
+            last_part = module_path[-2] if module_path[-1] == "*" else module_path[-1]
             # If we reach here, assume the last module part is a file
-            final_file = current_dir / f"{module_path[-1]}.rs"
+            final_file = current_dir / f"{last_part}.rs"
             if final_file.exists():
                 return final_file
             else:
                 return None
 
-        # Decode the symbol name and split into module path components
-        import_symbol_name = import_symbol_node.text.decode()
-        module_path = import_symbol_name.split("::")
+        if import_symbol_node.type == "scoped_use_list":
+            """
+            Parse the import statement for a scoped use list
+            e.g. Parsing `use super::{sub_module::sub_function as sub, bar::*};`, we should split the use list into
+            the following import symbol names:
+            - `super::sub_module::sub_function as sub`
+            - `super::bar::*`
 
-        # Determine if the import is absolute
-        is_absolute = module_path[0] == "crate"
-        if is_absolute:
-            module_path = module_path[1:]  # Remove the leading "crate"
+            Then we can attempt to find the imported file based on heuristics
+            """
+            module_path_prefix = import_symbol_node.child_by_field_name(
+                "path"
+            ).text.decode()
+            use_list_node = import_symbol_node.child_by_field_name("list")
 
-        # Attempt to find the imported file based on heuristics
-        imported_file = find_import_path(
-            self.repo.repo_path, importer_file_path, module_path, is_absolute
-        )
-        return [imported_file] if imported_file else []
+            imported_files = []
+            for use_clause in use_list_node.named_children:
+                if use_clause.type == "use_as_clause":
+                    # Only take the first part of the import symbol, e.g. `super::sub_module::sub_function as sub`
+                    # Ignore the `as sub` part
+                    import_symbol_name = use_clause.text.decode().split()[0]
+                else:
+                    import_symbol_name = use_clause.text.decode()
+
+                # Group up import symbol names
+                import_symbol_name = f"{module_path_prefix}::{import_symbol_name}"
+                # Split into module path components
+                module_path = import_symbol_name.split("::")
+                # Attempt to find the imported file based on heuristics
+                imported_file = find_import_path(
+                    self.repo.repo_path, importer_file_path, module_path
+                )
+                if imported_file:
+                    imported_files.append(imported_file)
+
+            return imported_files
+        else:
+            # Decode the symbol name and split into module path components
+            import_symbol_name = import_symbol_node.text.decode()
+            module_path = import_symbol_name.split("::")
+            # Attempt to find the imported file based on heuristics
+            imported_file = find_import_path(
+                self.repo.repo_path, importer_file_path, module_path
+            )
+            return [imported_file] if imported_file else []
 
     def resolve_lua_import(
         self, import_symbol_node: TS_Node, importer_file_path: Path
