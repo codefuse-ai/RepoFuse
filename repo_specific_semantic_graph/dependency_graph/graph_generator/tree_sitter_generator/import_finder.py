@@ -149,8 +149,9 @@ FIND_IMPORT_QUERY = {
     Language.Rust: dedent(
         """
         [
-            (use_declaration argument: (scoped_identifier) @import_name)
+            (use_declaration argument: [(scoped_identifier)(use_wildcard)] @import_name)
             (use_declaration argument: (use_as_clause path: (scoped_identifier) @import_name))
+            (use_declaration argument: (scoped_use_list) @import_name)
         ]
         """
     ),

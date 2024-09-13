@@ -16,12 +16,13 @@ from dependency_graph.utils.intervals import find_innermost_interval
 
 
 class DependencyGraph:
-    def __init__(self, repo_path: PathLike, language: Language) -> None:
+    def __init__(self, repo_path: PathLike, *languages: Language) -> None:
         # See https://networkx.org/documentation/stable/reference/classes/multidigraph.html
         # See also https://stackoverflow.com/questions/26691442/how-do-i-add-a-new-attribute-to-an-edge-in-networkx
         self.graph = nx.MultiDiGraph()
         self.repo_path = Path(repo_path) if isinstance(repo_path, str) else repo_path
-        self.language = language
+        # De-duplicate the languages and convert to tuple
+        self.languages = tuple(set([Language(lang) for lang in languages]))
 
         self._update_callbacks: set[Callable] = set()
         # Clear the cache of self.get_edges when the graph is updated
@@ -93,7 +94,7 @@ class DependencyGraph:
         """Get a subgraph that contains all the nodes and edges that are related to the given relations.
         This subgraph is a new sub-copy of the original graph."""
         edges = self.get_related_edges(*relations)
-        sub_graph = DependencyGraph(self.repo_path, self.language)
+        sub_graph = DependencyGraph(self.repo_path, *self.languages)
         sub_graph.add_relational_edges_from(edges)
         return sub_graph
 
@@ -137,11 +138,23 @@ class DependencyGraph:
             G = self.get_related_subgraph(relation).graph
         yield from lexicographical_cyclic_topological_sort(G, key=lambda n: str(n))
 
+    def compose_all(self, *graphs: "DependencyGraph"):
+        """Merge the given graphs into this graph and return ."""
+        all_graphs = [self.graph] + [graph.graph for graph in graphs]
+        self.graph = nx.compose_all(all_graphs)
+
+        language_set = set(self.languages)
+        for graph in graphs:
+            language_set.update(graph.languages)
+        self.languages = tuple(language_set)
+
+        self._notify_update()
+
     def to_dict(self) -> dict:
         edge_list = self.get_edges()
         return {
             "repo_path": str(self.repo_path),
-            "language": self.language,
+            "languages": self.languages,
             "edges": [
                 (edge[0].to_dict(), edge[1].to_dict(), edge[2].to_dict())
                 for edge in edge_list
@@ -157,7 +170,7 @@ class DependencyGraph:
             (Node.from_dict(edge[0]), Node.from_dict(edge[1]), Edge.from_dict(edge[2]))
             for edge in obj_dict["edges"]
         ]
-        graph = DependencyGraph(obj_dict["repo_path"], obj_dict["language"])
+        graph = DependencyGraph(obj_dict["repo_path"], *obj_dict["languages"])
         graph.add_relational_edges_from(edges)
         return graph
 

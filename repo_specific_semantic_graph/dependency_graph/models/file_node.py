@@ -26,6 +26,7 @@ class FileNode:
             logger.error(
                 f"Decoding or reading File {self.file_path} failed: {e}. Returning empty string."
             )
+            self._content = ""
         return self._content
 
     def write_content(self, content: str) -> None:

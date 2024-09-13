@@ -7,6 +7,8 @@ use my_other_module::helper::helper_function;
 // At crate root
 use crate::foo::foo;
 
+use my_module::bar::bar_function as bar;
+
 fn main() {
     sub_function();
     helper_function();
@@ -14,4 +16,5 @@ fn main() {
 
     // Using a utility function from utils.rs
     my_module::utils::utility_function();
+    bar();
 }
