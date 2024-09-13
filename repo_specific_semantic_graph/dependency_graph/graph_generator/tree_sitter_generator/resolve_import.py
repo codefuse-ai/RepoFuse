@@ -139,8 +139,6 @@ class ImportResolver:
 
         # Find the module path
         # e.g. './Descriptor' -> './Descriptor.ts'; '../Descriptor' -> '../Descriptor.ts'
-        if import_symbol_name == "./utils/util.C":
-            pass
         if (
             import_symbol_name.startswith("./")
             or ".." in Path(import_symbol_name).parts
