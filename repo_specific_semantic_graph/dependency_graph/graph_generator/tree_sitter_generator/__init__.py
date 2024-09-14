@@ -4,6 +4,7 @@ from pathlib import Path
 
 from tqdm import tqdm
 from tree_sitter import Node as TS_Node
+from typing import List, Tuple, Dict
 
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import BaseDependencyGraphGenerator
@@ -31,7 +32,7 @@ logger = setup_logger()
 
 
 class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
-    supported_languages: tuple[Language] = (
+    supported_languages: Tuple[Language] = (
         Language.Python,
         Language.Java,
         Language.CSharp,
@@ -50,6 +51,22 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.R,
     )
 
+    def __init__(self, max_lines_to_read: int = 10000):
+        """
+        Initialize TreeSitterDependencyGraphGenerator
+        :param max_lines_to_read: The maximum number of lines to read from a file. Default is 10000.
+        Tree-sitter parser may fail and more seriously, causes memory leak or deadlock if the file is too large.
+        """
+        self.max_lines_to_read = max_lines_to_read
+        super().__init__()
+
+    def read_file_to_string_with_limited_line(self, file_path: PathLike) -> str:
+        # Use read_file_to_string here to avoid non-UTF8 decoding issue
+        content = read_file_to_string(
+            file_path, max_lines_to_read=self.max_lines_to_read
+        )
+        return content
+
     def generate_file(
         self,
         repo: Repository,
@@ -60,19 +77,22 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
     def generate(self, repo: Repository) -> DependencyGraph:
         D = DependencyGraph(repo.repo_path, repo.language)
-        module_map: dict[str, list[Path]] = defaultdict(list)
+        module_map: Dict[str, List[Path]] = defaultdict(list)
         # The key is (file_path, class_name)
-        import_map: dict[tuple[Path, str], list[TS_Node]] = defaultdict(list)
+        import_map: Dict[Tuple[Path, str], List[TS_Node]] = defaultdict(list)
         finder = ImportFinder(repo.language)
         resolver = ImportResolver(repo)
 
         for file in tqdm(repo.files, desc="Generating graph"):
             if not file.content.strip():
                 continue
-
-            if name := finder.find_module_name(file.file_path):
+            content = read_file_to_string(
+                file.file_path, max_lines_to_read=self.max_lines_to_read
+            )
+            name = finder.find_module_name(file.file_path)
+            if name:
                 module_map[name].append(file.file_path)
-            nodes = finder.find_imports(file.content)
+            nodes = finder.find_imports(content)
             import_map[(file.file_path, name)].extend(nodes)
 
         for (
@@ -94,7 +114,9 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 for importee_file_path in resolved:
                     # Use read_file_to_string here to avoid non-UTF8 decoding issue
                     importer_node = finder.parser.parse(
-                        read_file_to_string(importer_file_path).encode()
+                        read_file_to_string(
+                            importer_file_path, max_lines_to_read=self.max_lines_to_read
+                        ).encode()
                     ).root_node
 
                     if (
@@ -103,7 +125,9 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     ):
                         continue
                     importee_node = finder.parser.parse(
-                        read_file_to_string(importee_file_path).encode()
+                        read_file_to_string(
+                            importee_file_path, max_lines_to_read=self.max_lines_to_read
+                        ).encode()
                     ).root_node
 
                     importer_module_name = finder.find_module_name(importer_file_path)
