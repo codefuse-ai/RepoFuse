@@ -178,6 +178,7 @@ def test_virtualpath_glob():
     assert VirtualPath(mem_fs, "/dir/file1") in matches
     assert VirtualPath(mem_fs, "/dir/file2") in matches
 
+
 def test_virtualpath_glob_1():
     mem_fs = MemoryFS()
     mem_fs.makedir("/dir")
@@ -319,4 +320,10 @@ def test_virtualpath_is_relative_to_a_string():
 def test_virtualpath_absolute():
     mem_fs = MemoryFS()
     vpath = VirtualPath(mem_fs, "dir/subdir/file")
-    assert vpath.absolute() == VirtualPath(mem_fs, '/dir/subdir/file')
+    assert vpath.absolute() == VirtualPath(mem_fs, "/dir/subdir/file")
+
+
+def test_virtualpath_resolve():
+    mem_fs = MemoryFS()
+    vpath = VirtualPath(mem_fs, "dir/subdir/file")
+    assert vpath.resolve() == VirtualPath(mem_fs, "/dir/subdir/file")

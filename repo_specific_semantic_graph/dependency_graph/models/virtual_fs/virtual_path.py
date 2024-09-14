@@ -324,7 +324,12 @@ class VirtualPath(pathlib.PosixPath):
         # FS objects have no concept of a current directory
         return self.with_segments(fs.path.abspath(self.relative_fs_path))
 
+    def resolve(self, strict: bool = False):
+        # FS objects have no concept of a current directory
+        return self.absolute()
+
     if sys.version_info < (3, 9):
+
         def is_relative_to(self, *other):
             try:
                 self.relative_to(*other)
