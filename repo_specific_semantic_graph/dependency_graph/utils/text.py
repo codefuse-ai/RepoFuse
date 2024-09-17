@@ -36,3 +36,22 @@ def slice_text(
         text, start_line, start_column, end_line, end_column
     )
     return sliced_text
+
+
+def get_position(file_content: str):
+    """Return the start and end line numbers and column numbers of the content, starting from 1."""
+    lines = file_content.splitlines()
+
+    # Start position is always (1, 1)
+    start_line = 1
+    start_column = 1
+
+    # End position
+    end_line = 1
+    end_column = 1
+
+    if lines:
+        end_line = len(lines)
+        end_column = len(lines[-1]) + 1  # Length of the last line + 1 for 1-based index
+
+    return (start_line, start_column), (end_line, end_column)
