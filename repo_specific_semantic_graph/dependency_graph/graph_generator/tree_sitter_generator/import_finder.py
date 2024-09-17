@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
 
+from dataclasses import dataclass
 from tree_sitter import Parser, Language as TS_Language, Node as TS_Node, Tree
 
 from dependency_graph.graph_generator.tree_sitter_generator.load_lib import (
@@ -220,8 +223,21 @@ FIND_PACKAGE_QUERY = {
     ),
 }
 
+REGEX_FIND_IMPORT_PATTERN = {
+    Language.Lua: r"(?:require|dofile|loadfile)\s*\(?(.+)\){1}",
+}
+
+
+@dataclass
+class RegexNode:
+    start_point: tuple[int, int]
+    end_point: tuple[int, int]
+    text: str
+
 
 class ImportFinder:
+    languages_using_regex = tuple(REGEX_FIND_IMPORT_PATTERN.keys())
+
     def __init__(self, language: Language):
         lib_path = get_builtin_lib_path()
         self.language = language
@@ -244,6 +260,29 @@ class ImportFinder:
         query = self.ts_language.query(query)
         captures = query.captures(tree.root_node)
         return [node for node, captured in captures if captured == capture_name]
+
+    def _regex_find_imports(self, code: str, pattern: str) -> list[RegexNode]:
+        matches = []
+        for match in re.finditer(pattern, code):
+            module_name = match.group(1)
+            start_index = match.start(1)
+            end_index = match.end(1)
+
+            # Calculate line and column number
+            start_line = code.count("\n", 0, start_index)
+            start_column = start_index - code.rfind("\n", 0, start_index) - 1
+
+            end_line = code.count("\n", 0, end_index)
+            end_column = end_index - code.rfind("\n", 0, end_index) - 1
+
+            matches.append(
+                RegexNode(
+                    start_point=(start_line, start_column),
+                    end_point=(end_line, end_column),
+                    text=module_name,
+                )
+            )
+        return matches
 
     @lru_cache(maxsize=256)
     def find_imports(
