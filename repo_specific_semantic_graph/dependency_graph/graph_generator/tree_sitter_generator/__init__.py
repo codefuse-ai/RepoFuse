@@ -1,10 +1,10 @@
 import traceback
 from collections import defaultdict
 from pathlib import Path
+from typing import List, Tuple, Dict
 
 from tqdm import tqdm
 from tree_sitter import Node as TS_Node
-from typing import List, Tuple, Dict
 
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import BaseDependencyGraphGenerator
@@ -26,6 +26,7 @@ from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
 from dependency_graph.utils.log import setup_logger
 from dependency_graph.utils.read_file import read_file_to_string
+from dependency_graph.utils.text import get_position
 
 # Initialize logging
 logger = setup_logger()
@@ -51,11 +52,12 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         Language.R,
     )
 
-    def __init__(self, max_lines_to_read: int = 10000):
+    def __init__(self, max_lines_to_read: int = None):
         """
         Initialize TreeSitterDependencyGraphGenerator
-        :param max_lines_to_read: The maximum number of lines to read from a file. Default is 10000.
+        :param max_lines_to_read: The maximum number of lines to read from a file. Default is None.
         Tree-sitter parser may fail and more seriously, causes memory leak or deadlock if the file is too large.
+        So if max_lines_to_read is set, the file is read by limited line to workaround ths.
         """
         self.max_lines_to_read = max_lines_to_read
         super().__init__()
@@ -86,9 +88,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         for file in tqdm(repo.files, desc="Generating graph"):
             if not file.content.strip():
                 continue
-            content = read_file_to_string(
-                file.file_path, max_lines_to_read=self.max_lines_to_read
-            )
+            content = self.read_file_to_string_with_limited_line(file.file_path)
             name = finder.find_module_name(file.file_path)
             if name:
                 module_map[name].append(file.file_path)
@@ -113,22 +113,23 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
                 for importee_file_path in resolved:
                     # Use read_file_to_string here to avoid non-UTF8 decoding issue
-                    importer_node = finder.parser.parse(
+                    importer_file_location = get_position(
                         read_file_to_string(
                             importer_file_path, max_lines_to_read=self.max_lines_to_read
-                        ).encode()
-                    ).root_node
+                        )
+                    )
+
+                    importee_file_location = get_position(
+                        read_file_to_string(
+                            importee_file_path, max_lines_to_read=self.max_lines_to_read
+                        )
+                    )
 
                     if (
                         not importee_file_path.exists()
                         or not importee_file_path.is_file()
                     ):
                         continue
-                    importee_node = finder.parser.parse(
-                        read_file_to_string(
-                            importee_file_path, max_lines_to_read=self.max_lines_to_read
-                        ).encode()
-                    ).root_node
 
                     importer_module_name = finder.find_module_name(importer_file_path)
                     importee_module_name = finder.find_module_name(importee_file_path)
@@ -138,10 +139,10 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         name=importer_module_name,
                         location=Location(
                             file_path=importer_file_path,
-                            start_line=importer_node.start_point[0] + 1,
-                            start_column=importer_node.start_point[1] + 1,
-                            end_line=importer_node.end_point[0] + 1,
-                            end_column=importer_node.end_point[1] + 1,
+                            start_line=importer_file_location[0][0],
+                            start_column=importer_file_location[0][1],
+                            end_line=importer_file_location[1][0],
+                            end_column=importer_file_location[1][1],
                         ),
                     )
                     to_node = Node(
@@ -149,10 +150,10 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         name=importee_module_name,
                         location=Location(
                             file_path=importee_file_path,
-                            start_line=importee_node.start_point[0] + 1,
-                            start_column=importee_node.start_point[1] + 1,
-                            end_line=importee_node.end_point[0] + 1,
-                            end_column=importee_node.end_point[1] + 1,
+                            start_line=importee_file_location[0][0],
+                            start_column=importee_file_location[0][1],
+                            end_line=importee_file_location[1][0],
+                            end_column=importee_file_location[1][1],
                         ),
                     )
                     import_location = Location(
