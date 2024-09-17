@@ -575,14 +575,52 @@ def test_lua(tree_sitter_generator, lua_repo_suite_path):
             edge[1].name,
             edge[1].location.file_path.name,
             edge[2].get_text(),
+            (
+                edge[2].location.start_line,
+                edge[2].location.start_column,
+                edge[2].location.end_line,
+                edge[2].location.end_column,
+            ),
         )
         for edge in edges
     ]
     assert relations == [
-        ("module", "init", "module", "module1", "module1.lua", "'module1'"),
-        ("module", "init", "module", "module2", "module2.lua", '"submodule.module2"'),
-        ("module", "init", "module", "module3", "module3.lua", '"module3"'),
-        ("module", "init", "module", "module4", "module4.lua", '"module4.lua"'),
+        (
+            "module",
+            "init",
+            "module",
+            "module1",
+            "module1.lua",
+            "'module1'",
+            (2, 25, 2, 34),
+        ),
+        (
+            "module",
+            "init",
+            "module",
+            "module2",
+            "module2.lua",
+            '"submodule.module2"',
+            (5, 25, 5, 44),
+        ),
+        (
+            "module",
+            "init",
+            "module",
+            "module3",
+            "module3.lua",
+            '"module3"',
+            (7, 9, 7, 18),
+        ),
+        (
+            "module",
+            "init",
+            "module",
+            "module4",
+            "module4.lua",
+            '"module4.lua"',
+            (9, 8, 9, 21),
+        ),
     ]
 
 
