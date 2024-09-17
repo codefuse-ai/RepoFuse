@@ -224,7 +224,8 @@ FIND_PACKAGE_QUERY = {
 }
 
 REGEX_FIND_IMPORT_PATTERN = {
-    Language.Lua: r"(?:require|dofile|loadfile)\s*\(?(.+)\){1}",
+    Language.Lua: r"^(?!--).*(?:require|dofile|loadfile)\s*\((.+)\)",
+    Language.R: r"^(?!#).*(?:source)\s*\((.+)\)",
 }
 
 
@@ -263,7 +264,7 @@ class ImportFinder:
 
     def _regex_find_imports(self, code: str, pattern: str) -> list[RegexNode]:
         matches = []
-        for match in re.finditer(pattern, code):
+        for match in re.finditer(pattern, code, re.MULTILINE):
             module_name = match.group(1)
             start_index = match.start(1)
             end_index = match.end(1)

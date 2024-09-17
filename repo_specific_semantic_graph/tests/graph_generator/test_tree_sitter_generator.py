@@ -673,6 +673,12 @@ def test_r(tree_sitter_generator, r_repo_suite_path):
             edge[1].name,
             edge[1].location.file_path.name,
             edge[2].get_text(),
+            (
+                edge[2].location.start_line,
+                edge[2].location.start_column,
+                edge[2].location.end_line,
+                edge[2].location.end_column,
+            ),
         )
         for edge in edges
     ]
@@ -684,5 +690,6 @@ def test_r(tree_sitter_generator, r_repo_suite_path):
             "external_script",
             "external_script.R",
             '"external_script.R"',
+            (4, 8, 4, 27),
         )
     ]
