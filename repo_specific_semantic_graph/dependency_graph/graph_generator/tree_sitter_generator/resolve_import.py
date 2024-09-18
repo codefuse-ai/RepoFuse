@@ -5,6 +5,10 @@ from importlab.parsepy import ImportStatement
 from importlab.resolve import ImportException
 from tree_sitter import Node as TS_Node
 
+from dependency_graph.graph_generator.tree_sitter_generator import ImportFinder
+from dependency_graph.graph_generator.tree_sitter_generator.import_finder import (
+    RegexNode,
+)
 from dependency_graph.graph_generator.tree_sitter_generator.python_resolver import (
     Resolver,
 )
@@ -35,11 +39,15 @@ class ImportResolver:
 
     def resolve_import(
         self,
-        import_symbol_node: TS_Node,
+        import_symbol_node: TS_Node | RegexNode,
         module_map: dict[str, list[Path]],
         importer_file_path: Path,
     ) -> list[Path]:
         resolved_path_list = []
+        if isinstance(import_symbol_node, RegexNode):
+            assert (
+                self.repo.language in ImportFinder.languages_using_regex
+            ), f"import_symbol_node {import_symbol_node} of type RegexNode is only supported for {ImportFinder.languages_using_regex}, not {self.repo.language}"
 
         match self.repo.language:
             case Language.Java | Language.Kotlin:
@@ -558,11 +566,14 @@ class ImportResolver:
             return [imported_file] if imported_file else []
 
     def resolve_lua_import(
-        self, import_symbol_node: TS_Node, importer_file_path: Path
+        self, import_symbol_node: TS_Node | RegexNode, importer_file_path: Path
     ) -> list[Path]:
-        import_symbol_name = import_symbol_node.text.decode()
-        import_symbol_name = import_symbol_name.strip('"').strip("'")
+        if isinstance(import_symbol_node, RegexNode):
+            import_symbol_name = import_symbol_node.text
+        else:
+            import_symbol_name = import_symbol_node.text.decode()
 
+        import_symbol_name = import_symbol_name.strip('"').strip("'")
         extension_list = Repository.code_file_extensions[Language.Lua]
 
         # Here, we make sure in case of `dofile("module4.lua")`, the `.lua` suffix is preserved.
@@ -586,9 +597,13 @@ class ImportResolver:
         return []
 
     def resolve_bash_import(
-        self, import_symbol_node: TS_Node, importer_file_path: Path
+        self, import_symbol_node: TS_Node | RegexNode, importer_file_path: Path
     ) -> list[Path]:
-        import_symbol_name = import_symbol_node.text.decode()
+        if isinstance(import_symbol_node, RegexNode):
+            import_symbol_name = import_symbol_node.text
+        else:
+            import_symbol_name = import_symbol_node.text.decode()
+
         if self._Path(import_symbol_name).exists():
             return [self._Path(import_symbol_name)]
         else:
@@ -598,9 +613,13 @@ class ImportResolver:
         return []
 
     def resolve_r_import(
-        self, import_symbol_node: TS_Node, importer_file_path: Path
+        self, import_symbol_node: TS_Node | RegexNode, importer_file_path: Path
     ) -> list[Path]:
-        import_symbol_name = import_symbol_node.text.decode()
+        if isinstance(import_symbol_node, RegexNode):
+            import_symbol_name = import_symbol_node.text
+        else:
+            import_symbol_name = import_symbol_node.text.decode()
+
         import_symbol_name = import_symbol_name.strip('"').strip("'")
 
         if self._Path(import_symbol_name).exists():

@@ -575,14 +575,52 @@ def test_lua(tree_sitter_generator, lua_repo_suite_path):
             edge[1].name,
             edge[1].location.file_path.name,
             edge[2].get_text(),
+            (
+                edge[2].location.start_line,
+                edge[2].location.start_column,
+                edge[2].location.end_line,
+                edge[2].location.end_column,
+            ),
         )
         for edge in edges
     ]
     assert relations == [
-        ("module", "init", "module", "module1", "module1.lua", "'module1'"),
-        ("module", "init", "module", "module2", "module2.lua", '"submodule.module2"'),
-        ("module", "init", "module", "module3", "module3.lua", '"module3"'),
-        ("module", "init", "module", "module4", "module4.lua", '"module4.lua"'),
+        (
+            "module",
+            "init",
+            "module",
+            "module1",
+            "module1.lua",
+            "'module1'",
+            (2, 25, 2, 34),
+        ),
+        (
+            "module",
+            "init",
+            "module",
+            "module2",
+            "module2.lua",
+            '"submodule.module2"',
+            (5, 25, 5, 44),
+        ),
+        (
+            "module",
+            "init",
+            "module",
+            "module3",
+            "module3.lua",
+            '"module3"',
+            (7, 9, 7, 18),
+        ),
+        (
+            "module",
+            "init",
+            "module",
+            "module4",
+            "module4.lua",
+            '"module4.lua"',
+            (9, 8, 9, 21),
+        ),
     ]
 
 
@@ -601,13 +639,43 @@ def test_bash(tree_sitter_generator, bash_repo_suite_path):
             edge[1].name,
             edge[1].location.file_path.name,
             edge[2].get_text(),
+            (
+                edge[2].location.start_line,
+                edge[2].location.start_column,
+                edge[2].location.end_line,
+                edge[2].location.end_column,
+            ),
         )
         for edge in edges
     ]
     assert relations == [
-        ("module", "main.sh", "module", "script.sh", "script.sh", "script.sh"),
-        ("module", "main.sh", "module", "utils.sh", "utils.sh", "./lib/utils.sh"),
-        ("module", "main.sh", "module", "hello.bash", "hello.bash", "./lib/hello.bash"),
+        (
+            "module",
+            "main.sh",
+            "module",
+            "script.sh",
+            "script.sh",
+            "script.sh",
+            (2, 8, 2, 17),
+        ),
+        (
+            "module",
+            "main.sh",
+            "module",
+            "utils.sh",
+            "utils.sh",
+            "./lib/utils.sh",
+            (3, 8, 3, 22),
+        ),
+        (
+            "module",
+            "main.sh",
+            "module",
+            "hello.bash",
+            "hello.bash",
+            "./lib/hello.bash",
+            (4, 3, 4, 19),
+        ),
         (
             "module",
             "main.sh",
@@ -615,8 +683,17 @@ def test_bash(tree_sitter_generator, bash_repo_suite_path):
             "source.bash",
             "source.bash",
             "./lib/source.bash",
+            (5, 6, 5, 23),
         ),
-        ("module", "main.sh", "module", "config.sh", "config.sh", "config.sh"),
+        (
+            "module",
+            "main.sh",
+            "module",
+            "config.sh",
+            "config.sh",
+            "config.sh",
+            (9, 10, 9, 19),
+        ),
     ]
 
 
@@ -635,6 +712,12 @@ def test_r(tree_sitter_generator, r_repo_suite_path):
             edge[1].name,
             edge[1].location.file_path.name,
             edge[2].get_text(),
+            (
+                edge[2].location.start_line,
+                edge[2].location.start_column,
+                edge[2].location.end_line,
+                edge[2].location.end_column,
+            ),
         )
         for edge in edges
     ]
@@ -646,5 +729,6 @@ def test_r(tree_sitter_generator, r_repo_suite_path):
             "external_script",
             "external_script.R",
             '"external_script.R"',
+            (4, 8, 4, 27),
         )
     ]

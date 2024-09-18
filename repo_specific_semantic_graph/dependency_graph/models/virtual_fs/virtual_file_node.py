@@ -7,10 +7,6 @@ class VirtualFileNode(FileNode):
         super().__init__(file_path)
         self.file_path = file_path
 
-    @property
-    def content(self) -> str:
-        return self.file_path.read_text()
-
     def write_content(self, content: str) -> None:
         raise NotImplementedError(
             "Write operation is not permitted for VirtualFileNode."

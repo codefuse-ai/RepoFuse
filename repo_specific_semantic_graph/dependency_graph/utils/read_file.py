@@ -45,14 +45,22 @@ def read_file_with_encodings(file_path: Path, encodings: tuple[str]) -> tuple[st
     )
 
 
-def read_file_to_string(file_path: PathLike) -> str:
-    """Function to detect encoding and read file to string"""
+def read_file_with_limit(content: str, max_lines_to_read: int = None) -> str:
+    """Helper function to return a limited number of lines from the content."""
+    if max_lines_to_read is None:
+        return content
+    else:
+        return "\n".join(content.splitlines()[:max_lines_to_read])
+
+
+def read_file_to_string(file_path: PathLike, *, max_lines_to_read: int = None) -> str:
+    """Function to detect encoding and read file to string with an optional line limit."""
     if isinstance(file_path, str):
         file_path = Path(file_path)
 
     try:
         content, _ = read_file_with_encodings(file_path, (default_encoding,))
-        return content
+        return read_file_with_limit(content, max_lines_to_read)
     except ValueError:
         pass
 
@@ -60,13 +68,13 @@ def read_file_to_string(file_path: PathLike) -> str:
         detected_encoding = detect_file_encoding(file_path)
         # Read the file with the detected encoding
         content, _ = read_file_with_encodings(file_path, (detected_encoding,))
-        return content
+        return read_file_with_limit(content, max_lines_to_read)
     except ValueError:
         pass
 
     try:
         content, _ = read_file_with_encodings(file_path, common_encodings)
-        return content
+        return read_file_with_limit(content, max_lines_to_read)
     except ValueError:
         pass
 
