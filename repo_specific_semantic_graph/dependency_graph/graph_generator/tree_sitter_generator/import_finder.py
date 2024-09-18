@@ -224,6 +224,9 @@ FIND_PACKAGE_QUERY = {
     ),
 }
 
+"""
+Regex pattern to find all the imports in a code. The captured import name should be matched in group 1
+"""
 REGEX_FIND_IMPORT_PATTERN = {
     Language.Lua: r"^(?!--).*(?:require|dofile|loadfile)\s*\((.+)\)",
     Language.R: r"^(?!#).*(?:source)\s*\((.+)\)",
