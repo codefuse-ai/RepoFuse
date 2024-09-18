@@ -639,13 +639,43 @@ def test_bash(tree_sitter_generator, bash_repo_suite_path):
             edge[1].name,
             edge[1].location.file_path.name,
             edge[2].get_text(),
+            (
+                edge[2].location.start_line,
+                edge[2].location.start_column,
+                edge[2].location.end_line,
+                edge[2].location.end_column,
+            ),
         )
         for edge in edges
     ]
     assert relations == [
-        ("module", "main.sh", "module", "script.sh", "script.sh", "script.sh"),
-        ("module", "main.sh", "module", "utils.sh", "utils.sh", "./lib/utils.sh"),
-        ("module", "main.sh", "module", "hello.bash", "hello.bash", "./lib/hello.bash"),
+        (
+            "module",
+            "main.sh",
+            "module",
+            "script.sh",
+            "script.sh",
+            "script.sh",
+            (2, 8, 2, 17),
+        ),
+        (
+            "module",
+            "main.sh",
+            "module",
+            "utils.sh",
+            "utils.sh",
+            "./lib/utils.sh",
+            (3, 8, 3, 22),
+        ),
+        (
+            "module",
+            "main.sh",
+            "module",
+            "hello.bash",
+            "hello.bash",
+            "./lib/hello.bash",
+            (4, 3, 4, 19),
+        ),
         (
             "module",
             "main.sh",
@@ -653,8 +683,17 @@ def test_bash(tree_sitter_generator, bash_repo_suite_path):
             "source.bash",
             "source.bash",
             "./lib/source.bash",
+            (5, 6, 5, 23),
         ),
-        ("module", "main.sh", "module", "config.sh", "config.sh", "config.sh"),
+        (
+            "module",
+            "main.sh",
+            "module",
+            "config.sh",
+            "config.sh",
+            "config.sh",
+            (9, 10, 9, 19),
+        ),
     ]
 
 
