@@ -597,9 +597,13 @@ class ImportResolver:
         return []
 
     def resolve_bash_import(
-        self, import_symbol_node: TS_Node, importer_file_path: Path
+        self, import_symbol_node: TS_Node | RegexNode, importer_file_path: Path
     ) -> list[Path]:
-        import_symbol_name = import_symbol_node.text.decode()
+        if isinstance(import_symbol_node, RegexNode):
+            import_symbol_name = import_symbol_node.text
+        else:
+            import_symbol_name = import_symbol_node.text.decode()
+
         if self._Path(import_symbol_name).exists():
             return [self._Path(import_symbol_name)]
         else:
