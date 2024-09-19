@@ -31,10 +31,10 @@ class ImportResolver:
         """
         Convert the str file path to handle both physical and virtual paths
         """
-        if isinstance(self.repo.repo_path, Path):
-            return Path(file_path)
-        elif isinstance(self.repo.repo_path, VirtualPath):
+        if isinstance(self.repo.repo_path, VirtualPath):
             return VirtualPath(self.repo.repo_path.fs, file_path)
+        elif isinstance(self.repo.repo_path, Path):
+            return Path(file_path)
         else:
             return Path(file_path)
 

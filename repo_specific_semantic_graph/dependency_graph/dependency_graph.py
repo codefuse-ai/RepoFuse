@@ -205,10 +205,10 @@ class DependencyGraphContextRetriever:
             # Patch the method in OriginalPath
             Path.is_relative_to = is_relative_to
 
-        if isinstance(self.graph.repo_path, Path):
+        if isinstance(self.graph.repo_path, VirtualPath):
+            return VirtualPath(self.graph.repo_path.fs, file_path)
+        elif isinstance(self.graph.repo_path, Path):
             return Path(file_path)
-        elif isinstance(self.graph.repo_path, VirtualPath):
-            return VirtualPath(self.repo.repo_path.fs, file_path)
         else:
             return Path(file_path)
 
