@@ -189,10 +189,10 @@ class DependencyGraphContextRetriever:
 
     def _Path(self, file_path: PathLike) -> Path:
         match self.graph.repo_path:
-            case Path():
-                return Path(file_path)
             case VirtualPath():
                 return VirtualPath(self.graph.repo_path.fs, file_path)
+            case Path():
+                return Path(file_path)
             case _:
                 return Path(file_path)
 
