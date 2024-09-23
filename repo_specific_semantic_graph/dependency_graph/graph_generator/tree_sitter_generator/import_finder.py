@@ -315,7 +315,7 @@ class ImportFinder:
             end_column = end_index - code.rfind("\n", 0, end_index) - 1
 
             matches.append(
-                RegexNode(
+                RegexInfo(
                     start_point=(start_line, start_column),
                     end_point=(end_line, end_column),
                     text=module_name,
