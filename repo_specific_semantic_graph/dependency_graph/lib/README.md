@@ -1,4 +1,4 @@
-# Tree-sitter library 
+# Tree-sitter library
 
 Built-in tree-sitter parser for the following languages:
 

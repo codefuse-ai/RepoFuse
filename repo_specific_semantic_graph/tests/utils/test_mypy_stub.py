@@ -1,8 +1,9 @@
 import sys
 from textwrap import dedent
 
-from dependency_graph.utils.mypy_stub import generate_python_stub
 import pytest
+
+from dependency_graph.utils.mypy_stub import generate_python_stub
 
 
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python 3.10 or higher")

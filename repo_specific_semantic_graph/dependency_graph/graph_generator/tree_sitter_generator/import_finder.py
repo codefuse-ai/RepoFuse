@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import re
-
 from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
 
 from tree_sitter import Parser, Language as TS_Language, Tree
 
-from dependency_graph.graph_generator.tree_sitter_generator.load_lib import (
-    get_builtin_lib_path,
-)
 from dependency_graph.graph_generator.tree_sitter_generator.info import (
     RegexInfo,
     ParseTreeInfo,
+)
+from dependency_graph.graph_generator.tree_sitter_generator.load_lib import (
+    get_builtin_lib_path,
 )
 from dependency_graph.models.language import Language
 from dependency_graph.utils.read_file import read_file_to_string

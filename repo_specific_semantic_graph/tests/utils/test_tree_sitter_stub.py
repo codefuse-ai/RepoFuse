@@ -1,4 +1,3 @@
-from pathlib import Path
 from textwrap import dedent
 
 from dependency_graph.utils.tree_sitter_stub import (

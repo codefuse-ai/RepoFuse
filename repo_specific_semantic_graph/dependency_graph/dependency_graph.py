@@ -8,9 +8,9 @@ from typing import Iterable, Callable
 
 import networkx as nx
 
-from dependency_graph.models.language import Language
 from dependency_graph.models import PathLike, VirtualPath
 from dependency_graph.models.graph_data import Node, Edge, EdgeRelation, NodeType
+from dependency_graph.models.language import Language
 from dependency_graph.utils.digraph import lexicographical_cyclic_topological_sort
 from dependency_graph.utils.intervals import find_innermost_interval
 

@@ -1,13 +1,14 @@
 from __future__ import annotations
+
 import functools
 from pathlib import Path
-
-# from git import Repo, InvalidGitRepositoryError, GitCommandError, NoSuchPathError
 
 from dependency_graph.models import PathLike
 from dependency_graph.models.file_node import FileNode
 from dependency_graph.models.language import Language
 from dependency_graph.utils.log import setup_logger
+
+# from git import Repo, InvalidGitRepositoryError, GitCommandError, NoSuchPathError
 
 # Initialize logging
 logger = setup_logger()
