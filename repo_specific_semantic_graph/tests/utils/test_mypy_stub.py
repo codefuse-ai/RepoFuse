@@ -1,8 +1,12 @@
+import sys
 from textwrap import dedent
+
+import pytest
 
 from dependency_graph.utils.mypy_stub import generate_python_stub
 
 
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python 3.10 or higher")
 def test_mypy_stub():
     code = dedent(
         '''
@@ -40,6 +44,7 @@ def test_mypy_stub():
     assert actual == expected
 
 
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python 3.10 or higher")
 def test_mypy_stub_can_include_docstrings():
     code = dedent(
         '''
@@ -79,6 +84,7 @@ def test_mypy_stub_can_include_docstrings():
     assert actual == expected
 
 
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python 3.10 or higher")
 def test_mypy_stub_critical_error():
     code = dedent(
         """

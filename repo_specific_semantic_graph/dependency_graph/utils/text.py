@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def slice_text_around(
     text: str, start_line: int, start_column: int, end_line: int, end_column: int
 ) -> tuple[str, str, str]:

@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 import traceback
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Tuple, Dict
 
 from tqdm import tqdm
-from tree_sitter import Node as TS_Node
 
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.graph_generator import BaseDependencyGraphGenerator
 from dependency_graph.graph_generator.tree_sitter_generator.import_finder import (
     ImportFinder,
+)
+from dependency_graph.graph_generator.tree_sitter_generator.info import (
+    RegexInfo,
+    ParseTreeInfo,
 )
 from dependency_graph.graph_generator.tree_sitter_generator.resolve_import import (
     ImportResolver,
@@ -81,13 +86,14 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         D = DependencyGraph(repo.repo_path, repo.language)
         module_map: Dict[str, List[Path]] = defaultdict(list)
         # The key is (file_path, class_name)
-        import_map: Dict[Tuple[Path, str], List[TS_Node]] = defaultdict(list)
+        import_map: dict[tuple[Path, str], list[ParseTreeInfo] | list[RegexInfo]] = (
+            defaultdict(list)
+        )
+
         finder = ImportFinder(repo.language)
         resolver = ImportResolver(repo)
 
         for file in tqdm(repo.files, desc="Generating graph"):
-            if not file.content.strip():
-                continue
             content = self.read_file_to_string_with_limited_line(file.file_path)
             name = finder.find_module_name(file.file_path)
             if name:
@@ -131,8 +137,11 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     ):
                         continue
 
-                    importer_module_name = finder.find_module_name(importer_file_path)
-                    importee_module_name = finder.find_module_name(importee_file_path)
+                    importee_module_name = None
+                    for module_name, file_paths in module_map.items():
+                        if importee_file_path.resolve() in file_paths:
+                            importee_module_name = module_name
+                            break
 
                     from_node = Node(
                         type=NodeType.MODULE,

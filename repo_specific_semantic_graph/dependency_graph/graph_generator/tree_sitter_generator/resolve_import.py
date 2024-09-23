@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 import os
+import re
 from pathlib import Path
 
 from importlab.parsepy import ImportStatement
 from importlab.resolve import ImportException
-from tree_sitter import Node as TS_Node
 
 from dependency_graph.graph_generator.tree_sitter_generator import ImportFinder
-from dependency_graph.graph_generator.tree_sitter_generator.import_finder import (
-    RegexNode,
+from dependency_graph.graph_generator.tree_sitter_generator.info import (
+    RegexInfo,
+    ParseTreeInfo,
 )
 from dependency_graph.graph_generator.tree_sitter_generator.python_resolver import (
     Resolver,
@@ -29,96 +32,92 @@ class ImportResolver:
         """
         Convert the str file path to handle both physical and virtual paths
         """
-        match self.repo.repo_path:
-            case VirtualPath():
-                return VirtualPath(self.repo.repo_path.fs, file_path)
-            case Path():
-                return Path(file_path)
-            case _:
-                return Path(file_path)
+        if isinstance(self.repo.repo_path, VirtualPath):
+            return VirtualPath(self.repo.repo_path.fs, file_path)
+        elif isinstance(self.repo.repo_path, Path):
+            return Path(file_path)
+        else:
+            return Path(file_path)
 
     def resolve_import(
         self,
-        import_symbol_node: TS_Node | RegexNode,
+        import_symbol_node: ParseTreeInfo | RegexInfo,
         module_map: dict[str, list[Path]],
         importer_file_path: Path,
     ) -> list[Path]:
         resolved_path_list = []
-        if isinstance(import_symbol_node, RegexNode):
+        if isinstance(import_symbol_node, RegexInfo):
             assert (
                 self.repo.language in ImportFinder.languages_using_regex
             ), f"import_symbol_node {import_symbol_node} of type RegexNode is only supported for {ImportFinder.languages_using_regex}, not {self.repo.language}"
 
-        match self.repo.language:
-            case Language.Java | Language.Kotlin:
-                import_symbol_name = import_symbol_node.text.decode()
-                # Deal with star import: `import xxx.*`
-                if b".*" in import_symbol_node.parent.text:
-                    for module_name, path_list in module_map.items():
-                        # Use rpartition to split the string at the rightmost '.'
-                        package_name, _, _ = module_name.rpartition(".")
-                        if package_name == import_symbol_name:
-                            resolved_path_list.extend(path_list)
-                else:
-                    resolved_path_list.extend(module_map.get(import_symbol_name, []))
-            case Language.CSharp:
-                import_symbol_name = import_symbol_node.text.decode()
+        if self.repo.language in (Language.Java, Language.Kotlin):
+            import_symbol_name = import_symbol_node.text
+            # Deal with star import: `import xxx.*`
+            if ".*" in import_symbol_node.parent.text:
+                for module_name, path_list in module_map.items():
+                    # Use rpartition to split the string at the rightmost '.'
+                    package_name, _, _ = module_name.rpartition(".")
+                    if package_name == import_symbol_name:
+                        resolved_path_list.extend(path_list)
+            else:
                 resolved_path_list.extend(module_map.get(import_symbol_name, []))
-            case Language.TypeScript | Language.JavaScript:
-                resolved_path_list.extend(
-                    self.resolve_ts_js_import(
-                        import_symbol_node, module_map, importer_file_path
-                    )
+        elif self.repo.language == Language.CSharp:
+            import_symbol_name = import_symbol_node.text
+            resolved_path_list.extend(module_map.get(import_symbol_name, []))
+        elif self.repo.language in (Language.TypeScript, Language.JavaScript):
+            resolved_path_list.extend(
+                self.resolve_ts_js_import(
+                    import_symbol_node, module_map, importer_file_path
                 )
-            case Language.Python:
-                resolved_path_list.extend(
-                    self.resolve_python_import(import_symbol_node, importer_file_path)
-                )
-            case Language.PHP:
-                resolved_path_list.extend(
-                    self.resolve_php_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Ruby:
-                resolved_path_list.extend(
-                    self.resolve_ruby_import(import_symbol_node, importer_file_path)
-                )
-            case Language.C | Language.CPP:
-                resolved_path_list.extend(
-                    self.resolve_cfamily_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Go:
-                resolved_path_list.extend(self.resolve_go_import(import_symbol_node))
-            case Language.Swift:
-                resolved_path_list.extend(
-                    self.resolve_swift_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Rust:
-                resolved_path_list.extend(
-                    self.resolve_rust_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Lua:
-                resolved_path_list.extend(
-                    self.resolve_lua_import(import_symbol_node, importer_file_path)
-                )
-            case Language.Bash:
-                resolved_path_list.extend(
-                    self.resolve_bash_import(import_symbol_node, importer_file_path)
-                )
-            case Language.R:
-                resolved_path_list.extend(
-                    self.resolve_r_import(import_symbol_node, importer_file_path)
-                )
-            case _:
-                raise NotImplementedError(
-                    f"Language {self.repo.language} is not supported"
-                )
+            )
+        elif self.repo.language == Language.Python:
+            resolved_path_list.extend(
+                self.resolve_python_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.PHP:
+            resolved_path_list.extend(
+                self.resolve_php_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Ruby:
+            resolved_path_list.extend(
+                self.resolve_ruby_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language in (Language.C, Language.CPP):
+            resolved_path_list.extend(
+                self.resolve_cfamily_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Go:
+            resolved_path_list.extend(self.resolve_go_import(import_symbol_node))
+        elif self.repo.language == Language.Swift:
+            resolved_path_list.extend(
+                self.resolve_swift_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Rust:
+            resolved_path_list.extend(
+                self.resolve_rust_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Lua:
+            resolved_path_list.extend(
+                self.resolve_lua_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.Bash:
+            resolved_path_list.extend(
+                self.resolve_bash_import(import_symbol_node, importer_file_path)
+            )
+        elif self.repo.language == Language.R:
+            resolved_path_list.extend(
+                self.resolve_r_import(import_symbol_node, importer_file_path)
+            )
+        else:
+            raise NotImplementedError(f"Language {self.repo.language} is not supported")
 
         # De-duplicate the resolved path
         return list(set(resolved_path_list))
 
     def resolve_ts_js_import(
         self,
-        import_symbol_node: TS_Node,
+        import_symbol_node: ParseTreeInfo,
         module_map: dict[str, list[Path]],
         importer_file_path: Path,
     ) -> list[Path]:
@@ -139,7 +138,7 @@ class ImportResolver:
                     break
             return result_path
 
-        import_symbol_name = import_symbol_node.text.decode()
+        import_symbol_name = import_symbol_node.text
         extension_list = (
             Repository.code_file_extensions[Language.TypeScript]
             + Repository.code_file_extensions[Language.JavaScript]
@@ -171,47 +170,66 @@ class ImportResolver:
 
     def resolve_python_import(
         self,
-        import_symbol_node: TS_Node,
+        import_symbol_node: ParseTreeInfo,
         importer_file_path: Path,
     ) -> list[Path]:
+        def analyze_import_statement(import_statement, is_from_import=None):
+            # Regular expression to match from ... import ... as ... or import ... as ...
+            from_pattern = r"from\s+([\w\.]+)\s+import\s+(\*|[\w\.]+)(?:\s+as\s+(\w+))?"
+            import_pattern = r"import\s+([\w\.]+)(?:\s+as\s+(\w+))?"
+
+            if is_from_import is True:
+                match = re.search(from_pattern, import_statement)
+                if match:
+                    module_name = match.group(1)  # Module name
+                    imported_name = match.group(
+                        2
+                    )  # Imported name, could be * or something else
+                    as_name = match.group(3)  # Name after as keyword (if it exists)
+
+                    return (
+                        module_name,
+                        imported_name,
+                        as_name,
+                        imported_name == "*",  # is_wildcard_import
+                    )
+
+            elif is_from_import is False:
+                match = re.search(import_pattern, import_statement)
+                if match:
+                    module_name = match.group(1)  # Module name
+                    as_name = match.group(2)  # Name after as keyword (if it exists)
+
+                    return (
+                        module_name,
+                        None,  # imported_name
+                        as_name,
+                        False,  # is_wildcard_import
+                    )
+
+            return None
+
         assert import_symbol_node.type in (
             "import_statement",
             "import_from_statement",
         ), "import_symbol_node type is not import_statement or import_from_statement"
 
         source_path = str(importer_file_path)
-        # source_path = None
         if import_symbol_node.type == "import_from_statement":
-            module_name = import_symbol_node.child_by_field_name(
-                "module_name"
-            ).text.decode()
-            asname = None
-            if asname_node := import_symbol_node.child_by_field_name("name"):
-                if (
-                    asname_node.type == "aliased_import"
-                    and asname_node.child_by_field_name("name")
-                ):
-                    asname = asname_node.child_by_field_name("name").text.decode()
-                else:
-                    asname = asname_node.text.decode()
-            is_star = any(
-                child.type == "wildcard_import" for child in import_symbol_node.children
+            module_name, imported_name, asname, is_star = analyze_import_statement(
+                import_symbol_node.text, True
             )
-            name = f"{module_name}.{asname}" if asname else module_name
+            name = (
+                f"{module_name}.{imported_name}"
+                if imported_name != "*"
+                else module_name
+            )
             imp = ImportStatement(name, asname, True, is_star, source_path)
         else:
-            name = None
-            asname = None
-            if name_node := import_symbol_node.child_by_field_name("name"):
-                if (
-                    name_node.type == "aliased_import"
-                    and name_node.child_by_field_name("name")
-                ):
-                    name = name_node.child_by_field_name("name").text.decode()
-                    asname = name_node.child_by_field_name("alias").text.decode()
-                else:
-                    name = name_node.text.decode()
-            imp = ImportStatement(name, asname, False, False, source_path)
+            module_name, _, asname, _ = analyze_import_statement(
+                import_symbol_node.text, False
+            )
+            imp = ImportStatement(module_name, asname, False, False, source_path)
 
         resolver = Resolver(self.repo.repo_path, importer_file_path)
 
@@ -223,10 +241,10 @@ class ImportResolver:
 
     def resolve_php_import(
         self,
-        import_symbol_node: TS_Node,
+        import_symbol_node: ParseTreeInfo,
         importer_file_path: Path,
     ) -> list[Path]:
-        import_symbol_name = import_symbol_node.text.decode()
+        import_symbol_name = import_symbol_node.text
         # Strip double and single quote
         import_symbol_name = import_symbol_name.strip('"').strip("'")
         # Find the module path
@@ -242,10 +260,10 @@ class ImportResolver:
 
     def resolve_ruby_import(
         self,
-        import_symbol_node: TS_Node,
+        import_symbol_node: ParseTreeInfo,
         importer_file_path: Path,
     ) -> list[Path]:
-        import_symbol_name = import_symbol_node.text.decode()
+        import_symbol_name = import_symbol_node.text
         # Strip double and single quote
         import_symbol_name = import_symbol_name.strip('"').strip("'")
 
@@ -271,11 +289,11 @@ class ImportResolver:
 
     def resolve_cfamily_import(
         self,
-        import_symbol_node: TS_Node,
+        import_symbol_node: ParseTreeInfo,
         importer_file_path: Path,
     ) -> list[Path]:
 
-        import_symbol_name = import_symbol_node.text.decode()
+        import_symbol_name = import_symbol_node.text
         # Strip double quote and angle bracket
         import_symbol_name = import_symbol_name.strip('"').lstrip("<").rstrip(">")
         import_path = self._Path(import_symbol_name)
@@ -311,7 +329,7 @@ class ImportResolver:
 
         return result_path
 
-    def resolve_go_import(self, import_symbol_node: TS_Node) -> list[Path]:
+    def resolve_go_import(self, import_symbol_node: ParseTreeInfo) -> list[Path]:
         def parse_go_mod(go_mod_path: Path) -> tuple[str, dict[str, Path]]:
             """
             Parses the go.mod file and returns the module path and replacements.
@@ -362,7 +380,7 @@ class ImportResolver:
         # Find corresponding paths for the imported packages
         imported_paths = []
 
-        import_stmt = import_symbol_node.text.decode()
+        import_stmt = import_symbol_node.text
         import_stmt = import_stmt.strip('"')
 
         # Resolve the import path using replacements or the module path
@@ -389,17 +407,13 @@ class ImportResolver:
         return imported_paths
 
     def resolve_swift_import(
-        self, import_symbol_node: TS_Node, importer_file_path: Path
+        self, import_symbol_node: ParseTreeInfo, importer_file_path: Path
     ) -> list[Path]:
-        import_symbol_name = import_symbol_node.text.decode()
-        if len(import_symbol_node.parent.children) > 2:
+        import_symbol_name = import_symbol_node.text
+        if "." in import_symbol_name:
             # Handle individual declarations importing such as `import kind module.symbol`
             # In this case, we extract the module name from the import statement
-            import_symbol_name = (
-                ".".join(import_symbol_name.split(".")[:-1])
-                if "." in import_symbol_name
-                else import_symbol_name
-            )
+            import_symbol_name = ".".join(import_symbol_name.split(".")[:-1])
 
         import_symbol_name = import_symbol_name.replace(".", os.sep)
         import_path = self._Path(import_symbol_name)
@@ -435,8 +449,46 @@ class ImportResolver:
         return result_files
 
     def resolve_rust_import(
-        self, import_symbol_node: TS_Node, importer_file_path: Path
+        self, import_symbol_node: ParseTreeInfo, importer_file_path: Path
     ) -> list[Path]:
+        def parse_rust_import(import_statement):
+            # Capture everything within the curly braces
+            match = re.match(r"(.*)::\{(.*)\}", import_statement)
+            if not match:
+                return []
+
+            base_path = match.group(1)
+            use_list = match.group(2)
+
+            # Split use list by ',' while respecting structure within
+            sub_imports = []
+            nested_level = 0
+            current_import = ""
+
+            for char in use_list:
+                if char == "," and nested_level == 0:
+                    sub_imports.append(current_import.strip())
+                    current_import = ""
+                else:
+                    current_import += char
+                    if char == "{":
+                        nested_level += 1
+                    elif char == "}":
+                        nested_level -= 1
+
+            if current_import:
+                sub_imports.append(current_import.strip())
+
+            # Reconstruct the full paths
+            import_symbols = [f"{base_path}::{sub}" for sub in sub_imports]
+
+            return import_symbols
+
+        # Example usage
+        import_statement = "super::{sub_module::sub_function as sub, bar::*}"
+        parsed_imports = parse_rust_import(import_statement)
+        print(parsed_imports)
+
         def find_import_path(
             project_root: Path,
             file: Path,
@@ -523,31 +575,40 @@ class ImportResolver:
             """
             Parse the import statement for a scoped use list
             e.g. Parsing `use super::{sub_module::sub_function as sub, bar::*};`, we should split the use list into
-            the following import symbol names:
-            - `super::sub_module::sub_function as sub`
-            - `super::bar::*`
+            the following module_path:
+            - `['super', 'sub_module', 'sub_function']`
+            - `[super', 'bar', '*']`
 
             Then we can attempt to find the imported file based on heuristics
             """
-            module_path_prefix = import_symbol_node.child_by_field_name(
-                "path"
-            ).text.decode()
-            use_list_node = import_symbol_node.child_by_field_name("list")
+
+            def parse_scoped_use_list(statement):
+                # Regular expression to match the scoped use list
+                pattern = r"([\w:]+)::({.*})"
+
+                # Find matches
+                matches = re.findall(pattern, statement)
+
+                result = []
+                for base, scoped in matches:
+                    # Remove curly braces and split by comma
+                    scoped_items = scoped.strip("{}").split(", ")
+                    for item in scoped_items:
+                        # Remove alias (e.g. " as sub") and split by "::"
+                        module_path = base.split("::") + [
+                            i.strip().split(" as ")[0] for i in item.split("::")
+                        ]
+                        result.append(module_path)
+
+                return result
+
+            scoped_use_list_module_paths = parse_scoped_use_list(
+                import_symbol_node.text
+            )
 
             imported_files = []
-            for use_clause in use_list_node.named_children:
-                if use_clause.type == "use_as_clause":
-                    # Only take the first part of the import symbol, e.g. `super::sub_module::sub_function as sub`
-                    # Ignore the `as sub` part
-                    import_symbol_name = use_clause.text.decode().split()[0]
-                else:
-                    import_symbol_name = use_clause.text.decode()
-
-                # Group up import symbol names
-                import_symbol_name = f"{module_path_prefix}::{import_symbol_name}"
-                # Split into module path components
-                module_path = import_symbol_name.split("::")
-                # Attempt to find the imported file based on heuristics
+            # Attempt to find the imported file based on heuristics
+            for module_path in scoped_use_list_module_paths:
                 imported_file = find_import_path(
                     self.repo.repo_path, importer_file_path, module_path
                 )
@@ -557,7 +618,7 @@ class ImportResolver:
             return imported_files
         else:
             # Decode the symbol name and split into module path components
-            import_symbol_name = import_symbol_node.text.decode()
+            import_symbol_name = import_symbol_node.text
             module_path = import_symbol_name.split("::")
             # Attempt to find the imported file based on heuristics
             imported_file = find_import_path(
@@ -566,12 +627,12 @@ class ImportResolver:
             return [imported_file] if imported_file else []
 
     def resolve_lua_import(
-        self, import_symbol_node: TS_Node | RegexNode, importer_file_path: Path
+        self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
     ) -> list[Path]:
-        if isinstance(import_symbol_node, RegexNode):
+        if isinstance(import_symbol_node, RegexInfo):
             import_symbol_name = import_symbol_node.text
         else:
-            import_symbol_name = import_symbol_node.text.decode()
+            import_symbol_name = import_symbol_node.text
 
         import_symbol_name = import_symbol_name.strip('"').strip("'")
         extension_list = Repository.code_file_extensions[Language.Lua]
@@ -597,12 +658,12 @@ class ImportResolver:
         return []
 
     def resolve_bash_import(
-        self, import_symbol_node: TS_Node | RegexNode, importer_file_path: Path
+        self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
     ) -> list[Path]:
-        if isinstance(import_symbol_node, RegexNode):
+        if isinstance(import_symbol_node, RegexInfo):
             import_symbol_name = import_symbol_node.text
         else:
-            import_symbol_name = import_symbol_node.text.decode()
+            import_symbol_name = import_symbol_node.text
 
         if self._Path(import_symbol_name).exists():
             return [self._Path(import_symbol_name)]
@@ -613,12 +674,12 @@ class ImportResolver:
         return []
 
     def resolve_r_import(
-        self, import_symbol_node: TS_Node | RegexNode, importer_file_path: Path
+        self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
     ) -> list[Path]:
-        if isinstance(import_symbol_node, RegexNode):
+        if isinstance(import_symbol_node, RegexInfo):
             import_symbol_name = import_symbol_node.text
         else:
-            import_symbol_name = import_symbol_node.text.decode()
+            import_symbol_name = import_symbol_node.text
 
         import_symbol_name = import_symbol_name.strip('"').strip("'")
 

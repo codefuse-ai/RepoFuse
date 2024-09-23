@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import namedtuple
 
 from fs.memoryfs import MemoryFS
@@ -28,16 +30,16 @@ class VirtualRepository(Repository):
         for file_path, content in virtual_files:
             # Strip the leading slash on the file path
             p = VirtualPath(self.fs, self.repo_path / file_path.lstrip("/"))
-            p.parent.mkdir(parents=True, exist_ok=True)
-            p.write_text(content)
-            self._all_file_paths.append(p)
+            if p.suffix in self.code_file_extensions[language]:
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text(content)
+                self._all_file_paths.append(p)
 
         super().__init__(self.repo_path, language)
 
     @property
     def files(self) -> set[VirtualFileNode]:
-        files: set[VirtualFileNode] = set()
-        for file_path in self._all_file_paths:
-            if file_path.suffix in self.code_file_extensions[self.language]:
-                files.add(VirtualFileNode(file_path))
+        files: set[VirtualFileNode] = set(
+            [VirtualFileNode(file_path) for file_path in self._all_file_paths]
+        )
         return files

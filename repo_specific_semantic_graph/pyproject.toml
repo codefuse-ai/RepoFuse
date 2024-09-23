@@ -6,13 +6,13 @@ authors = []
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.7"
 gitpython = "^3.1.40"
-networkx = "^3.2.1"
+networkx = ">=2.6.0"
 jedi = "^0.19.1"
 pyvis = "^0.3.2"
 dataclasses-json = "^0.6.3"
-mypy = "^1.8.0"
+mypy = ">=1.4.0"
 ipysigma = "^0.24.2"
 tree-sitter = "0.20.4"
 chardet = "^5.2.0"

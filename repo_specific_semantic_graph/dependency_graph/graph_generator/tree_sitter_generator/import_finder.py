@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
 
-from dataclasses import dataclass
-from tree_sitter import Parser, Language as TS_Language, Node as TS_Node, Tree
+from tree_sitter import Parser, Language as TS_Language, Tree
 
+from dependency_graph.graph_generator.tree_sitter_generator.info import (
+    RegexInfo,
+    ParseTreeInfo,
+)
 from dependency_graph.graph_generator.tree_sitter_generator.load_lib import (
     get_builtin_lib_path,
 )
@@ -233,13 +237,6 @@ REGEX_FIND_IMPORT_PATTERN = {
 }
 
 
-@dataclass
-class RegexNode:
-    start_point: tuple[int, int]
-    end_point: tuple[int, int]
-    text: str
-
-
 class ImportFinder:
     languages_using_regex = tuple(REGEX_FIND_IMPORT_PATTERN.keys())
 
@@ -253,7 +250,7 @@ class ImportFinder:
 
     def _query_and_captures(
         self, code: str, query: str, capture_name="import_name"
-    ) -> list[TS_Node]:
+    ) -> list[ParseTreeInfo]:
         """
         Query the Tree-sitter language and get the nodes that match the query
         :param code: The code to be parsed
@@ -264,7 +261,43 @@ class ImportFinder:
         tree: Tree = self.parser.parse(code.encode())
         query = self.ts_language.query(query)
         captures = query.captures(tree.root_node)
-        return [node for node, captured in captures if captured == capture_name]
+        nodes = [node for node, captured in captures if captured == capture_name]
+        info_list = []
+        for n in nodes:
+            info = ParseTreeInfo(n.start_point, n.end_point, n.text.decode(), n.type)
+            if n.parent:
+                info.parent = ParseTreeInfo(
+                    n.parent.start_point,
+                    n.parent.end_point,
+                    n.parent.text.decode(),
+                    n.parent.type,
+                )
+            info_list.append(info)
+        del tree
+        return info_list
+
+    def _regex_find_imports(self, code: str, pattern: str) -> list[RegexInfo]:
+        matches = []
+        for match in re.finditer(pattern, code, re.MULTILINE):
+            module_name = match.group(1)
+            start_index = match.start(1)
+            end_index = match.end(1)
+
+            # Calculate line and column number
+            start_line = code.count("\n", 0, start_index)
+            start_column = start_index - code.rfind("\n", 0, start_index) - 1
+
+            end_line = code.count("\n", 0, end_index)
+            end_column = end_index - code.rfind("\n", 0, end_index) - 1
+
+            matches.append(
+                RegexInfo(
+                    start_point=(start_line, start_column),
+                    end_point=(end_line, end_column),
+                    text=module_name,
+                )
+            )
+        return matches
 
     def _regex_find_imports(self, code: str, pattern: str) -> list[RegexNode]:
         matches = []
@@ -281,7 +314,7 @@ class ImportFinder:
             end_column = end_index - code.rfind("\n", 0, end_index) - 1
 
             matches.append(
-                RegexNode(
+                RegexInfo(
                     start_point=(start_line, start_column),
                     end_point=(end_line, end_column),
                     text=module_name,
@@ -293,8 +326,13 @@ class ImportFinder:
     def find_imports(
         self,
         code: str,
-    ) -> list[TS_Node]:
-        return self._query_and_captures(code, FIND_IMPORT_QUERY[self.language])
+    ) -> list[RegexInfo] | list[ParseTreeInfo]:
+        if self.language in self.languages_using_regex:
+            return self._regex_find_imports(
+                code, REGEX_FIND_IMPORT_PATTERN[self.language]
+            )
+        else:
+            return self._query_and_captures(code, FIND_IMPORT_QUERY[self.language])
 
     @lru_cache(maxsize=256)
     def find_module_name(self, file_path: Path) -> str | None:
@@ -307,39 +345,44 @@ class ImportFinder:
         """
         # Use read_file_to_string here to avoid non-UTF8 decoding issue
         code = read_file_to_string(file_path)
-        match self.language:
-            case Language.Java | Language.Kotlin:
-                captures = self._query_and_captures(
-                    code, FIND_PACKAGE_QUERY[self.language], "package_name"
-                )
+        if self.language in (Language.Java, Language.Kotlin):
+            captures = self._query_and_captures(
+                code, FIND_PACKAGE_QUERY[self.language], "package_name"
+            )
 
-                if len(captures) > 0:
-                    node = captures[0]
-                    package_name = node.text.decode()
-                    module_name = f"{package_name}.{file_path.stem}"
-                    return module_name
-            case Language.CSharp | Language.Go:
-                captures = self._query_and_captures(
-                    code, FIND_PACKAGE_QUERY[self.language], "package_name"
-                )
-                if len(captures) > 0:
-                    node = captures[0]
-                    package_name = node.text.decode()
-                    return package_name
-            case (
-                Language.TypeScript
-                | Language.JavaScript
-                | Language.Python
-                | Language.Ruby
-                | Language.Rust
-                | Language.Lua
-                | Language.R
-            ):
-                return file_path.stem
-            case Language.PHP | Language.C | Language.CPP | Language.Bash:
-                return file_path.name
-            case Language.Swift:
-                # Swift module name is its parent directory
-                return file_path.parent.name
-            case _:
-                raise NotImplementedError(f"Language {self.language} is not supported")
+            if len(captures) > 0:
+                node = captures[0]
+                package_name = node.text
+                module_name = f"{package_name}.{file_path.stem}"
+                return module_name
+
+        elif self.language in (Language.CSharp, Language.Go):
+            captures = self._query_and_captures(
+                code, FIND_PACKAGE_QUERY[self.language], "package_name"
+            )
+
+            if len(captures) > 0:
+                node = captures[0]
+                package_name = node.text
+                return package_name
+
+        elif self.language in (
+            Language.TypeScript,
+            Language.JavaScript,
+            Language.Python,
+            Language.Ruby,
+            Language.Rust,
+            Language.Lua,
+            Language.R,
+        ):
+            return file_path.stem
+
+        elif self.language in (Language.PHP, Language.C, Language.CPP, Language.Bash):
+            return file_path.name
+
+        elif self.language == Language.Swift:
+            # Swift module name is its parent directory
+            return file_path.parent.name
+
+        else:
+            raise NotImplementedError(f"Language {self.language} is not supported")

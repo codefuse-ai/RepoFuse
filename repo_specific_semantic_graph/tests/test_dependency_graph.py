@@ -1,7 +1,5 @@
-from pathlib import Path
-
-import pytest
 import networkx as nx
+import pytest
 from pytest_unordered import unordered
 
 from dependency_graph import (

@@ -325,8 +325,12 @@ class VirtualPath(pathlib.PosixPath):
         return self.with_segments(fs.path.abspath(self.relative_fs_path))
 
     def resolve(self, strict: bool = False):
-        # FS objects have no concept of a current directory
-        return self.absolute()
+        abs_path = self.absolute()
+        resolved_path = pathlib.Path(str(abs_path)).resolve(strict=False)
+        p = self.__class__(self.fs, *resolved_path.parts)
+        if strict and not p.exists():
+            raise FileNotFoundError(p)
+        return p
 
     if sys.version_info < (3, 9):
 

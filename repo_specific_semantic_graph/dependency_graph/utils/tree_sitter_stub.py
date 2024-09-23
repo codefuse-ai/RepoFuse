@@ -1,4 +1,3 @@
-from pathlib import Path
 from textwrap import dedent
 
 from tree_sitter import Language, Parser, Tree, Node
