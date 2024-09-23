@@ -1,8 +1,8 @@
+from __future__ import annotations
 import functools
 from pathlib import Path
 
 # from git import Repo, InvalidGitRepositoryError, GitCommandError, NoSuchPathError
-from typing import Set, Tuple, Dict
 
 from dependency_graph.models import PathLike
 from dependency_graph.models.file_node import FileNode
@@ -18,7 +18,7 @@ class Repository:
     repo_path: Path = None
     language: Language
 
-    code_file_extensions: Dict[Language, Tuple[str]] = {
+    code_file_extensions: dict[Language, tuple[str]] = {
         Language.CSharp: (".cs", ".csx"),
         Language.Python: (".py", ".pyi"),
         Language.Java: (".java",),
@@ -68,8 +68,8 @@ class Repository:
 
     @property
     @functools.lru_cache()
-    def files(self) -> Set[FileNode]:
-        files: Set[FileNode] = set()
+    def files(self) -> set[FileNode]:
+        files: set[FileNode] = set()
         # Loop through the file extensions
         for extension in self.code_file_extensions[self.language]:
             # Use rglob() with a pattern to match the file extension

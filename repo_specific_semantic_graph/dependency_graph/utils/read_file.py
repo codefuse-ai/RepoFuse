@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import chardet
-from typing import Tuple
 
 from dependency_graph.models import PathLike
 
@@ -33,7 +34,7 @@ def detect_file_encoding(file_path: Path) -> str:
     return encoding
 
 
-def read_file_with_encodings(file_path: Path, encodings: Tuple[str]) -> Tuple[str, str]:
+def read_file_with_encodings(file_path: Path, encodings: tuple[str]) -> tuple[str, str]:
     """Attempt to read a file using various encodings, return content if successful"""
     for encoding in encodings:
         try:

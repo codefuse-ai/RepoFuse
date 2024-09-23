@@ -1,9 +1,9 @@
-from typing import Tuple
+from __future__ import annotations
 
 
 def slice_text_around(
     text: str, start_line: int, start_column: int, end_line: int, end_column: int
-) -> Tuple[str, str, str]:
+) -> tuple[str, str, str]:
     """
     Slice the text around the specified portion of the text.
     :param text: The text to slice

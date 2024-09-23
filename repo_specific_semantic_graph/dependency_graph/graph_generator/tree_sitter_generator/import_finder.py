@@ -4,7 +4,6 @@ import re
 from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
-from typing import List
 
 from tree_sitter import Parser, Language as TS_Language, Tree
 
@@ -304,7 +303,7 @@ class ImportFinder:
     def find_imports(
         self,
         code: str,
-    ) -> List[RegexInfo] | List[ParseTreeInfo]:
+    ) -> list[RegexInfo] | list[ParseTreeInfo]:
         if self.language in self.languages_using_regex:
             return self._regex_find_imports(
                 code, REGEX_FIND_IMPORT_PATTERN[self.language]

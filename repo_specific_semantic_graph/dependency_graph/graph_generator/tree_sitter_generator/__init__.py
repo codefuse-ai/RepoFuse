@@ -3,7 +3,6 @@ from __future__ import annotations
 import traceback
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Tuple, Dict
 
 from tqdm import tqdm
 
@@ -38,7 +37,7 @@ logger = setup_logger()
 
 
 class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
-    supported_languages: Tuple[Language] = (
+    supported_languages: tuple[Language] = (
         Language.Python,
         Language.Java,
         Language.CSharp,
@@ -84,9 +83,9 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
     def generate(self, repo: Repository) -> DependencyGraph:
         D = DependencyGraph(repo.repo_path, repo.language)
-        module_map: Dict[str, List[Path]] = defaultdict(list)
+        module_map: dict[str, list[Path]] = defaultdict(list)
         # The key is (file_path, class_name)
-        import_map: dict[Tuple[Path, str], list[ParseTreeInfo] | list[RegexInfo]] = (
+        import_map: dict[tuple[Path, str], list[ParseTreeInfo] | list[RegexInfo]] = (
             defaultdict(list)
         )
         finder = ImportFinder(repo.language)

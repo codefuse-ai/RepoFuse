@@ -1,7 +1,7 @@
+from __future__ import annotations
 from collections import namedtuple
 
 from fs.memoryfs import MemoryFS
-from typing import Set, List
 
 from dependency_graph.models import PathLike
 from dependency_graph.models.language import Language
@@ -18,7 +18,7 @@ class VirtualRepository(Repository):
         self,
         repo_path: PathLike,
         language: Language,
-        virtual_files: List[VirtualFile],  # Use the named tuple for typing
+        virtual_files: list[VirtualFile],  # Use the named tuple for typing
     ):
         self.fs = MemoryFS()
         # Make sure the repo path is absolute
@@ -37,8 +37,8 @@ class VirtualRepository(Repository):
         super().__init__(self.repo_path, language)
 
     @property
-    def files(self) -> Set[VirtualFileNode]:
-        files: Set[VirtualFileNode] = set(
+    def files(self) -> set[VirtualFileNode]:
+        files: set[VirtualFileNode] = set(
             [VirtualFileNode(file_path) for file_path in self._all_file_paths]
         )
         return files
