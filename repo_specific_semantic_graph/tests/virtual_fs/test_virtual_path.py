@@ -325,5 +325,5 @@ def test_virtualpath_absolute():
 
 def test_virtualpath_resolve():
     mem_fs = MemoryFS()
-    vpath = VirtualPath(mem_fs, "dir/subdir/file")
+    vpath = VirtualPath(mem_fs, "dir/subdir/../subdir/file")
     assert vpath.resolve() == VirtualPath(mem_fs, "/dir/subdir/file")
