@@ -14,6 +14,16 @@ from dependency_graph.models.language import Language
 from dependency_graph.utils.digraph import lexicographical_cyclic_topological_sort
 from dependency_graph.utils.intervals import find_innermost_interval
 
+if sys.version_info < (3, 9):
+    def is_relative_to(self, *other):
+        try:
+            self.relative_to(*other)
+            return True
+        except ValueError:
+            return False
+
+    # Patch the method in OriginalPath
+    Path.is_relative_to = is_relative_to
 
 class DependencyGraph:
     def __init__(self, repo_path: PathLike, *languages: Language) -> None:
@@ -191,20 +201,6 @@ class DependencyGraphContextRetriever:
         self.graph = graph
 
     def _Path(self, file_path: PathLike) -> Path:
-        from pathlib import Path
-
-        if sys.version_info < (3, 9):
-
-            def is_relative_to(self, *other):
-                try:
-                    self.relative_to(*other)
-                    return True
-                except ValueError:
-                    return False
-
-            # Patch the method in OriginalPath
-            Path.is_relative_to = is_relative_to
-
         if isinstance(self.graph.repo_path, VirtualPath):
             return VirtualPath(self.graph.repo_path.fs, file_path)
         elif isinstance(self.graph.repo_path, Path):

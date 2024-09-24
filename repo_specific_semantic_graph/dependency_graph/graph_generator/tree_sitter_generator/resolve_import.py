@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from pathlib import Path
 
 from importlab.parsepy import ImportStatement
@@ -23,6 +24,16 @@ from dependency_graph.utils.log import setup_logger
 # Initialize logging
 logger = setup_logger()
 
+if sys.version_info < (3, 9):
+    def is_relative_to(self, *other):
+        try:
+            self.relative_to(*other)
+            return True
+        except ValueError:
+            return False
+
+    # Patch the method in OriginalPath
+    Path.is_relative_to = is_relative_to
 
 class ImportResolver:
     def __init__(self, repo: Repository):
@@ -346,20 +357,30 @@ class ImportResolver:
 
         # Add parent directories of the C file path
         for parent in importer_file_path.parents:
-            search_paths.append(parent / import_path)
+            potential_path = parent / import_path
+            if potential_path.is_relative_to(self.repo.repo_path):  # Ensure the path is within repo_path
+                search_paths.append(potential_path)
 
         # Add sibling directories of each directory component of importer_file_path
         for parent in importer_file_path.parents:
             for sibling in parent.iterdir():
                 if sibling.is_dir() and sibling != importer_file_path:
-                    search_paths.append(sibling / import_path)
+                    potential_path = sibling / import_path
+                    if potential_path.is_relative_to(self.repo.repo_path):  # Ensure the path is within repo_path
+                        search_paths.append(potential_path)
 
         # Find the module path
         result_path = []
         # Check if any of these paths exist
+        extension_list = Repository.code_file_extensions[Language.C] + Repository.code_file_extensions[Language.CPP]
         for path in search_paths:
             if path.exists():
                 result_path.append(path)
+            elif path.suffix == '':
+                for ext in extension_list:
+                    path = path.with_suffix(ext)
+                    if path.exists():
+                        result_path.append(path)
 
         return result_path
 
