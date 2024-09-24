@@ -130,7 +130,7 @@ def test_construct_tree_sitter_graph_on_python_virtual_repo(python_repo_suite_pa
     graph = construct_dependency_graph(repo, dependency_graph_generator)
     edges = graph.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 5
+    assert len(edges) == 6
     relations = [
         (
             edge[0].type.value,
@@ -167,6 +167,14 @@ def test_construct_tree_sitter_graph_on_python_virtual_repo(python_repo_suite_pa
             "foo",
             "foo.py",
             "from module_a.foo import foo_function",
+        ),
+        (
+            "module",
+            "run",
+            "module",
+            "bar",
+            "bar.py",
+            "from module_a.submodule.bar import bar_function as bar_alias_func, bar_function_1",
         ),
         (
             "module",
