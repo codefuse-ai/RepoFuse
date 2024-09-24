@@ -20,7 +20,7 @@ def test_python(tree_sitter_generator, python_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 5
+    assert len(edges) == 6
     relations = [
         (
             edge[0].type.value,
@@ -64,6 +64,14 @@ def test_python(tree_sitter_generator, python_repo_suite_path):
             "foo",
             "foo.py",
             "from module_a.foo import foo_function",
+        ),
+        (
+            "module",
+            "run",
+            "module",
+            "bar",
+            "bar.py",
+            "from module_a.submodule.bar import bar_function as bar_alias_func, bar_function_1",
         ),
         (
             "module",

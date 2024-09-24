@@ -173,41 +173,69 @@ class ImportResolver:
         import_symbol_node: ParseTreeInfo,
         importer_file_path: Path,
     ) -> list[Path]:
-        def analyze_import_statement(import_statement, is_from_import=None):
+        def analyze_import_statement(
+            import_statement, is_from_import=None
+        ) -> list[tuple]:
+            import_statement = import_statement.replace("\n", "")
+            # Deal with Python break lines
+            import_statement = import_statement.replace("\\", "")
             # Regular expression to match from ... import ... as ... or import ... as ...
-            from_pattern = r"from\s+([\w\.]+)\s+import\s+(\*|[\w\.]+)(?:\s+as\s+(\w+))?"
+            from_pattern = r"from\s+([\w\.]+)\s+import\s+(\(.*?\)|[^\(\),]+(?:\s+as\s+\w+)?(?:\s*,\s*[^\(\),]+(?:\s+as\s+\w+)?)*)"
             import_pattern = r"import\s+([\w\.]+)(?:\s+as\s+(\w+))?"
 
             if is_from_import is True:
                 match = re.search(from_pattern, import_statement)
-                if match:
-                    module_name = match.group(1)  # Module name
-                    imported_name = match.group(
-                        2
-                    )  # Imported name, could be * or something else
-                    as_name = match.group(3)  # Name after as keyword (if it exists)
-
-                    return (
-                        module_name,
-                        imported_name,
-                        as_name,
-                        imported_name == "*",  # is_wildcard_import
+                if not match:
+                    raise ValueError(
+                        f"Invalid parsing Python import statement: {import_statement}"
                     )
+
+                module_name = match.group(1)  # Module name
+                items_str = match.group(2)
+
+                # Remove parentheses if present
+                items_str = items_str.strip("()")
+                items = [item.strip() for item in items_str.split(",")]
+
+                # Construct full module names
+                parsed_items = []
+                for imported_name in items:
+                    asname = None
+                    # Handle aliasing with 'as'
+                    if " as " in imported_name:
+                        imported_name, asname = imported_name.split(" as ")
+                        imported_name = imported_name.strip()
+                        asname = asname.strip()
+                    if imported_name:  # Ensure item is not empty
+                        parsed_items.append(
+                            (
+                                module_name,
+                                imported_name,
+                                asname,
+                                "*" in imported_name,  # is_wildcard_import
+                            )
+                        )
+
+                return parsed_items
 
             elif is_from_import is False:
                 match = re.search(import_pattern, import_statement)
-                if match:
-                    module_name = match.group(1)  # Module name
-                    as_name = match.group(2)  # Name after as keyword (if it exists)
-
-                    return (
-                        module_name,
-                        None,  # imported_name
-                        as_name,
-                        False,  # is_wildcard_import
+                if not match:
+                    raise ValueError(
+                        f"Invalid parsing Python import statement: {import_statement}"
                     )
 
-            return None
+                module_name = match.group(1)  # Module name
+                asname = match.group(2)  # Name after as keyword (if it exists)
+
+                return [
+                    (
+                        module_name,
+                        None,  # imported_name
+                        asname,
+                        False,  # is_wildcard_import
+                    )
+                ]
 
         assert import_symbol_node.type in (
             "import_statement",
@@ -215,29 +243,35 @@ class ImportResolver:
         ), "import_symbol_node type is not import_statement or import_from_statement"
 
         source_path = str(importer_file_path)
+        resolver = Resolver(self.repo.repo_path, importer_file_path)
+        imp_list = []
         if import_symbol_node.type == "import_from_statement":
-            module_name, imported_name, asname, is_star = analyze_import_statement(
-                import_symbol_node.text, True
-            )
-            name = (
-                f"{module_name}.{imported_name}"
-                if imported_name != "*"
-                else module_name
-            )
-            imp = ImportStatement(name, asname, True, is_star, source_path)
+            parsed_items = analyze_import_statement(import_symbol_node.text, True)
+            for module_name, imported_name, asname, is_star in parsed_items:
+                name = (
+                    f"{module_name}.{imported_name}"
+                    if imported_name != "*"
+                    else module_name
+                )
+                imp = ImportStatement(name, asname, True, is_star, source_path)
+                imp_list.append(imp)
         else:
             module_name, _, asname, _ = analyze_import_statement(
                 import_symbol_node.text, False
-            )
+            )[0]
             imp = ImportStatement(module_name, asname, False, False, source_path)
+            imp_list.append(imp)
 
-        resolver = Resolver(self.repo.repo_path, importer_file_path)
+        resolved_path_list = []
+        for imp in imp_list:
+            try:
+                resolved_path = resolver.resolve_import(imp)
+                if resolved_path:
+                    resolved_path_list.append(resolved_path)
+            except ImportException:
+                pass
 
-        try:
-            resolved_path = resolver.resolve_import(imp)
-            return [resolved_path] if resolved_path else []
-        except ImportException:
-            return []
+        return resolved_path_list
 
     def resolve_php_import(
         self,
@@ -451,44 +485,6 @@ class ImportResolver:
     def resolve_rust_import(
         self, import_symbol_node: ParseTreeInfo, importer_file_path: Path
     ) -> list[Path]:
-        def parse_rust_import(import_statement):
-            # Capture everything within the curly braces
-            match = re.match(r"(.*)::\{(.*)\}", import_statement)
-            if not match:
-                return []
-
-            base_path = match.group(1)
-            use_list = match.group(2)
-
-            # Split use list by ',' while respecting structure within
-            sub_imports = []
-            nested_level = 0
-            current_import = ""
-
-            for char in use_list:
-                if char == "," and nested_level == 0:
-                    sub_imports.append(current_import.strip())
-                    current_import = ""
-                else:
-                    current_import += char
-                    if char == "{":
-                        nested_level += 1
-                    elif char == "}":
-                        nested_level -= 1
-
-            if current_import:
-                sub_imports.append(current_import.strip())
-
-            # Reconstruct the full paths
-            import_symbols = [f"{base_path}::{sub}" for sub in sub_imports]
-
-            return import_symbols
-
-        # Example usage
-        import_statement = "super::{sub_module::sub_function as sub, bar::*}"
-        parsed_imports = parse_rust_import(import_statement)
-        print(parsed_imports)
-
         def find_import_path(
             project_root: Path,
             file: Path,
@@ -583,6 +579,8 @@ class ImportResolver:
             """
 
             def parse_scoped_use_list(statement):
+                # Deal with multi-line use list
+                statement = statement.replace("\n", "")
                 # Regular expression to match the scoped use list
                 pattern = r"([\w:]+)::({.*})"
 
