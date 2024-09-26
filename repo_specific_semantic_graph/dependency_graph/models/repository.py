@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import functools
 from pathlib import Path
+from typing import Iterable
 
 from dependency_graph.models import PathLike
 from dependency_graph.models.file_node import FileNode
@@ -61,6 +61,8 @@ class Repository:
                 f"Language {self.language} is not supported to get code files"
             )
 
+        self._files: set[FileNode] = set()
+
         # try:
         #     self._git_repo = Repo(repo_path)
         # except (InvalidGitRepositoryError, NoSuchPathError):
@@ -68,9 +70,10 @@ class Repository:
         #     pass
 
     @property
-    @functools.lru_cache()
     def files(self) -> set[FileNode]:
-        files: set[FileNode] = set()
+        if self._files:
+            return self._files
+
         # Loop through the file extensions
         for extension in self.code_file_extensions[self.language]:
             # Use rglob() with a pattern to match the file extension
@@ -96,7 +99,7 @@ class Repository:
             #         pass
 
             # Add the files to the set filtering out git-ignored files
-            files.update(
+            self._files.update(
                 [
                     FileNode(file)
                     for file in rglob_file_list
@@ -104,4 +107,9 @@ class Repository:
                 ]
             )
 
-        return files
+        return self._files
+
+    @files.setter
+    def files(self, file_nodes: Iterable[FileNode]):
+        """Setter to update the files in the repository."""
+        self._files = set(file_nodes)
