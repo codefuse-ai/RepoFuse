@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import namedtuple
+from typing import Iterable
 
 from fs.memoryfs import MemoryFS
 
@@ -43,3 +44,13 @@ class VirtualRepository(Repository):
             [VirtualFileNode(file_path) for file_path in self._all_file_paths]
         )
         return files
+
+    @files.setter
+    def files(self, file_nodes: Iterable[VirtualFileNode]):
+        """Setter to update the virtual files in the repository."""
+        # Clear existing files
+        self._all_file_paths.clear()
+
+        for file_node in file_nodes:
+            p = VirtualPath(self.fs, file_node.file_path)
+            self._all_file_paths.append(p)

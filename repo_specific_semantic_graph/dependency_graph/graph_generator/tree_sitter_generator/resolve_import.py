@@ -127,7 +127,14 @@ class ImportResolver:
             raise NotImplementedError(f"Language {self.repo.language} is not supported")
 
         # De-duplicate the resolved path
-        return list(set(resolved_path_list))
+        path_list = set(resolved_path_list)
+        resolved_path_list = []
+        # Remove file not in the repo
+        for resolved_path in path_list:
+            if resolved_path.is_relative_to(self.repo.repo_path):
+                resolved_path_list.append(resolved_path)
+
+        return resolved_path_list
 
     def resolve_ts_js_import(
         self,
@@ -658,10 +665,7 @@ class ImportResolver:
     def resolve_lua_import(
         self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
     ) -> list[Path]:
-        if isinstance(import_symbol_node, RegexInfo):
-            import_symbol_name = import_symbol_node.text
-        else:
-            import_symbol_name = import_symbol_node.text
+        import_symbol_name = import_symbol_node.text
 
         import_symbol_name = import_symbol_name.strip('"').strip("'")
         extension_list = Repository.code_file_extensions[Language.Lua]
@@ -689,10 +693,7 @@ class ImportResolver:
     def resolve_bash_import(
         self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
     ) -> list[Path]:
-        if isinstance(import_symbol_node, RegexInfo):
-            import_symbol_name = import_symbol_node.text
-        else:
-            import_symbol_name = import_symbol_node.text
+        import_symbol_name = import_symbol_node.text
 
         if self._Path(import_symbol_name).exists():
             return [self._Path(import_symbol_name)]
@@ -705,10 +706,7 @@ class ImportResolver:
     def resolve_r_import(
         self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
     ) -> list[Path]:
-        if isinstance(import_symbol_node, RegexInfo):
-            import_symbol_name = import_symbol_node.text
-        else:
-            import_symbol_name = import_symbol_node.text
+        import_symbol_name = import_symbol_node.text
 
         import_symbol_name = import_symbol_name.strip('"').strip("'")
 
