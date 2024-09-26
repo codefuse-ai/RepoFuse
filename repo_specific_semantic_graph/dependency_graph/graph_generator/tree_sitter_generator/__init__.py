@@ -106,7 +106,6 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
             importer_module_name,
         ), import_symbol_nodes in tqdm(import_map.items(), desc="Resolving imports"):
             for import_symbol_node in import_symbol_nodes:
-                resolved = []
                 try:
                     resolved = resolver.resolve_import(
                         import_symbol_node, module_map, importer_file_path
@@ -116,6 +115,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     logger.error(
                         f"Error {e} resolving import {import_symbol_node.text} in {importer_file_path}, will ignore: {tb_str}"
                     )
+                    continue
 
                 for importee_file_path in resolved:
                     # Use read_file_to_string here to avoid non-UTF8 decoding issue

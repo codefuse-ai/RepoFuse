@@ -512,7 +512,11 @@ class ImportResolver:
 
         for path in search_paths:
             extension_list = Repository.code_file_extensions[Language.Swift]
-            if path.exists() and path.is_dir():
+            if (
+                path.is_relative_to(self.repo.repo_path)
+                and path.exists()
+                and path.is_dir()
+            ):
                 for ext in extension_list:
                     for swift_file in path.glob(f"**/*{ext}"):
                         result_files.append(swift_file)
@@ -560,13 +564,18 @@ class ImportResolver:
                 mod_file_path = dir_path / "mod.rs"
                 file_path = current_dir / f"{part}.rs"
 
-                if mod_file_path.exists():
+                if (
+                    mod_file_path.is_relative_to(self.repo.repo_path)
+                    and mod_file_path.exists()
+                ):
                     current_dir = dir_path
                     # If it is the last part or the next part is star, return the mod.rs
                     if i == len(module_path) - 1 or module_path[i + 1] == "*":
                         return mod_file_path
 
-                elif file_path.exists():
+                elif (
+                    file_path.is_relative_to(self.repo.repo_path) and file_path.exists()
+                ):
                     return file_path
 
                 else:
@@ -577,6 +586,11 @@ class ImportResolver:
                             ancestor_dir_path = ancestor / part
                             ancestor_mod_file_path = ancestor_dir_path / "mod.rs"
                             ancestor_file_path = ancestor / f"{part}.rs"
+
+                            if not ancestor_file_path.is_relative_to(
+                                self.repo.repo_path
+                            ):
+                                continue
 
                             if ancestor_mod_file_path.exists():
                                 # If it is the last part or the next part is star, return the mod.rs
@@ -600,7 +614,7 @@ class ImportResolver:
             last_part = module_path[-2] if module_path[-1] == "*" else module_path[-1]
             # If we reach here, assume the last module part is a file
             final_file = current_dir / f"{last_part}.rs"
-            if final_file.exists():
+            if final_file.is_relative_to(self.repo.repo_path) and final_file.exists():
                 return final_file
             else:
                 return None
@@ -681,12 +695,12 @@ class ImportResolver:
 
         resolved_path = importer_file_path.parent / import_symbol_name
 
-        if resolved_path.exists():
+        if resolved_path.is_relative_to(self.repo.repo_path) and resolved_path.exists():
             return [resolved_path]
 
         for ext in extension_list:
             path = resolved_path.with_suffix(ext)
-            if path.exists():
+            if path.is_relative_to(self.repo.repo_path) and path.exists():
                 return [resolved_path.with_suffix(ext)]
         return []
 
@@ -694,12 +708,15 @@ class ImportResolver:
         self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
     ) -> list[Path]:
         import_symbol_name = import_symbol_node.text
-
-        if self._Path(import_symbol_name).exists():
+        import_path = self._Path(import_symbol_name)
+        if import_path.is_relative_to(self.repo.repo_path) and import_path.exists():
             return [self._Path(import_symbol_name)]
         else:
             resolved_path = importer_file_path.parent / import_symbol_name
-            if resolved_path.exists():
+            if (
+                resolved_path.is_relative_to(self.repo.repo_path)
+                and resolved_path.exists()
+            ):
                 return [resolved_path]
         return []
 
@@ -707,13 +724,16 @@ class ImportResolver:
         self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
     ) -> list[Path]:
         import_symbol_name = import_symbol_node.text
-
         import_symbol_name = import_symbol_name.strip('"').strip("'")
 
-        if self._Path(import_symbol_name).exists():
+        import_path = self._Path(import_symbol_name)
+        if import_path.is_relative_to(self.repo.repo_path) and import_path.exists():
             return [self._Path(import_symbol_name)]
         else:
             resolved_path = importer_file_path.parent / import_symbol_name
-            if resolved_path.exists():
+            if (
+                resolved_path.is_relative_to(self.repo.repo_path)
+                and resolved_path.exists()
+            ):
                 return [resolved_path]
         return []
