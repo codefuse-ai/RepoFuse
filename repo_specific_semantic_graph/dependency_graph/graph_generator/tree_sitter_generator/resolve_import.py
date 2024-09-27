@@ -611,7 +611,9 @@ class ImportResolver:
                     else:
                         return None
 
-            last_part = module_path[-2] if module_path[-1] == "*" else module_path[-1]
+            last_part = module_path[-1]
+            if module_path[-1] == "*" and len(module_path) > 1:
+                last_part = module_path[-2]
             # If we reach here, assume the last module part is a file
             final_file = current_dir / f"{last_part}.rs"
             if final_file.is_relative_to(self.repo.repo_path) and final_file.exists():
