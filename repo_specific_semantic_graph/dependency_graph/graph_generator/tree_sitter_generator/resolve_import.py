@@ -63,7 +63,7 @@ class ImportResolver:
         if isinstance(import_symbol_node, RegexInfo):
             assert (
                 self.repo.language in ImportFinder.languages_using_regex
-            ), f"import_symbol_node {import_symbol_node} of type RegexNode is only supported for {ImportFinder.languages_using_regex}, not {self.repo.language}"
+            ), f"import_symbol_node {import_symbol_node} of type RegexInfo is only supported for {ImportFinder.languages_using_regex}, not {self.repo.language}"
 
         if self.repo.language in (Language.Java, Language.Kotlin):
             import_symbol_name = import_symbol_node.text

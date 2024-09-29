@@ -234,6 +234,7 @@ REGEX_FIND_IMPORT_PATTERN = {
     Language.Lua: r"^\s*(?!--).*(?:require|dofile|loadfile)\s*\((.+)\)$",
     Language.R: r"^\s*(?<!#)(?:source)\s*\((.+)\)$",
     Language.Bash: r"^\s*(?<!#)(?:\.|source|bash|zsh|ksh|csh|dash)\s+[\"\']?([^\"\s]+)[\"\']?",
+    Language.Swift: r"^\s*(?!\/\/|\/\*).*?\bimport\s+(?:typealias|struct|class|enum|protocol|let|var|func\s+)?(.+?)(?:\s*;)?$",
 }
 
 
@@ -299,30 +300,7 @@ class ImportFinder:
             )
         return matches
 
-    def _regex_find_imports(self, code: str, pattern: str) -> list[RegexNode]:
-        matches = []
-        for match in re.finditer(pattern, code, re.MULTILINE):
-            module_name = match.group(1)
-            start_index = match.start(1)
-            end_index = match.end(1)
-
-            # Calculate line and column number
-            start_line = code.count("\n", 0, start_index)
-            start_column = start_index - code.rfind("\n", 0, start_index) - 1
-
-            end_line = code.count("\n", 0, end_index)
-            end_column = end_index - code.rfind("\n", 0, end_index) - 1
-
-            matches.append(
-                RegexInfo(
-                    start_point=(start_line, start_column),
-                    end_point=(end_line, end_column),
-                    text=module_name,
-                )
-            )
-        return matches
-
-    @lru_cache(maxsize=256)
+    @lru_cache(maxsize=128)
     def find_imports(
         self,
         code: str,
