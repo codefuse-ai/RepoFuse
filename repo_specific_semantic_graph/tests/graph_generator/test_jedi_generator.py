@@ -249,3 +249,62 @@ def test_class_hierarchy_relation(jedi_generator, python_repo_suite_path):
             ("class", "Animal", "class", "Cat", "single_inheritance.py", 2),
         ]
     )
+
+
+def test_method_override_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "method_override"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = jedi_generator.generate(repository)
+
+    edges = D.get_related_edges(EdgeRelation.Overrides)
+    assert edges
+    assert len(edges) == 3
+
+    class_hierarchy = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[2].location.file_path.name,
+            edge[2].location.start_line,
+        )
+        for edge in edges
+    ]
+
+    assert class_hierarchy == unordered(
+        [
+            ("function", "Dog.speak", "function", "Animal.speak", "base_class.py", 2),
+            ("function", "Cat.speak", "function", "Animal.speak", "base_class.py", 2),
+            ("function", "Lion.speak", "function", "Cat.speak", "sub_classes.py", 10),
+        ]
+    )
+
+
+def test_field_use_relation_relation(jedi_generator, python_repo_suite_path):
+    repo_path = python_repo_suite_path / "field_use"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = jedi_generator.generate(repository)
+
+    edges = D.get_related_edges(EdgeRelation.Uses)
+    assert edges
+    assert len(edges) == 2
+
+    class_hierarchy = [
+        (
+            edge[0].type.value,
+            edge[0].name,
+            edge[1].type.value,
+            edge[1].name,
+            edge[2].location.file_path.name,
+            edge[2].location.start_line,
+        )
+        for edge in edges
+    ]
+
+    assert class_hierarchy == unordered(
+        [
+            ("class", "Car", "variable", "Engine", "engine.py", 1),
+            ("class", "Car", "variable", "Manufacturer", "engine.py", 9),
+        ]
+    )

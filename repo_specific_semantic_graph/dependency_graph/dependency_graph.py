@@ -15,6 +15,7 @@ from dependency_graph.utils.digraph import lexicographical_cyclic_topological_so
 from dependency_graph.utils.intervals import find_innermost_interval
 
 if sys.version_info < (3, 9):
+
     def is_relative_to(self, *other):
         try:
             self.relative_to(*other)
@@ -24,6 +25,7 @@ if sys.version_info < (3, 9):
 
     # Patch the method in OriginalPath
     Path.is_relative_to = is_relative_to
+
 
 class DependencyGraph:
     def __init__(self, repo_path: PathLike, *languages: Language) -> None:

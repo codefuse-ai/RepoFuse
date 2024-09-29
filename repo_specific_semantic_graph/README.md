@@ -20,10 +20,10 @@ called `dependency_graph`.
 Currently, the following Repo-Specific Semantic Graph generator types are supported, with the corresponding languages
 and dependency relations:
 
-| **Graph Generator Type** | **Supported Languages**                                                                            | **Supported Dependency Relations**                                                                                               |
-|--------------------------|----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| Jedi                     | Python                                                                                             | ParentOf/ChildOf, Imports/ImportedBy, BaseClassOf/DerivedClassOf, Calls/CalledBy, Instantiates/InstantiatedBy, Defines/DefinedBy |
-| Tree-sitter              | Python, Java, C, C++, Kotlin, C#, TypeScript, JavaScript, Go, PHP, Rust, Swift, Ruby, Lua, Bash, R | Imports/ImportedBy                                                                                                               |
+| **Graph Generator Type** | **Supported Languages**                                                                            | **Supported Dependency Relations**                                                                                                                                    |
+|--------------------------|----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Jedi                     | Python                                                                                             | ParentOf/ChildOf, Imports/ImportedBy, BaseClassOf/DerivedClassOf, Overrides/OverriddenBy, Calls/CalledBy, Instantiates/InstantiatedBy, Uses/UsedBy, Defines/DefinedBy |
+| Tree-sitter              | Python, Java, C, C++, Kotlin, C#, TypeScript, JavaScript, Go, PHP, Rust, Swift, Ruby, Lua, Bash, R | Imports/ImportedBy                                                                                                                                                    |
 
 ## Install
 
@@ -184,7 +184,6 @@ from dependency_graph import (
 )
 from dependency_graph.models.language import Language
 from dependency_graph.models.graph_data import EdgeRelation
-
 
 repo_path = "/path/to/repo"
 graph = construct_dependency_graph(
