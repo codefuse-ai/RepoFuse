@@ -7,6 +7,8 @@ from multiprocessing import Lock, Manager
 from pathlib import Path
 
 from dataclasses_json import dataclass_json, config
+from joblib import Parallel, delayed
+
 from dependency_graph import (
     DependencyGraph,
     Repository,
@@ -223,34 +225,27 @@ def main(
     cceval_data = data_path.read_text().splitlines()
 
     # Use a Manager to create a shared dictionary and lock for multi-processing
-    with Manager() as manager:
+    with (
+        Manager() as manager,
+        tqdm(desc=f"Processing {data_path.name} with language {language}") as pbar,
+    ):
         dependency_graph_dict = manager.dict()
         lock = manager.Lock()
 
-        with ProcessPoolExecutor(
-            max_workers=max_workers, max_tasks_per_child=1
-        ) as executor:
-            # Prepare future tasks for each line of data
-            future_to_data = {
-                executor.submit(
-                    process_data,
-                    json.loads(d),
-                    repository_suite_path,
-                    language,
-                    output_path,
-                    dependency_graph_dict,
-                    lock,
-                    dependency_graph_suite_path,
-                ): d
-                for d in cceval_data
-            }
-
-            # Use tqdm to display progress
-            for future in tqdm(as_completed(future_to_data), total=len(future_to_data)):
-                try:
-                    future.result()  # You can handle exceptions here if needed
-                except Exception as e:
-                    print(f"An error occurred: {e}")
+        # Use joblib to process each line in the batch
+        Parallel(n_jobs=max_workers, verbose=10)(
+            delayed(process_data)(
+                json.loads(d),
+                repository_suite_path,
+                language,
+                output_path,
+                dependency_graph_dict,
+                lock,
+                dependency_graph_suite_path,
+            )
+            for d in cceval_data
+        )
+        pbar.update()
 
 
 def parse_args():
