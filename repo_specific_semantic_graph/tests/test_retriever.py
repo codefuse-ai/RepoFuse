@@ -25,7 +25,7 @@ def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
         not in (EdgeRelation.Defines, EdgeRelation.DefinedBy),
     )
 
-    assert len(cross_file_edge_list) == 27
+    assert len(cross_file_edge_list) == 28
     context = [
         (
             edge[0].type.value,
@@ -141,6 +141,7 @@ def test_get_cross_file_context(sample_retriever, python_repo_suite_path):
                 "main.py",
             ),
             ("variable", "foo", 31, 1, "usage.py", "Instantiates", "Foo", "main.py"),
+            ("class", "Usage", 17, 1, "usage.py", "Uses", "Foo", "main.py"),
         ]
     )
 

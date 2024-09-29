@@ -509,6 +509,50 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
                     f"Error while extracting method override relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
                 )
 
+    def _extract_field_use_relation(
+        self,
+        script: jedi.Script,
+        all_names: list[Name],
+        D: DependencyGraph,
+    ):
+        for name in all_names:
+            try:
+                # Checks if a name is defined as ``self.foo = 3``
+                if not name.is_side_effect():
+                    continue
+
+                instance_type_names = name.infer()
+                instance_owner = name.parent()
+                while instance_owner is not None:
+                    if instance_owner.type == "class":
+                        break
+                    instance_owner = instance_owner.parent()
+
+                if instance_owner is None:
+                    continue
+
+                for instance_type in instance_type_names:  # type: Name
+                    # Skip builtin types
+                    if instance_type.in_builtin_module():
+                        continue
+
+                    self._update_graph(
+                        D=D,
+                        from_name=instance_owner,
+                        from_type=_JEDI_API_TYPES_dict[instance_owner.type],
+                        to_name=instance_type,
+                        to_type=_JEDI_API_TYPES_dict[instance_type.type],
+                        edge_name=instance_type,
+                        edge_relation=EdgeRelation.Uses,
+                        inverse_edge_relation=EdgeRelation.UsedBy,
+                    )
+
+            except Exception as e:
+                tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                logger.error(
+                    f"Error while extracting field use relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
+                )
+
     def _generate_file(
         self,
         code: str,
@@ -553,6 +597,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             self._extract_def_use_relation(script, all_def_names, D)
             self._extract_class_hierarchy_relation(script, all_def_names, D)
             self._extract_method_override_relation(script, all_def_names, D)
+            self._extract_field_use_relation(script, all_def_names, D)
         except Exception as e:
             tb_str = "\n".join(traceback.format_tb(e.__traceback__))
             logger.error(
