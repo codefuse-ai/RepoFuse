@@ -5,7 +5,7 @@ import sys
 import traceback
 
 import jedi
-from jedi.api.classes import Name, BaseName
+from jedi.api.classes import Name, BaseName, Completion
 from parso.python.tree import Name as ParsoTreeName
 from parso.tree import BaseNode
 from tqdm import tqdm
@@ -461,7 +461,52 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             except Exception as e:
                 tb_str = "\n".join(traceback.format_tb(e.__traceback__))
                 logger.error(
-                    f"Error while extracting def-use relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
+                    f"Error while extracting class hierarchy relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
+                )
+
+    def _extract_method_override_relation(
+        self,
+        script: jedi.Script,
+        all_names: list[Name],
+        D: DependencyGraph,
+    ):
+        for name in all_names:
+            try:
+                if (
+                    name.type != "function"
+                    or name.parent() is None
+                    or name.parent().type != "class"
+                ):
+                    continue
+
+                line, _ = name.get_definition_start_position()
+                # Find the left parenthesis in the method definition, if not exist, skip
+                # For example, find the index of the `(` in `def speak(self):\n`
+                if "(" not in name.get_line_code():
+                    continue
+
+                column = name.get_line_code().index("(")
+                completions = script.complete(line, column)
+
+                for completion in completions:  # type: Completion
+                    override_method_list = completion.infer()
+                    for method in override_method_list:
+                        if method.type != "function":
+                            continue
+                        self._update_graph(
+                            D=D,
+                            from_name=name,
+                            from_type=_JEDI_API_TYPES_dict[name.type],
+                            to_name=method,
+                            to_type=_JEDI_API_TYPES_dict[method.type],
+                            edge_name=method,
+                            edge_relation=EdgeRelation.Overrides,
+                            inverse_edge_relation=EdgeRelation.OverriddenBy,
+                        )
+            except Exception as e:
+                tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                logger.error(
+                    f"Error while extracting method override relation for name {name} in {name.module_path}: Error {e} occurred at:\n{tb_str}"
                 )
 
     def _generate_file(
@@ -507,6 +552,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             self._extract_import_relation(script, all_def_names, D)
             self._extract_def_use_relation(script, all_def_names, D)
             self._extract_class_hierarchy_relation(script, all_def_names, D)
+            self._extract_method_override_relation(script, all_def_names, D)
         except Exception as e:
             tb_str = "\n".join(traceback.format_tb(e.__traceback__))
             logger.error(
