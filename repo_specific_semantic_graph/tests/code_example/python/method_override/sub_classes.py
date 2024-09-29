@@ -1,6 +1,4 @@
-class Animal:
-    def speak(self):
-        return "Animal speaks"
+from .base_class import Animal
 
 
 class Dog(Animal):

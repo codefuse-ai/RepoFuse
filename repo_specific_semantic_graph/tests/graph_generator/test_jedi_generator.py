@@ -274,8 +274,8 @@ def test_method_override_relation(jedi_generator, python_repo_suite_path):
 
     assert class_hierarchy == unordered(
         [
-            ("function", "Lion.speak", "function", "Cat.speak", "main.py", 12),
-            ("function", "Dog.speak", "function", "Animal.speak", "main.py", 2),
-            ("function", "Cat.speak", "function", "Animal.speak", "main.py", 2),
+            ("function", "Dog.speak", "function", "Animal.speak", "base_class.py", 2),
+            ("function", "Cat.speak", "function", "Animal.speak", "base_class.py", 2),
+            ("function", "Lion.speak", "function", "Cat.speak", "sub_classes.py", 10),
         ]
     )
