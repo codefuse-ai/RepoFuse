@@ -9,6 +9,7 @@ from dataclasses_json import dataclass_json, config
 
 from dependency_graph.models.language import Language
 from dependency_graph.utils.log import setup_logger
+from dependency_graph.utils.read_file import read_file_to_string
 from dependency_graph.utils.text import slice_text
 
 # Initialize logging
@@ -85,7 +86,7 @@ class Location:
         if self.file_path is None:
             return None
 
-        content = self.file_path.read_text()
+        content = read_file_to_string(self.file_path)
         loc = [self.start_line, self.start_column, self.end_line, self.end_column]
         if any([l is None for l in loc]):
             return None

@@ -77,7 +77,8 @@ class Repository:
         # Loop through the file extensions
         for extension in self.code_file_extensions[self.language]:
             # Use rglob() with a pattern to match the file extension
-            rglob_file_list = list(self.repo_path.rglob(f"*{extension}"))
+            rglob_file_list = self.repo_path.rglob(f"*{extension}")
+            rglob_file_list = [file for file in rglob_file_list if file.is_file()]
 
             # Get the git-ignored files
             ignored_files = []
