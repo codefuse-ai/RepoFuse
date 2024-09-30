@@ -1,12 +1,14 @@
 import argparse
 import json
 import logging
-from concurrent.futures import as_completed, ProcessPoolExecutor
 from dataclasses import dataclass, field
 from multiprocessing import Lock, Manager
 from pathlib import Path
 
 from dataclasses_json import dataclass_json, config
+from joblib import Parallel, delayed
+from tqdm import tqdm
+
 from dependency_graph import (
     DependencyGraph,
     Repository,
@@ -15,7 +17,6 @@ from dependency_graph import (
     GraphGeneratorType,
 )
 from dependency_graph.models.graph_data import Node, Edge, NodeType
-from tqdm import tqdm
 
 
 @dataclass_json
@@ -137,13 +138,16 @@ def process_data(
     dependency_graph_dict: dict[str, DependencyGraph],
     lock: Lock,
     dependency_graph_suite_path: Path | None = None,
+    line_number_start_from_1: bool | None = False,
 ):
     repository = data["metadata"]["repository"]
     file = data["metadata"]["file"]
     groundtruth_start_lineno = data["metadata"]["groundtruth_start_lineno"]
-    # FIXME repoEval starts from 1 already
-    # Convert to 1-based
-    groundtruth_start_lineno += 1
+
+    # repoEval starts from 1 already
+    if not line_number_start_from_1:
+        # Convert to 1-based
+        groundtruth_start_lineno += 1
 
     repo_path = repository_suite_path / f"{repository}"
 
@@ -208,6 +212,7 @@ def main(
     output_path: Path,
     max_workers: int = 8,
     dependency_graph_suite_path: Path | None = None,
+    line_number_start_from_1: bool | None = False,
 ) -> None:
     """
     Construct CrossCodeEval data from code Repo-Specific Semantic Graph
@@ -223,34 +228,28 @@ def main(
     cceval_data = data_path.read_text().splitlines()
 
     # Use a Manager to create a shared dictionary and lock for multi-processing
-    with Manager() as manager:
+    with (
+        Manager() as manager,
+        tqdm(desc=f"Processing {data_path.name} with language {language}") as pbar,
+    ):
         dependency_graph_dict = manager.dict()
         lock = manager.Lock()
 
-        with ProcessPoolExecutor(
-            max_workers=max_workers, max_tasks_per_child=1
-        ) as executor:
-            # Prepare future tasks for each line of data
-            future_to_data = {
-                executor.submit(
-                    process_data,
-                    json.loads(d),
-                    repository_suite_path,
-                    language,
-                    output_path,
-                    dependency_graph_dict,
-                    lock,
-                    dependency_graph_suite_path,
-                ): d
-                for d in cceval_data
-            }
-
-            # Use tqdm to display progress
-            for future in tqdm(as_completed(future_to_data), total=len(future_to_data)):
-                try:
-                    future.result()  # You can handle exceptions here if needed
-                except Exception as e:
-                    print(f"An error occurred: {e}")
+        # Use joblib to process each line in the batch
+        Parallel(n_jobs=max_workers, verbose=10)(
+            delayed(process_data)(
+                json.loads(d),
+                repository_suite_path,
+                language,
+                output_path,
+                dependency_graph_dict,
+                lock,
+                dependency_graph_suite_path,
+                line_number_start_from_1,
+            )
+            for d in cceval_data
+        )
+        pbar.update()
 
 
 def parse_args():
