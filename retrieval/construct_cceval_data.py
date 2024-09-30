@@ -1,13 +1,13 @@
 import argparse
 import json
 import logging
-from concurrent.futures import as_completed, ProcessPoolExecutor
 from dataclasses import dataclass, field
 from multiprocessing import Lock, Manager
 from pathlib import Path
 
 from dataclasses_json import dataclass_json, config
 from joblib import Parallel, delayed
+from tqdm import tqdm
 
 from dependency_graph import (
     DependencyGraph,
@@ -17,7 +17,6 @@ from dependency_graph import (
     GraphGeneratorType,
 )
 from dependency_graph.models.graph_data import Node, Edge, NodeType
-from tqdm import tqdm
 
 
 @dataclass_json
@@ -139,13 +138,16 @@ def process_data(
     dependency_graph_dict: dict[str, DependencyGraph],
     lock: Lock,
     dependency_graph_suite_path: Path | None = None,
+    line_number_start_from_1: bool | None = False,
 ):
     repository = data["metadata"]["repository"]
     file = data["metadata"]["file"]
     groundtruth_start_lineno = data["metadata"]["groundtruth_start_lineno"]
-    # FIXME repoEval starts from 1 already
-    # Convert to 1-based
-    groundtruth_start_lineno += 1
+
+    # repoEval starts from 1 already
+    if not line_number_start_from_1:
+        # Convert to 1-based
+        groundtruth_start_lineno += 1
 
     repo_path = repository_suite_path / f"{repository}"
 
