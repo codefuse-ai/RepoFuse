@@ -212,6 +212,7 @@ def main(
     output_path: Path,
     max_workers: int = 8,
     dependency_graph_suite_path: Path | None = None,
+    line_number_start_from_1: bool | None = False,
 ) -> None:
     """
     Construct CrossCodeEval data from code Repo-Specific Semantic Graph
@@ -244,6 +245,7 @@ def main(
                 dependency_graph_dict,
                 lock,
                 dependency_graph_suite_path,
+                line_number_start_from_1,
             )
             for d in cceval_data
         )
