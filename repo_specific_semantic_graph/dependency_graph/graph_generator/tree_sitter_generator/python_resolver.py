@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 from pathlib import Path
+from typing import Optional
 
 from importlab.import_finder import is_builtin
 from importlab.resolve import (
@@ -27,7 +26,7 @@ class Resolver:
                 return file
         return None
 
-    def resolve_import(self, item) -> Path | None:
+    def resolve_import(self, item) -> Optional[Path]:
         """Simulate how Python resolves imports.
 
         Returns the filename of the source file Python would load

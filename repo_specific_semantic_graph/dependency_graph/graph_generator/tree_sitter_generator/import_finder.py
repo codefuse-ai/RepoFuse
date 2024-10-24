@@ -1,9 +1,8 @@
-from __future__ import annotations
-
 import re
 from functools import lru_cache
 from pathlib import Path
 from textwrap import dedent
+from typing import List, Union, Optional
 
 from tree_sitter import Parser, Language as TS_Language, Tree
 
@@ -251,7 +250,7 @@ class ImportFinder:
 
     def _query_and_captures(
         self, code: str, query: str, capture_name="import_name"
-    ) -> list[ParseTreeInfo]:
+    ) -> List[ParseTreeInfo]:
         """
         Query the Tree-sitter language and get the nodes that match the query
         :param code: The code to be parsed
@@ -277,7 +276,7 @@ class ImportFinder:
         del tree
         return info_list
 
-    def _regex_find_imports(self, code: str, pattern: str) -> list[RegexInfo]:
+    def _regex_find_imports(self, code: str, pattern: str) -> List[RegexInfo]:
         matches = []
         for match in re.finditer(pattern, code, re.MULTILINE):
             module_name = match.group(1)
@@ -304,7 +303,7 @@ class ImportFinder:
     def find_imports(
         self,
         code: str,
-    ) -> list[RegexInfo] | list[ParseTreeInfo]:
+    ) -> Union[List[RegexInfo], List[ParseTreeInfo]]:
         if self.language in self.languages_using_regex:
             return self._regex_find_imports(
                 code, REGEX_FIND_IMPORT_PATTERN[self.language]
@@ -313,7 +312,7 @@ class ImportFinder:
             return self._query_and_captures(code, FIND_IMPORT_QUERY[self.language])
 
     @lru_cache(maxsize=256)
-    def find_module_name(self, file_path: Path) -> str | None:
+    def find_module_name(self, file_path: Path) -> Optional[str]:
         """
         Find the name of the module of the current file.
         This term is broad enough to encompass the different ways in which these languages organize and reference code units

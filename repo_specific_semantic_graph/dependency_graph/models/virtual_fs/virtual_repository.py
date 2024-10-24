@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from collections import namedtuple
-from typing import Iterable
+from typing import Iterable, List, Set
 
 from fs.memoryfs import MemoryFS
 
@@ -20,7 +18,7 @@ class VirtualRepository(Repository):
         self,
         repo_path: PathLike,
         language: Language,
-        virtual_files: list[VirtualFile],  # Use the named tuple for typing
+        virtual_files: List[VirtualFile],  # Use the named tuple for typing
     ):
         self.fs = MemoryFS()
         # Make sure the repo path is absolute
@@ -39,8 +37,8 @@ class VirtualRepository(Repository):
         super().__init__(self.repo_path, language)
 
     @property
-    def files(self) -> set[VirtualFileNode]:
-        files: set[VirtualFileNode] = set(
+    def files(self) -> Set[VirtualFileNode]:
+        files: Set[VirtualFileNode] = set(
             [VirtualFileNode(file_path) for file_path in self._all_file_paths]
         )
         return files

@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Dict, Tuple, Set
 
 from dependency_graph.models import PathLike
 from dependency_graph.models.file_node import FileNode
@@ -19,7 +17,7 @@ class Repository:
     repo_path: Path = None
     language: Language
 
-    code_file_extensions: dict[Language, tuple[str]] = {
+    code_file_extensions: Dict[Language, Tuple[str]] = {
         Language.CSharp: (".cs", ".csx"),
         Language.Python: (".py", ".pyi"),
         Language.Java: (".java",),
@@ -61,7 +59,7 @@ class Repository:
                 f"Language {self.language} is not supported to get code files"
             )
 
-        self._files: set[FileNode] = set()
+        self._files: Set[FileNode] = set()
 
         # try:
         #     self._git_repo = Repo(repo_path)
@@ -70,7 +68,7 @@ class Repository:
         #     pass
 
     @property
-    def files(self) -> set[FileNode]:
+    def files(self) -> Set[FileNode]:
         if self._files:
             return self._files
 

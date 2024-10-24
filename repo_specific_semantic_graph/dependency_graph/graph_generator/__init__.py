@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 import enum
 from abc import ABC, abstractmethod, ABCMeta
 from functools import wraps
+from typing import Tuple
 
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.models import PathLike
@@ -45,7 +44,7 @@ class BaseDependencyGraphGeneratorMeta(ABCMeta):
 
 
 class BaseDependencyGraphGenerator(ABC, metaclass=BaseDependencyGraphGeneratorMeta):
-    supported_languages: tuple[Language] = ()
+    supported_languages: Tuple[Language] = ()
 
     def _validate_language(self, language: Language):
         if language not in self.supported_languages:

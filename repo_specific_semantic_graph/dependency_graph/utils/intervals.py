@@ -1,11 +1,9 @@
-from __future__ import annotations
-
-from typing import Iterable, Any
+from typing import Iterable, Any, Tuple, Optional
 
 
 def find_innermost_interval(
-    intervals: Iterable[tuple[int, int, Any]], index: int
-) -> tuple[int, int, Any] | None:
+    intervals: Iterable[Tuple[int, int, Any]], index: int
+) -> Optional[Tuple[int, int, Any]]:
     """
     Finds the innermost interval that contains the specified index.
 

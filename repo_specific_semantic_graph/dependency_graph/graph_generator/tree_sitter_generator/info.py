@@ -1,19 +1,18 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
+from typing import Tuple, Optional
 
 
 @dataclass
 class ParseTreeInfo:
-    start_point: tuple[int, int]
-    end_point: tuple[int, int]
+    start_point: Tuple[int, int]
+    end_point: Tuple[int, int]
     text: str
     type: str
-    parent: ParseTreeInfo | None = None
+    parent: Optional["ParseTreeInfo"] = None
 
 
 @dataclass
 class RegexInfo:
-    start_point: tuple[int, int]
-    end_point: tuple[int, int]
+    start_point: Tuple[int, int]
+    end_point: Tuple[int, int]
     text: str
