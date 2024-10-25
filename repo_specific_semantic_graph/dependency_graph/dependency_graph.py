@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import json
 import sys
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, Callable
+from typing import Iterable, Callable, Optional, Tuple, List
 
 import networkx as nx
 
@@ -36,7 +34,7 @@ class DependencyGraph:
         # De-duplicate the languages and convert to tuple
         self.languages = tuple(set([Language(lang) for lang in languages]))
 
-        self._update_callbacks: set[Callable] = set()
+        self._update_callbacks: Set[Callable] = set()
         # Clear the cache of self.get_edges when the graph is updated
         self.register_update_callback(self.get_edges.cache_clear)
 
@@ -61,7 +59,9 @@ class DependencyGraph:
         self.graph.add_nodes_from(nodes)
         self._notify_update()
 
-    def add_relational_edge(self, n1: Node, n2: Node, r1: Edge, r2: Edge | None = None):
+    def add_relational_edge(
+        self, n1: Node, n2: Node, r1: Edge, r2: Optional[Edge] = None
+    ):
         """Add a relational edge between two nodes.
         r2 can be None to indicate this is a unidirectional edge."""
         self.add_node(n1)
@@ -71,7 +71,7 @@ class DependencyGraph:
             self.graph.add_edge(n2, n1, relation=r2)
 
     def add_relational_edges_from(
-        self, edges: Iterable[tuple[Node, Node, Edge, Edge | None]]
+        self, edges: Iterable[Tuple[Node, Node, Edge, Optional[Edge]]]
     ):
         """Add relational edges.
         r2 can be None to indicate this is a unidirectional edge."""
@@ -81,7 +81,7 @@ class DependencyGraph:
 
     def get_related_edges(
         self, *relations: EdgeRelation
-    ) -> list[tuple[Node, Node, Edge]]:
+    ) -> List[Tuple[Node, Node, Edge]]:
         filtered_edges = self.get_edges(
             edge_filter=lambda in_node, out_node, edge: edge.relation in relations
         )
@@ -90,7 +90,7 @@ class DependencyGraph:
 
     def get_related_edges_by_node(
         self, node: Node, *relations: EdgeRelation
-    ) -> list[tuple[Node, Node, Edge]] | None:
+    ) -> Optional[List[Tuple[Node, Node, Edge]]]:
         """Get the related edges of the given node by the given relations.
         If the given node is not in the graph, return None."""
         if node not in self.graph:
@@ -115,7 +115,7 @@ class DependencyGraph:
         self,
         # the edge_filter parameter should also be hashable
         edge_filter: Callable[[Node, Node, Edge], bool] = None,
-    ) -> list[tuple[Node, Node, Edge]]:
+    ) -> List[Tuple[Node, Node, Edge]]:
         # self.graph.edges(data="relation") is something like:
         # [(1, 2, Edge(...), (1, 2, Edge(...)), (3, 4, Edge(...)]
         if edge_filter is None:
@@ -130,13 +130,13 @@ class DependencyGraph:
         self,
         # the node_filter parameter should also be hashable
         node_filter: Callable[[Node], bool] = None,
-    ) -> list[Node]:
+    ) -> List[Node]:
         if node_filter is None:
             return list(self.graph.nodes())
 
         return list(filter(node_filter, self.graph.nodes()))
 
-    def get_edge(self, n1: Node, n2: Node) -> list[Edge] | None:
+    def get_edge(self, n1: Node, n2: Node) -> Optional[List[Edge]]:
         if self.graph.has_edge(n1, n2):
             return [data["relation"] for data in self.graph[n1][n2].values()]
 
@@ -214,7 +214,7 @@ class DependencyGraphContextRetriever:
         self,
         file_path: PathLike,
         start_line: int,
-    ) -> Node | None:
+    ) -> Optional[Node]:
         # Statement nodes are not taken into account for now
         file_path = self._Path(file_path)
         nodes = self.graph.get_nodes(
@@ -235,7 +235,7 @@ class DependencyGraphContextRetriever:
         file_path: PathLike,
         start_line: int,
         *relations: EdgeRelation,
-    ) -> list[tuple[Node, Node, Edge]] | None:
+    ) -> Optional[List[Tuple[Node, Node, Edge]]]:
         node = self._get_innermost_node_by_line(file_path, start_line)
         related_edge_list = self.graph.get_related_edges_by_node(
             node,
@@ -264,7 +264,7 @@ class DependencyGraphContextRetriever:
         self,
         file_path: PathLike,
         edge_filter: Callable[[Node, Node, Edge], bool] = None,
-    ) -> list[tuple[Node, Node, Edge]]:
+    ) -> List[Tuple[Node, Node, Edge]]:
         """
         Construct the cross-file context of a file
         - The in node should be located in the repo and be cross-file
@@ -290,7 +290,7 @@ class DependencyGraphContextRetriever:
         self,
         file_path: PathLike,
         start_line: int,
-    ) -> list[tuple[Node, Node, Edge]] | None:
+    ) -> Optional[List[Tuple[Node, Node, Edge]]]:
         """
         Construct the cross-file definition of a file by line.
         It will return the cross-file definition of the innermost scope(func/class) located between the start_line.
@@ -354,7 +354,7 @@ class DependencyGraphContextRetriever:
         self,
         file_path: PathLike,
         start_line: int,
-    ) -> list[tuple[Node, Node, Edge]] | None:
+    ) -> Optional[List[Tuple[Node, Node, Edge]]]:
         """
         Construct the cross-file usage of a file by line
         It will return the cross-file usage of the innermost scope(func/class) located between the start_line.
@@ -388,7 +388,7 @@ class DependencyGraphContextRetriever:
 
     def get_related_edges_by_file(
         self, file_path: PathLike, *relations: EdgeRelation
-    ) -> list[tuple[Node, Node, Edge]]:
+    ) -> List[Tuple[Node, Node, Edge]]:
         """
         Get all related edges of a file and return them
         """

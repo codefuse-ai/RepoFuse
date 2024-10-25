@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import enum
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -81,7 +79,7 @@ class Location:
     def __hash__(self) -> int:
         return hash(self.__str__())
 
-    def get_text(self) -> str | None:
+    def get_text(self) -> Optional[str]:
         # TODO should leverage the FileNode.content
         if self.file_path is None:
             return None
@@ -131,12 +129,12 @@ class Node:
     def __hash__(self) -> int:
         return hash(self.__str__())
 
-    def get_text(self) -> str | None:
+    def get_text(self) -> Optional[str]:
         return self.location.get_text()
 
     def get_stub(
         self, language: Language, include_comments: bool = False
-    ) -> str | None:
+    ) -> Optional[str]:
         if language == Language.Python:
             from dependency_graph.utils.mypy_stub import generate_python_stub
 
@@ -191,7 +189,7 @@ class Edge:
     def __hash__(self) -> int:
         return hash(self.__str__())
 
-    def get_text(self) -> str | None:
+    def get_text(self) -> Optional[str]:
         return self.location.get_text()
 
     def get_inverse_edge(self) -> "Edge":

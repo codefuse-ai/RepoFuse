@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Union, Optional
 
 from importlab.parsepy import ImportStatement
 from importlab.resolve import ImportException
@@ -55,10 +53,10 @@ class ImportResolver:
 
     def resolve_import(
         self,
-        import_symbol_node: ParseTreeInfo | RegexInfo,
-        module_map: dict[str, list[Path]],
+        import_symbol_node: Union[ParseTreeInfo, RegexInfo],
+        module_map: Dict[str, List[Path]],
         importer_file_path: Path,
-    ) -> list[Path]:
+    ) -> List[Path]:
         resolved_path_list = []
         if isinstance(import_symbol_node, RegexInfo):
             assert (
@@ -139,10 +137,10 @@ class ImportResolver:
     def resolve_ts_js_import(
         self,
         import_symbol_node: ParseTreeInfo,
-        module_map: dict[str, list[Path]],
+        module_map: Dict[str, List[Path]],
         importer_file_path: Path,
-    ) -> list[Path]:
-        def _search_file(search_path: Path, module_name: str) -> list[Path]:
+    ) -> List[Path]:
+        def _search_file(search_path: Path, module_name: str) -> List[Path]:
             result_path = []
             for ext in extension_list:
                 if (search_path / f"{module_name}{ext}").exists():
@@ -193,7 +191,7 @@ class ImportResolver:
         self,
         import_symbol_node: ParseTreeInfo,
         importer_file_path: Path,
-    ) -> list[Path]:
+    ) -> List[Path]:
         def analyze_import_statement(
             import_statement: str, is_from_import: bool = None
         ) -> List[Tuple[str, str, str, bool]]:
@@ -298,7 +296,7 @@ class ImportResolver:
         self,
         import_symbol_node: ParseTreeInfo,
         importer_file_path: Path,
-    ) -> list[Path]:
+    ) -> List[Path]:
         import_symbol_name = import_symbol_node.text
         # Strip double and single quote
         import_symbol_name = import_symbol_name.strip('"').strip("'")
@@ -317,7 +315,7 @@ class ImportResolver:
         self,
         import_symbol_node: ParseTreeInfo,
         importer_file_path: Path,
-    ) -> list[Path]:
+    ) -> List[Path]:
         import_symbol_name = import_symbol_node.text
         # Strip double and single quote
         import_symbol_name = import_symbol_name.strip('"').strip("'")
@@ -346,7 +344,7 @@ class ImportResolver:
         self,
         import_symbol_node: ParseTreeInfo,
         importer_file_path: Path,
-    ) -> list[Path]:
+    ) -> List[Path]:
 
         import_symbol_name = import_symbol_node.text
         # Strip double quote and angle bracket
@@ -401,8 +399,8 @@ class ImportResolver:
 
         return result_path
 
-    def resolve_go_import(self, import_symbol_node: ParseTreeInfo) -> list[Path]:
-        def parse_go_mod(go_mod_path: Path) -> tuple[str, dict[str, Path]]:
+    def resolve_go_import(self, import_symbol_node: ParseTreeInfo) -> List[Path]:
+        def parse_go_mod(go_mod_path: Path) -> Tuple[str, Dict[str, Path]]:
             """
             Parses the go.mod file and returns the module path and replacements.
             :param go_mod_path: The path to the go.mod file.
@@ -480,7 +478,7 @@ class ImportResolver:
 
     def resolve_swift_import(
         self, import_symbol_node: ParseTreeInfo, importer_file_path: Path
-    ) -> list[Path]:
+    ) -> List[Path]:
         import_symbol_name = import_symbol_node.text
         if "." in import_symbol_name:
             # Handle individual declarations importing such as `import kind module.symbol`
@@ -526,12 +524,12 @@ class ImportResolver:
 
     def resolve_rust_import(
         self, import_symbol_node: ParseTreeInfo, importer_file_path: Path
-    ) -> list[Path]:
+    ) -> List[Path]:
         def find_import_path(
             project_root: Path,
             file: Path,
-            module_path: list[str],
-        ) -> Path | None:
+            module_path: List[str],
+        ) -> Optional[Path]:
             """
             Given the project root, the file containing the import, and the module path,
             heuristically find the corresponding file path for the imported module.
@@ -679,8 +677,10 @@ class ImportResolver:
             return [imported_file] if imported_file else []
 
     def resolve_lua_import(
-        self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
-    ) -> list[Path]:
+        self,
+        import_symbol_node: Union[ParseTreeInfo, RegexInfo],
+        importer_file_path: Path,
+    ) -> List[Path]:
         import_symbol_name = import_symbol_node.text
 
         import_symbol_name = import_symbol_name.strip('"').strip("'")
@@ -707,8 +707,10 @@ class ImportResolver:
         return []
 
     def resolve_bash_import(
-        self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
-    ) -> list[Path]:
+        self,
+        import_symbol_node: Union[ParseTreeInfo, RegexInfo],
+        importer_file_path: Path,
+    ) -> List[Path]:
         import_symbol_name = import_symbol_node.text
         import_path = self._Path(import_symbol_name)
         if import_path.is_relative_to(self.repo.repo_path) and import_path.exists():
@@ -723,8 +725,10 @@ class ImportResolver:
         return []
 
     def resolve_r_import(
-        self, import_symbol_node: ParseTreeInfo | RegexInfo, importer_file_path: Path
-    ) -> list[Path]:
+        self,
+        import_symbol_node: Union[ParseTreeInfo, RegexInfo],
+        importer_file_path: Path,
+    ) -> List[Path]:
         import_symbol_name = import_symbol_node.text
         import_symbol_name = import_symbol_name.strip('"').strip("'")
 

@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 import re
 import sys
 import traceback
+from typing import Dict, Tuple, Optional, List
 
 import jedi
 from jedi.api.classes import Name, BaseName, Completion
@@ -33,7 +32,7 @@ from dependency_graph.utils.log import setup_logger
 logger = setup_logger()
 
 # Mapping from jedi api type to node type
-_JEDI_API_TYPES_dict: dict[str, NodeType | None] = {
+_JEDI_API_TYPES_dict: Optional[Dict[str, NodeType]] = {
     "module": NodeType.MODULE,
     "class": NodeType.CLASS,
     "instance": NodeType.VARIABLE,
@@ -48,11 +47,11 @@ _JEDI_API_TYPES_dict: dict[str, NodeType | None] = {
 
 
 class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
-    supported_languages: tuple[Language] = (Language.Python,)
+    supported_languages: Tuple[Language] = (Language.Python,)
 
     def _convert_name_pos_to_location(
-        self, name: Name, node_type: NodeType | None = None
-    ) -> Location | None:
+        self, name: Name, node_type: Optional[NodeType] = None
+    ) -> Optional[Location]:
         """helper function for creating location"""
         if name is None:
             return None
@@ -103,9 +102,9 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
         from_type: NodeType,
         to_name: Name,
         to_type: NodeType,
-        edge_name: (
-            Name | None
-        ),  # Edge name can be None as not all relation have a location
+        edge_name: Optional[
+            Name
+        ],  # Edge name can be None as not all relation have a location
         edge_relation: EdgeRelation,
         inverse_edge_relation: EdgeRelation,
     ):
@@ -124,7 +123,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_parent_relation(
         self,
         script: jedi.Script,
-        all_names: list[Name],
+        all_names: List[Name],
         D: DependencyGraph,
     ):
         for name in all_names:
@@ -172,7 +171,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_import_relation(
         self,
         script: jedi.Script,
-        all_names: list[Name],
+        all_names: List[Name],
         D: DependencyGraph,
     ):
         for name in all_names:
@@ -223,7 +222,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_call_relation(
         self,
         script: jedi.Script,
-        all_names: list[Name],
+        all_names: List[Name],
         D: DependencyGraph,
     ):
         for name in all_names:
@@ -261,7 +260,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_instantiate_relation(
         self,
         script: jedi.Script,
-        all_names: list[Name],
+        all_names: List[Name],
         D: DependencyGraph,
     ):
         for name in all_names:
@@ -349,7 +348,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_def_use_relation(
         self,
         script: jedi.Script,
-        all_names: list[Name],
+        all_names: List[Name],
         D: DependencyGraph,
     ):
         for name in all_names:
@@ -390,10 +389,10 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_class_hierarchy_relation(
         self,
         script: jedi.Script,
-        all_names: list[Name],
+        all_names: List[Name],
         D: DependencyGraph,
     ):
-        def get_parent_classes_with_columns(class_definition: str) -> dict[str, int]:
+        def get_parent_classes_with_columns(class_definition: str) -> Dict[str, int]:
             """
             Get the parent classes and their columns in the class definition header
             e.g.
@@ -467,7 +466,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_method_override_relation(
         self,
         script: jedi.Script,
-        all_names: list[Name],
+        all_names: List[Name],
         D: DependencyGraph,
     ):
         for name in all_names:
@@ -512,7 +511,7 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
     def _extract_field_use_relation(
         self,
         script: jedi.Script,
-        all_names: list[Name],
+        all_names: List[Name],
         D: DependencyGraph,
     ):
         for name in all_names:

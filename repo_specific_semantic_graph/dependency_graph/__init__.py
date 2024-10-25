@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 from pathlib import Path
 from textwrap import dedent
+from typing import Union, Optional
 
 import networkx as nx
 from ipysigma import Sigma
@@ -24,9 +23,9 @@ logger = setup_logger()
 
 
 def construct_dependency_graph(
-    repo: Repository | PathLike,
+    repo: Union[Repository, PathLike],
     dependency_graph_generator: GraphGeneratorType,
-    language: Language | None = None,
+    language: Optional[Language] = None,
 ) -> DependencyGraph:
     if isinstance(repo, str) or isinstance(repo, Path) or isinstance(repo, VirtualPath):
         if language is None:
