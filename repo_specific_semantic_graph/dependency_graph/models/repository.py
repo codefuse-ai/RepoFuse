@@ -40,6 +40,11 @@ class Repository:
         repo_path: PathLike,
         language: Language,
     ) -> None:
+        """Initialize the repository. It will find the code files in the repository according to the language suffixes.
+        Args:
+            repo_path: Path to the repository.
+            language: Language of the repository.
+        """
         if isinstance(repo_path, str):
             self.repo_path = Path(repo_path).expanduser().absolute()
         else:
@@ -65,11 +70,6 @@ class Repository:
         # except (InvalidGitRepositoryError, NoSuchPathError):
         #     # The repo is not a git repo, just ignore
         #     pass
-
-    @property
-    def files(self) -> List[Path]:
-        if self._files:
-            return self._files
 
         # Loop through the file extensions
         for extension in self.code_file_extensions[self.language]:
@@ -101,7 +101,9 @@ class Repository:
                 [file for file in rglob_file_list if str(file) not in ignored_files]
             )
 
-        return self._files
+    @property
+    def files(self) -> List[Path]:
+        return list(set(self._files))
 
     @files.setter
     def files(self, file_paths: Iterable[Path]):
