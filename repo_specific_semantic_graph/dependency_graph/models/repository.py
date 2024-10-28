@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import Iterable, Dict, Tuple, Set
+from typing import Iterable, Dict, Tuple, List
 
 from dependency_graph.models import PathLike
-from dependency_graph.models.file_node import FileNode
 from dependency_graph.models.language import Language
 from dependency_graph.utils.log import setup_logger
 
@@ -59,7 +58,7 @@ class Repository:
                 f"Language {self.language} is not supported to get code files"
             )
 
-        self._files: Set[FileNode] = set()
+        self._files: List[Path] = []
 
         # try:
         #     self._git_repo = Repo(repo_path)
@@ -68,7 +67,7 @@ class Repository:
         #     pass
 
     @property
-    def files(self) -> Set[FileNode]:
+    def files(self) -> List[Path]:
         if self._files:
             return self._files
 
@@ -98,17 +97,13 @@ class Repository:
             #         pass
 
             # Add the files to the set filtering out git-ignored files
-            self._files.update(
-                [
-                    FileNode(file)
-                    for file in rglob_file_list
-                    if str(file) not in ignored_files
-                ]
+            self._files.extend(
+                [file for file in rglob_file_list if str(file) not in ignored_files]
             )
 
         return self._files
 
     @files.setter
-    def files(self, file_nodes: Iterable[FileNode]):
+    def files(self, file_paths: Iterable[Path]):
         """Setter to update the files in the repository."""
-        self._files = set(file_nodes)
+        self._files = list(file_paths)

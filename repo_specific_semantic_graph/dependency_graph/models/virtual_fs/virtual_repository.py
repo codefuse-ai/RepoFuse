@@ -1,12 +1,11 @@
 from collections import namedtuple
-from typing import Iterable, List, Set
+from typing import Iterable, List
 
 from fs.memoryfs import MemoryFS
 
 from dependency_graph.models import PathLike
 from dependency_graph.models.language import Language
 from dependency_graph.models.repository import Repository
-from dependency_graph.models.virtual_fs.virtual_file_node import VirtualFileNode
 from dependency_graph.models.virtual_fs.virtual_path import VirtualPath
 
 # Define the VirtualFile named tuple
@@ -37,18 +36,10 @@ class VirtualRepository(Repository):
         super().__init__(self.repo_path, language)
 
     @property
-    def files(self) -> Set[VirtualFileNode]:
-        files: Set[VirtualFileNode] = set(
-            [VirtualFileNode(file_path) for file_path in self._all_file_paths]
-        )
-        return files
+    def files(self) -> List[VirtualPath]:
+        return self._all_file_paths
 
     @files.setter
-    def files(self, file_nodes: Iterable[VirtualFileNode]):
+    def files(self, file_paths: Iterable[VirtualPath]):
         """Setter to update the virtual files in the repository."""
-        # Clear existing files
-        self._all_file_paths.clear()
-
-        for file_node in file_nodes:
-            p = VirtualPath(self.fs, file_node.file_path)
-            self._all_file_paths.append(p)
+        self._all_file_paths = list(file_paths)
