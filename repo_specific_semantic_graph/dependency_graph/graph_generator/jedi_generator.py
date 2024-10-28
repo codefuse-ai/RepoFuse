@@ -27,6 +27,7 @@ from dependency_graph.models.repository import Repository
 from dependency_graph.models.virtual_fs.virtual_importlib import VirtualFSFinder
 from dependency_graph.models.virtual_fs.virtual_repository import VirtualRepository
 from dependency_graph.utils.log import setup_logger
+from dependency_graph.utils.read_file import read_file_to_string
 
 # Initialize logging
 logger = setup_logger()
@@ -640,9 +641,9 @@ class JediDependencyGraphGenerator(BaseDependencyGraphGenerator):
             finder = VirtualFSFinder(repo.fs)
             sys.meta_path.insert(0, finder)
 
-        for file in tqdm(repo.files, desc="Generating graph"):
-            if not file.content.strip():
-                continue
-            self._generate_file(file.content, file.file_path, D, project, repo)
+        for file_path in tqdm(repo.files, desc="Generating graph"):
+            # Use read_file_to_string here to avoid non-UTF8 decoding issue
+            content = read_file_to_string(file_path)
+            self._generate_file(content, file_path, D, project, repo)
 
         return D

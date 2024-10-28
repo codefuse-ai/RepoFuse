@@ -80,7 +80,6 @@ class Location:
         return hash(self.__str__())
 
     def get_text(self) -> Optional[str]:
-        # TODO should leverage the FileNode.content
         if self.file_path is None:
             return None
 

@@ -91,13 +91,13 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         finder = ImportFinder(repo.language)
         resolver = ImportResolver(repo)
 
-        for file in tqdm(repo.files, desc="Generating graph"):
-            content = self.read_file_to_string_with_limited_line(file.file_path)
-            name = finder.find_module_name(file.file_path)
+        for file_path in tqdm(repo.files, desc="Finding imports"):
+            content = self.read_file_to_string_with_limited_line(file_path)
+            name = finder.find_module_name(file_path)
             if name:
-                module_map[name].append(file.file_path)
+                module_map[name].append(file_path)
             nodes = finder.find_imports(content)
-            import_map[(file.file_path, name)].extend(nodes)
+            import_map[(file_path, name)].extend(nodes)
 
         for (
             importer_file_path,

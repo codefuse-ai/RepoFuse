@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import Iterable, Dict, Tuple, Set
+from typing import Iterable, Dict, Tuple, List
 
 from dependency_graph.models import PathLike
-from dependency_graph.models.file_node import FileNode
 from dependency_graph.models.language import Language
 from dependency_graph.utils.log import setup_logger
 
@@ -41,6 +40,11 @@ class Repository:
         repo_path: PathLike,
         language: Language,
     ) -> None:
+        """Initialize the repository. It will find the code files in the repository according to the language suffixes.
+        Args:
+            repo_path: Path to the repository.
+            language: Language of the repository.
+        """
         if isinstance(repo_path, str):
             self.repo_path = Path(repo_path).expanduser().absolute()
         else:
@@ -59,18 +63,13 @@ class Repository:
                 f"Language {self.language} is not supported to get code files"
             )
 
-        self._files: Set[FileNode] = set()
+        self._files: List[Path] = []
 
         # try:
         #     self._git_repo = Repo(repo_path)
         # except (InvalidGitRepositoryError, NoSuchPathError):
         #     # The repo is not a git repo, just ignore
         #     pass
-
-    @property
-    def files(self) -> Set[FileNode]:
-        if self._files:
-            return self._files
 
         # Loop through the file extensions
         for extension in self.code_file_extensions[self.language]:
@@ -98,17 +97,15 @@ class Repository:
             #         pass
 
             # Add the files to the set filtering out git-ignored files
-            self._files.update(
-                [
-                    FileNode(file)
-                    for file in rglob_file_list
-                    if str(file) not in ignored_files
-                ]
+            self._files.extend(
+                [file for file in rglob_file_list if str(file) not in ignored_files]
             )
 
-        return self._files
+    @property
+    def files(self) -> List[Path]:
+        return list(set(self._files))
 
     @files.setter
-    def files(self, file_nodes: Iterable[FileNode]):
+    def files(self, file_paths: Iterable[Path]):
         """Setter to update the files in the repository."""
-        self._files = set(file_nodes)
+        self._files = list(file_paths)
