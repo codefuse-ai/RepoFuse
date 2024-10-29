@@ -79,6 +79,9 @@ class Location:
     def __hash__(self) -> int:
         return hash(self.__str__())
 
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
     def get_text(self) -> Optional[str]:
         if self.file_path is None:
             return None
@@ -94,7 +97,10 @@ class Location:
 
     file_path: Optional[Path] = field(
         default=None,
-        metadata=config(encoder=lambda v: str(v), decoder=lambda v: Path(v)),
+        metadata=config(
+            encoder=lambda v: str(v),
+            decoder=lambda v: v if isinstance(v, Path) else Path(v),
+        ),
     )
     """The file path"""
     start_line: Optional[int] = None
@@ -127,6 +133,9 @@ class Node:
 
     def __hash__(self) -> int:
         return hash(self.__str__())
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
     def get_text(self) -> Optional[str]:
         return self.location.get_text()
@@ -187,6 +196,9 @@ class Edge:
 
     def __hash__(self) -> int:
         return hash(self.__str__())
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
     def get_text(self) -> Optional[str]:
         return self.location.get_text()
