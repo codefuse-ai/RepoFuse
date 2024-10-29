@@ -1,10 +1,12 @@
 import networkx as nx
 import pytest
+from fs.memoryfs import MemoryFS
 from pytest_unordered import unordered
 
 from dependency_graph import (
     construct_dependency_graph,
     GraphGeneratorType,
+    VirtualPath,
 )
 from dependency_graph.dependency_graph import DependencyGraph
 from dependency_graph.models.graph_data import (
@@ -133,3 +135,97 @@ def test_merge_graph(sample_graph: DependencyGraph, sample_java_graph: Dependenc
     assert sample_graph.languages == unordered((Language.Python, Language.Java))
     assert sample_graph.graph.number_of_nodes() == all_nodes
     assert sample_graph.graph.number_of_edges() == all_edages
+
+
+def test_merge_graph_with_same_node():
+    mem_fs = MemoryFS()
+    cpp_graph = DependencyGraph.from_dict(
+        {
+            "repo_path": "/unknown_repo",
+            "languages": ["cpp"],
+            "edges": [
+                [
+                    {
+                        "type": "module",
+                        "name": "grid.h",
+                        "location": {
+                            "file_path": VirtualPath(mem_fs, "/unknown_repo/grid.h"),
+                            "start_line": 1,
+                            "start_column": 1,
+                            "end_line": 1,
+                            "end_column": 18,
+                        },
+                    },
+                    {
+                        "type": "module",
+                        "name": "cell.h",
+                        "location": {
+                            "file_path": VirtualPath(mem_fs, "/unknown_repo/cell.h"),
+                            "start_line": 1,
+                            "start_column": 1,
+                            "end_line": 1,
+                            "end_column": 1,
+                        },
+                    },
+                    {
+                        "relation": "Imports",
+                        "location": {
+                            "file_path": VirtualPath(mem_fs, "/unknown_repo/grid.h"),
+                            "start_line": 1,
+                            "start_column": 10,
+                            "end_line": 1,
+                            "end_column": 18,
+                        },
+                    },
+                ],
+            ],
+        }
+    )
+
+    c_graph = DependencyGraph.from_dict(
+        {
+            "repo_path": "/unknown_repo",
+            "languages": ["c"],
+            "edges": [
+                [
+                    {
+                        "type": "module",
+                        "name": "grid.h",
+                        "location": {
+                            "file_path": VirtualPath(mem_fs, "/unknown_repo/grid.h"),
+                            "start_line": 1,
+                            "start_column": 1,
+                            "end_line": 1,
+                            "end_column": 18,
+                        },
+                    },
+                    {
+                        "type": "module",
+                        "name": "cell.h",
+                        "location": {
+                            "file_path": VirtualPath(mem_fs, "/unknown_repo/cell.h"),
+                            "start_line": 1,
+                            "start_column": 1,
+                            "end_line": 1,
+                            "end_column": 1,
+                        },
+                    },
+                    {
+                        "relation": "Imports",
+                        "location": {
+                            "file_path": VirtualPath(mem_fs, "/unknown_repo/grid.h"),
+                            "start_line": 1,
+                            "start_column": 10,
+                            "end_line": 1,
+                            "end_column": 18,
+                        },
+                    },
+                ],
+            ],
+        }
+    )
+
+    cpp_graph.compose_all(c_graph)
+    assert cpp_graph.languages == unordered((Language.C, Language.CPP))
+    assert cpp_graph.graph.number_of_nodes() == 2
+    assert cpp_graph.graph.number_of_edges() == 1
