@@ -124,6 +124,8 @@ class ImportResolver:
         else:
             raise NotImplementedError(f"Language {self.repo.language} is not supported")
 
+        # Resolve the path so that relative file path is normalized. This is important for the node identification in the graph
+        resolved_path_list = [path.resolve() for path in resolved_path_list]
         # De-duplicate the resolved path
         path_list = set(resolved_path_list)
         resolved_path_list = []

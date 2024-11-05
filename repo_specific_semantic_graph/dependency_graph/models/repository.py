@@ -46,9 +46,9 @@ class Repository:
             language: Language of the repository.
         """
         if isinstance(repo_path, str):
-            self.repo_path = Path(repo_path).expanduser().absolute()
+            self.repo_path = Path(repo_path).expanduser().absolute().resolve()
         else:
-            self.repo_path = repo_path.expanduser().absolute()
+            self.repo_path = repo_path.expanduser().absolute().resolve()
 
         self.language = language
 

@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import pytest
 from pytest_unordered import unordered
 
@@ -7,6 +9,7 @@ from dependency_graph import (
     Repository,
     EdgeRelation,
 )
+from dependency_graph.models.virtual_fs.virtual_repository import VirtualRepository
 
 
 @pytest.fixture
@@ -22,6 +25,46 @@ def test_tree_sitter_deadlock_will_not_block_and_do_not_raise_error(
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges == []
+
+
+def test_the_same_relative_paths_are_represented_to_the_same_node_in_the_graph(
+    tree_sitter_generator,
+):
+    repository = VirtualRepository(
+        "repo",
+        Language.JavaScript,
+        [
+            (
+                "src/component1/Component.js",
+                dedent(
+                    """
+                     import Button from '../Button/Button';
+                     """
+                ),
+            ),
+            (
+                "src/component2/Component.js",
+                dedent(
+                    """
+                     import Button from '../Button/Button';
+                     """
+                ),
+            ),
+            (
+                "src/Button/Button.js",
+                dedent(
+                    """
+                     const Button = () => {};
+                     export default Button;
+                     """
+                ),
+            ),
+        ],
+    )
+    D = tree_sitter_generator.generate(repository)
+    assert D.graph.number_of_nodes() == 3
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert len(edges) == 2
 
 
 def test_python(tree_sitter_generator, python_repo_suite_path):

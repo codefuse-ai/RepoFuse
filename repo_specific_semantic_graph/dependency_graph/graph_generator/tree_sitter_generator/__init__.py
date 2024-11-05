@@ -143,7 +143,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
 
                     importee_module_name = None
                     for module_name, file_paths in module_map.items():
-                        if importee_file_path.resolve() in file_paths:
+                        if importee_file_path in file_paths:
                             importee_module_name = module_name
                             break
 
