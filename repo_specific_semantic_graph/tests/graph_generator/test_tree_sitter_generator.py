@@ -14,6 +14,16 @@ def tree_sitter_generator():
     return TreeSitterDependencyGraphGenerator()
 
 
+def test_tree_sitter_deadlock_will_not_block_and_do_not_raise_error(
+    tree_sitter_generator, repo_suite_path
+):
+    repo_path = repo_suite_path / "tree_sitter_bad_case"
+    repository = Repository(repo_path=repo_path, language=Language.Python)
+    D = tree_sitter_generator.generate(repository)
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert edges == []
+
+
 def test_python(tree_sitter_generator, python_repo_suite_path):
     repo_path = python_repo_suite_path / "import_relation_for_tree_sitter_test"
     repository = Repository(repo_path=repo_path, language=Language.Python)

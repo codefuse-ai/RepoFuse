@@ -15,6 +15,7 @@ from dependency_graph.graph_generator.tree_sitter_generator.load_lib import (
 )
 from dependency_graph.models.language import Language
 from dependency_graph.utils.read_file import read_file_to_string
+from dependency_graph.utils.run_in_subprocess import SubprocessRunner
 
 """
 Tree-sitter query to find all the imports in a code. The captured import name should be named as `import_name`.
@@ -229,11 +230,12 @@ FIND_PACKAGE_QUERY = {
 """
 Regex pattern to find all the imports in a code. The captured import name should be matched in group 1
 """
+# Disable using regex to find imports for now, as the tree-sitter deadlock issue is mitigated by SubProcessRunner
 REGEX_FIND_IMPORT_PATTERN = {
-    Language.Lua: r"^\s*(?!--).*(?:require|dofile|loadfile)\s*\((.+)\)$",
-    Language.R: r"^\s*(?<!#)(?:source)\s*\((.+)\)$",
-    Language.Bash: r"^\s*(?<!#)(?:\.|source|bash|zsh|ksh|csh|dash)\s+[\"\']?([^\"\s]+)[\"\']?",
-    Language.Swift: r"^\s*(?!\/\/|\/\*).*?\bimport\s+(?:typealias|struct|class|enum|protocol|let|var|func\s+)?(.+?)(?:\s*;)?$",
+    # Language.Lua: r"^\s*(?!--).*(?:require|dofile|loadfile)\s*\((.+)\)$",
+    # Language.R: r"^\s*(?<!#)(?:source)\s*\((.+)\)$",
+    # Language.Bash: r"^\s*(?<!#)(?:\.|source|bash|zsh|ksh|csh|dash)\s+[\"\']?([^\"\s]+)[\"\']?",
+    # Language.Swift: r"^\s*(?!\/\/|\/\*).*?\bimport\s+(?:typealias|struct|class|enum|protocol|let|var|func\s+)?(.+?)(?:\s*;)?$",
 }
 
 
@@ -247,9 +249,10 @@ class ImportFinder:
         self.parser = Parser()
         self.ts_language = TS_Language(str(lib_path.absolute()), str(language))
         self.parser.set_language(self.ts_language)
+        self._timeout = 5  # seconds
 
     def _query_and_captures(
-        self, code: str, query: str, capture_name="import_name"
+        self, code: str, query: str, capture_name: str = "import_name"
     ) -> List[ParseTreeInfo]:
         """
         Query the Tree-sitter language and get the nodes that match the query
@@ -273,8 +276,19 @@ class ImportFinder:
                     n.parent.type,
                 )
             info_list.append(info)
-        del tree
         return info_list
+
+    def _query_and_captures_in_subprocess(
+        self, code: str, query: str, capture_name: str = "import_name"
+    ):
+        """
+        Use SubprocessRunner to query the Tree-sitter language and get the nodes that match the query
+        to avoid the Tree-sitter deadlock/segmentation fault issue
+        """
+        captures = SubprocessRunner(
+            self._query_and_captures, code, query, capture_name
+        ).run(self._timeout)
+        return captures
 
     def _regex_find_imports(self, code: str, pattern: str) -> List[RegexInfo]:
         matches = []
@@ -309,7 +323,9 @@ class ImportFinder:
                 code, REGEX_FIND_IMPORT_PATTERN[self.language]
             )
         else:
-            return self._query_and_captures(code, FIND_IMPORT_QUERY[self.language])
+            return self._query_and_captures_in_subprocess(
+                code, FIND_IMPORT_QUERY[self.language]
+            )
 
     @lru_cache(maxsize=256)
     def find_module_name(self, file_path: Path) -> Optional[str]:
@@ -323,7 +339,7 @@ class ImportFinder:
         # Use read_file_to_string here to avoid non-UTF8 decoding issue
         code = read_file_to_string(file_path)
         if self.language in (Language.Java, Language.Kotlin):
-            captures = self._query_and_captures(
+            captures = self._query_and_captures_in_subprocess(
                 code, FIND_PACKAGE_QUERY[self.language], "package_name"
             )
 
@@ -334,7 +350,7 @@ class ImportFinder:
                 return module_name
 
         elif self.language in (Language.CSharp, Language.Go):
-            captures = self._query_and_captures(
+            captures = self._query_and_captures_in_subprocess(
                 code, FIND_PACKAGE_QUERY[self.language], "package_name"
             )
 

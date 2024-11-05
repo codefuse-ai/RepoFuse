@@ -92,12 +92,18 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
         resolver = ImportResolver(repo)
 
         for file_path in tqdm(repo.files, desc="Finding imports"):
-            content = self.read_file_to_string_with_limited_line(file_path)
-            name = finder.find_module_name(file_path)
-            if name:
-                module_map[name].append(file_path)
-            nodes = finder.find_imports(content)
-            import_map[(file_path, name)].extend(nodes)
+            try:
+                content = self.read_file_to_string_with_limited_line(file_path)
+                name = finder.find_module_name(file_path)
+                if name:
+                    module_map[name].append(file_path)
+                nodes = finder.find_imports(content)
+                import_map[(file_path, name)].extend(nodes)
+            except Exception as e:
+                tb_str = "\n".join(traceback.format_tb(e.__traceback__))
+                logger.error(
+                    f"Error {e} finding import in {file_path}, will ignore: {tb_str}"
+                )
 
         for (
             importer_file_path,
