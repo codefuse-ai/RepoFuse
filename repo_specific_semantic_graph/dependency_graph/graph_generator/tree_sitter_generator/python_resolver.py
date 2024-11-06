@@ -81,10 +81,11 @@ class Resolver:
         # else:
         #     try_filename = try_short_filename = True
 
-        files = []
+        try_filename_files = set()
+        try_short_filename_files = set()
         if try_filename:
-            files.append((name, self.repo_path / filename))
-            files.append((name, self.current_directory / filename))
+            try_filename_files.add((name, self.repo_path / filename))
+            try_filename_files.add((name, self.current_directory / filename))
 
             # Add parent directories
             for parent in self.current_directory.parents:
@@ -92,13 +93,13 @@ class Resolver:
                 if potential_path.is_relative_to(
                     self.repo_path
                 ):  # Ensure the path is within repo_path
-                    files.append((name, potential_path))
+                    try_filename_files.add((name, potential_path))
 
         if try_short_filename:
             short_filename = (self.repo_path / filename).parent
-            files.append((short_name, short_filename))
+            try_short_filename_files.add((short_name, short_filename))
             short_filename = (self.current_directory / filename).parent
-            files.append((short_name, short_filename))
+            try_short_filename_files.add((short_name, short_filename))
 
             # Add parent directories
             for parent in self.current_directory.parents:
@@ -106,7 +107,10 @@ class Resolver:
                 if potential_path.is_relative_to(
                     self.repo_path
                 ):  # Ensure the path is within repo_path
-                    files.append((short_name, potential_path))
+                    try_short_filename_files.add((short_name, potential_path))
+
+        # Try filename first then short filename
+        files = list(try_filename_files) + list(try_short_filename_files)
 
         for module_name, path in files:
             f = self._find_file(path)

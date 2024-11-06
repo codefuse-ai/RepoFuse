@@ -117,7 +117,7 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                 except Exception as e:
                     tb_str = "\n".join(traceback.format_tb(e.__traceback__))
                     logger.error(
-                        f"Error {e} resolving import {import_symbol_node.text} in {importer_file_path}, will ignore: {tb_str}"
+                        f"Error {e} resolving import `{import_symbol_node.text}` in {importer_file_path}, will ignore: {tb_str}"
                     )
                     continue
 

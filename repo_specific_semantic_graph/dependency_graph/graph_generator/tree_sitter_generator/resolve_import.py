@@ -279,10 +279,17 @@ class ImportResolver:
         is_from_import = import_symbol_node.type == "import_from_statement"
         parsed_items = analyze_import_statement(import_symbol_node.text, is_from_import)
         for module_name, imported_name, asname, is_star in parsed_items:
-            if imported_name and imported_name != "*":
+            if module_name == ".":
+                # Convert `from . import qux` to `.qux`
+                name = f".{imported_name}"
+            elif module_name == "..":
+                # Convert `from .. import qux` to `..qux`
+                name = f"..{imported_name}"
+            elif imported_name and imported_name != "*":
                 name = f"{module_name}.{imported_name}"
             else:
                 name = module_name
+
             imp = ImportStatement(name, asname, is_from_import, is_star, source_path)
 
             try:
