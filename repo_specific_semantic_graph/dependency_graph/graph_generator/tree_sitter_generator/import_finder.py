@@ -230,10 +230,9 @@ FIND_PACKAGE_QUERY = {
 """
 Regex pattern to find all the imports in a code. The captured import name should be matched in group 1
 """
-# Disable using regex to find imports for now, as the tree-sitter deadlock issue is mitigated by SubProcessRunner
 REGEX_FIND_IMPORT_PATTERN = {
-    # Language.Lua: r"^\s*(?!--).*(?:require|dofile|loadfile)\s*\((.+)\)$",
-    # Language.R: r"^\s*(?<!#)(?:source)\s*\((.+)\)$",
+    Language.Lua: r"^\s*(?!--).*(?:require|dofile|loadfile)\s*\((.+)\)$",
+    Language.R: r"^\s*(?<!#)(?:source)\s*\((.+)\)$",
     # Language.Bash: r"^\s*(?<!#)(?:\.|source|bash|zsh|ksh|csh|dash)\s+[\"\']?([^\"\s]+)[\"\']?",
     # Language.Swift: r"^\s*(?!\/\/|\/\*).*?\bimport\s+(?:typealias|struct|class|enum|protocol|let|var|func\s+)?(.+?)(?:\s*;)?$",
 }
