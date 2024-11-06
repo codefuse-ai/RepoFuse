@@ -73,7 +73,7 @@ def test_python(tree_sitter_generator, python_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 9
+    assert len(edges) == 10
     relations = [
         (
             edge[0].type.value,
@@ -120,6 +120,7 @@ def test_python(tree_sitter_generator, python_repo_suite_path):
             "__init__.py",
             "from ..module_a.submodule import *",
         ),
+        ("module", "baz", "module", "quux", "quux.py", "from .quux import *"),
         (
             "module",
             "run",
