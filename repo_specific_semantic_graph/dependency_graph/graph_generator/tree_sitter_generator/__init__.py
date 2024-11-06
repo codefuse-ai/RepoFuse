@@ -135,12 +135,6 @@ class TreeSitterDependencyGraphGenerator(BaseDependencyGraphGenerator):
                         )
                     )
 
-                    if (
-                        not importee_file_path.exists()
-                        or not importee_file_path.is_file()
-                    ):
-                        continue
-
                     importee_module_name = None
                     for module_name, file_paths in module_map.items():
                         if importee_file_path in file_paths:

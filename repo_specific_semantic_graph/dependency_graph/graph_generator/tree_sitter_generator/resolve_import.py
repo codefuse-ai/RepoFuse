@@ -131,7 +131,10 @@ class ImportResolver:
         resolved_path_list = []
         # Remove file not in the repo
         for resolved_path in path_list:
-            if resolved_path.is_relative_to(self.repo.repo_path):
+            if (
+                resolved_path.is_relative_to(self.repo.repo_path)
+                and resolved_path.is_file()
+            ):
                 resolved_path_list.append(resolved_path)
 
         return resolved_path_list
