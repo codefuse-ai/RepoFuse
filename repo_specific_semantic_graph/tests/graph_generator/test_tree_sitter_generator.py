@@ -240,7 +240,7 @@ def test_javascript(tree_sitter_generator, javascript_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 5
+    assert len(edges) == 6
     relations = [
         (
             edge[0].type.value,
@@ -253,6 +253,7 @@ def test_javascript(tree_sitter_generator, javascript_repo_suite_path):
         for edge in edges
     ]
     assert relations == [
+        ("module", "ajax", "module", None, "ajax-loader.jade", "./ajax-loader.jade"),
         ("module", "app", "module", "mathUtils", "mathUtils.js", "./mathUtils"),
         ("module", "index", "module", "utilA", "utilA.js", "./utils/utilA"),
         ("module", "index", "module", "utilB", "utilB.js", "./utils/utilB"),

@@ -173,14 +173,16 @@ class ImportResolver:
             or "." in Path(import_symbol_name).parts
         ):
             """If the path is relative, then search in the filesystem"""
-            result_path = []
-            # If there is a suffix in the name
             suffix = self._Path(import_symbol_name).suffix
-            if suffix and suffix in extension_list:
-                # In case of '../package.json', we should filter it out
+            if suffix:
+                """If there is a suffix in the name, then search in the filesystem"""
                 path = importer_file_path.parent / import_symbol_name
                 if path.exists():
                     result_path = [path]
+                else:
+                    result_path = _search_file(
+                        importer_file_path.parent, import_symbol_name
+                    )
             else:
                 result_path = _search_file(
                     importer_file_path.parent, import_symbol_name
@@ -400,9 +402,10 @@ class ImportResolver:
         for path in search_paths:
             if path.exists():
                 result_path.append(path)
-            elif path.suffix == "":
+            else:
+                """Directly add the extension to the end no matter if it has suffix or not"""
                 for ext in extension_list:
-                    path = path.with_suffix(ext)
+                    path = path.parent / f"{path.name}{ext}"
                     if path.exists():
                         result_path.append(path)
 
