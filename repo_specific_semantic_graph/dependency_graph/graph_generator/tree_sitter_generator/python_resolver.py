@@ -20,6 +20,9 @@ class Resolver:
 
     def _find_file(self, name):
         init = name / "__init__.py"
+        # Check if there is a name to prevent `Path('/').with_suffix('.py')` error
+        if not name.name:
+            return None
         py = name.with_suffix(".py")
         for file in [init, py]:
             if file.exists():
