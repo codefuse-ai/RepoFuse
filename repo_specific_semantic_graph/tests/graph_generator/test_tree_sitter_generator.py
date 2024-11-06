@@ -401,7 +401,7 @@ def test_ruby(tree_sitter_generator, ruby_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 4
+    assert len(edges) == 5
     relations = [
         (
             edge[0].type.value,
@@ -415,6 +415,7 @@ def test_ruby(tree_sitter_generator, ruby_repo_suite_path):
     ]
     assert relations == [
         ("module", "another_helper", "module", "helper", "helper.rb", "'helper'"),
+        ("module", "bar", "module", "baz", "baz.rb", "'lib_foo/baz.rb'"),
         ("module", "main", "module", "helper", "helper.rb", "'lib/helper'"),
         (
             "module",

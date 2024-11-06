@@ -331,23 +331,34 @@ class ImportResolver:
         # Strip double and single quote
         import_symbol_name = import_symbol_name.strip('"').strip("'")
 
-        extension_list = Repository.code_file_extensions[Language.Ruby]
+        import_path = self._Path(import_symbol_name)
+
+        # Heuristics to search for the header file
+        search_paths = [
+            import_path,
+        ]
+
+        # Add parent directories to the search path
+        for parent in importer_file_path.parents:
+            potential_path = parent / import_path
+            if potential_path.is_relative_to(
+                self.repo.repo_path
+            ):  # Ensure the path is within repo_path
+                search_paths.append(potential_path)
 
         # Find the module path
         result_path = []
-        for ext in extension_list:
-            try:
-                import_path = self._Path(import_symbol_name).with_suffix(ext)
-            except ValueError:
-                continue
-
-            if import_path.is_absolute() and import_path.exists():
-                result_path.append(import_path)
+        # Check if any of these paths exist
+        extension_list = Repository.code_file_extensions[Language.Ruby]
+        for path in search_paths:
+            if path.exists():
+                result_path.append(path)
             else:
-                path = importer_file_path.parent / import_symbol_name
-                path = path.with_suffix(ext)
-                if path.exists():
-                    result_path.append(path)
+                """Directly add the extension to the end no matter if it has suffix or not"""
+                for ext in extension_list:
+                    path = path.parent / f"{path.name}{ext}"
+                    if path.exists():
+                        result_path.append(path)
 
         return result_path
 
