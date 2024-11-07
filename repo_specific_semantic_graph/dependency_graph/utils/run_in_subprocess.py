@@ -1,5 +1,6 @@
 import multiprocessing
 import pickle
+import traceback
 from typing import Any, Callable, Optional
 
 
@@ -18,8 +19,9 @@ class SubprocessRunner:
                 result = self.func(*args, **kwargs)
                 return_dict["result"] = result
             except Exception as e:
-                # Serialize the exception
+                # Serialize the exception and traceback
                 return_dict["error"] = pickle.dumps(e)
+                return_dict["traceback"] = traceback.format_exc()
 
         process = multiprocessing.Process(
             target=worker, args=(return_dict,) + self.args, kwargs=self.kwargs
@@ -41,6 +43,7 @@ class SubprocessRunner:
         if "error" in return_dict:
             # Deserialize the exception
             error = pickle.loads(return_dict["error"])
-            raise error  # Re-raise the original exception
+            tb = return_dict["traceback"]
+            raise type(error)(f"{error}\nOriginal traceback:\n{tb}") from error
 
         return return_dict.get("result")

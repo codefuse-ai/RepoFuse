@@ -124,12 +124,17 @@ class ImportResolver:
         else:
             raise NotImplementedError(f"Language {self.repo.language} is not supported")
 
+        # Resolve the path so that relative file path is normalized. This is important for the node identification in the graph
+        resolved_path_list = [path.resolve() for path in resolved_path_list]
         # De-duplicate the resolved path
         path_list = set(resolved_path_list)
         resolved_path_list = []
         # Remove file not in the repo
         for resolved_path in path_list:
-            if resolved_path.is_relative_to(self.repo.repo_path):
+            if (
+                resolved_path.is_relative_to(self.repo.repo_path)
+                and resolved_path.is_file()
+            ):
                 resolved_path_list.append(resolved_path)
 
         return resolved_path_list
@@ -171,14 +176,16 @@ class ImportResolver:
             or "." in Path(import_symbol_name).parts
         ):
             """If the path is relative, then search in the filesystem"""
-            result_path = []
-            # If there is a suffix in the name
             suffix = self._Path(import_symbol_name).suffix
-            if suffix and suffix in extension_list:
-                # In case of '../package.json', we should filter it out
+            if suffix:
+                """If there is a suffix in the name, then search in the filesystem"""
                 path = importer_file_path.parent / import_symbol_name
                 if path.exists():
                     result_path = [path]
+                else:
+                    result_path = _search_file(
+                        importer_file_path.parent, import_symbol_name
+                    )
             else:
                 result_path = _search_file(
                     importer_file_path.parent, import_symbol_name
@@ -277,10 +284,17 @@ class ImportResolver:
         is_from_import = import_symbol_node.type == "import_from_statement"
         parsed_items = analyze_import_statement(import_symbol_node.text, is_from_import)
         for module_name, imported_name, asname, is_star in parsed_items:
-            if imported_name and imported_name != "*":
+            if module_name == ".":
+                # Convert `from . import qux` to `.qux`
+                name = f".{imported_name}"
+            elif module_name == "..":
+                # Convert `from .. import qux` to `..qux`
+                name = f"..{imported_name}"
+            elif imported_name and imported_name != "*":
                 name = f"{module_name}.{imported_name}"
             else:
                 name = module_name
+
             imp = ImportStatement(name, asname, is_from_import, is_star, source_path)
 
             try:
@@ -320,23 +334,34 @@ class ImportResolver:
         # Strip double and single quote
         import_symbol_name = import_symbol_name.strip('"').strip("'")
 
-        extension_list = Repository.code_file_extensions[Language.Ruby]
+        import_path = self._Path(import_symbol_name)
+
+        # Heuristics to search for the header file
+        search_paths = [
+            import_path,
+        ]
+
+        # Add parent directories to the search path
+        for parent in importer_file_path.parents:
+            potential_path = parent / import_path
+            if potential_path.is_relative_to(
+                self.repo.repo_path
+            ):  # Ensure the path is within repo_path
+                search_paths.append(potential_path)
 
         # Find the module path
         result_path = []
-        for ext in extension_list:
-            try:
-                import_path = self._Path(import_symbol_name).with_suffix(ext)
-            except ValueError:
-                continue
-
-            if import_path.is_absolute() and import_path.exists():
-                result_path.append(import_path)
+        # Check if any of these paths exist
+        extension_list = Repository.code_file_extensions[Language.Ruby]
+        for path in search_paths:
+            if path.exists():
+                result_path.append(path)
             else:
-                path = importer_file_path.parent / import_symbol_name
-                path = path.with_suffix(ext)
-                if path.exists():
-                    result_path.append(path)
+                """Directly add the extension to the end no matter if it has suffix or not"""
+                for ext in extension_list:
+                    path = path.parent / f"{path.name}{ext}"
+                    if path.exists():
+                        result_path.append(path)
 
         return result_path
 
@@ -391,9 +416,10 @@ class ImportResolver:
         for path in search_paths:
             if path.exists():
                 result_path.append(path)
-            elif path.suffix == "":
+            else:
+                """Directly add the extension to the end no matter if it has suffix or not"""
                 for ext in extension_list:
-                    path = path.with_suffix(ext)
+                    path = path.parent / f"{path.name}{ext}"
                     if path.exists():
                         result_path.append(path)
 

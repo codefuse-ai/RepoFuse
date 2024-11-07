@@ -39,6 +39,13 @@ def test_run_will_reraise_error():
         ).run(timeout=1)
 
 
+def test_run_will_reraise_error_with_original_traceback():
+    with pytest.raises(NotImplementedError, match="Original traceback:"):
+        SubprocessRunner(
+            raise_error,
+        ).run(timeout=1)
+
+
 def test_run_can_accept_args():
     result = SubprocessRunner(lambda x: x + 1, 1).run(timeout=1)
     assert result == 2

@@ -20,6 +20,9 @@ class Resolver:
 
     def _find_file(self, name):
         init = name / "__init__.py"
+        # Check if there is a name to prevent `Path('/').with_suffix('.py')` error
+        if not name.name:
+            return None
         py = name.with_suffix(".py")
         for file in [init, py]:
             if file.exists():
@@ -62,7 +65,7 @@ class Resolver:
         if level:
             # This is a relative import; we need to resolve the filename
             # relative to the importing file path.
-            filename = str(self.current_directory / filename)
+            filename = str((self.current_directory / filename).resolve())
 
         try_filename = try_short_filename = True
 
@@ -81,15 +84,36 @@ class Resolver:
         # else:
         #     try_filename = try_short_filename = True
 
-        files = []
+        try_filename_files = set()
+        try_short_filename_files = set()
         if try_filename:
-            files.append((name, self.repo_path / filename))
-            files.append((name, self.current_directory / filename))
+            try_filename_files.add((name, self.repo_path / filename))
+            try_filename_files.add((name, self.current_directory / filename))
+
+            # Add parent directories
+            for parent in self.current_directory.parents:
+                potential_path = parent / filename
+                if potential_path.is_relative_to(
+                    self.repo_path
+                ):  # Ensure the path is within repo_path
+                    try_filename_files.add((name, potential_path))
+
         if try_short_filename:
             short_filename = (self.repo_path / filename).parent
-            files.append((short_name, short_filename))
+            try_short_filename_files.add((short_name, short_filename))
             short_filename = (self.current_directory / filename).parent
-            files.append((short_name, short_filename))
+            try_short_filename_files.add((short_name, short_filename))
+
+            # Add parent directories
+            for parent in self.current_directory.parents:
+                potential_path = (parent / filename).parent
+                if potential_path.is_relative_to(
+                    self.repo_path
+                ):  # Ensure the path is within repo_path
+                    try_short_filename_files.add((short_name, potential_path))
+
+        # Try filename first then short filename
+        files = list(try_filename_files) + list(try_short_filename_files)
 
         for module_name, path in files:
             f = self._find_file(path)

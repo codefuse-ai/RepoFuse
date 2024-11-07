@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import pytest
 from pytest_unordered import unordered
 
@@ -7,6 +9,7 @@ from dependency_graph import (
     Repository,
     EdgeRelation,
 )
+from dependency_graph.models.virtual_fs.virtual_repository import VirtualRepository
 
 
 @pytest.fixture
@@ -24,13 +27,53 @@ def test_tree_sitter_deadlock_will_not_block_and_do_not_raise_error(
     assert edges == []
 
 
+def test_the_same_relative_paths_are_represented_to_the_same_node_in_the_graph(
+    tree_sitter_generator,
+):
+    repository = VirtualRepository(
+        "repo",
+        Language.JavaScript,
+        [
+            (
+                "src/component1/Component.js",
+                dedent(
+                    """
+                     import Button from '../Button/Button';
+                     """
+                ),
+            ),
+            (
+                "src/component2/Component.js",
+                dedent(
+                    """
+                     import Button from '../Button/Button';
+                     """
+                ),
+            ),
+            (
+                "src/Button/Button.js",
+                dedent(
+                    """
+                     const Button = () => {};
+                     export default Button;
+                     """
+                ),
+            ),
+        ],
+    )
+    D = tree_sitter_generator.generate(repository)
+    assert D.graph.number_of_nodes() == 3
+    edges = D.get_related_edges(EdgeRelation.Imports)
+    assert len(edges) == 2
+
+
 def test_python(tree_sitter_generator, python_repo_suite_path):
     repo_path = python_repo_suite_path / "import_relation_for_tree_sitter_test"
     repository = Repository(repo_path=repo_path, language=Language.Python)
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 6
+    assert len(edges) == 10
     relations = [
         (
             edge[0].type.value,
@@ -43,6 +86,16 @@ def test_python(tree_sitter_generator, python_repo_suite_path):
         for edge in edges
     ]
     assert relations == [
+        ("module", "bar", "module", "foo", "foo.py", "from module_a import foo"),
+        ("module", "bar", "module", "qux", "qux.py", "from . import qux"),
+        (
+            "module",
+            "bar",
+            "module",
+            "__init__",
+            "__init__.py",
+            "from .. import module_b",
+        ),
         (
             "module",
             "baz",
@@ -67,6 +120,7 @@ def test_python(tree_sitter_generator, python_repo_suite_path):
             "__init__.py",
             "from ..module_a.submodule import *",
         ),
+        ("module", "baz", "module", "quux", "quux.py", "from .quux import *"),
         (
             "module",
             "run",
@@ -186,7 +240,7 @@ def test_javascript(tree_sitter_generator, javascript_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 5
+    assert len(edges) == 6
     relations = [
         (
             edge[0].type.value,
@@ -199,6 +253,7 @@ def test_javascript(tree_sitter_generator, javascript_repo_suite_path):
         for edge in edges
     ]
     assert relations == [
+        ("module", "ajax", "module", None, "ajax-loader.jade", "./ajax-loader.jade"),
         ("module", "app", "module", "mathUtils", "mathUtils.js", "./mathUtils"),
         ("module", "index", "module", "utilA", "utilA.js", "./utils/utilA"),
         ("module", "index", "module", "utilB", "utilB.js", "./utils/utilB"),
@@ -346,7 +401,7 @@ def test_ruby(tree_sitter_generator, ruby_repo_suite_path):
     D = tree_sitter_generator.generate(repository)
     edges = D.get_related_edges(EdgeRelation.Imports)
     assert edges
-    assert len(edges) == 4
+    assert len(edges) == 5
     relations = [
         (
             edge[0].type.value,
@@ -360,6 +415,7 @@ def test_ruby(tree_sitter_generator, ruby_repo_suite_path):
     ]
     assert relations == [
         ("module", "another_helper", "module", "helper", "helper.rb", "'helper'"),
+        ("module", "bar", "module", "baz", "baz.rb", "'lib_foo/baz.rb'"),
         ("module", "main", "module", "helper", "helper.rb", "'lib/helper'"),
         (
             "module",
