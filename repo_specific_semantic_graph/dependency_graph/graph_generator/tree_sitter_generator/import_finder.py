@@ -233,8 +233,8 @@ Regex pattern to find all the imports in a code. The captured import name should
 REGEX_FIND_IMPORT_PATTERN = {
     Language.Lua: r"^\s*(?!--).*(?:require|dofile|loadfile)\s*\((.+)\)$",
     Language.R: r"^\s*(?<!#)(?:source)\s*\((.+)\)$",
-    # Language.Bash: r"^\s*(?<!#)(?:\.|source|bash|zsh|ksh|csh|dash)\s+[\"\']?([^\"\s]+)[\"\']?",
-    # Language.Swift: r"^\s*(?!\/\/|\/\*).*?\bimport\s+(?:typealias|struct|class|enum|protocol|let|var|func\s+)?(.+?)(?:\s*;)?$",
+    Language.Bash: r"^\s*(?<!#)(?:\.|source|bash|zsh|ksh|csh|dash)\s+[\"\']?([^\"\s]+)[\"\']?",
+    Language.Swift: r"^\s*(?!\/\/|\/\*).*?\bimport\s+(?:typealias|struct|class|enum|protocol|let|var|func\s+)?(.+?)(?:\s*;)?$",
 }
 
 
