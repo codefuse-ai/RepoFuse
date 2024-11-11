@@ -279,7 +279,6 @@ class ImportResolver:
         ), "import_symbol_node type is not import_statement or import_from_statement"
 
         resolver = Resolver(self.repo.repo_path, importer_file_path)
-        source_path = str(importer_file_path)
         resolved_path_list = []
         is_from_import = import_symbol_node.type == "import_from_statement"
         parsed_items = analyze_import_statement(import_symbol_node.text, is_from_import)
@@ -295,7 +294,7 @@ class ImportResolver:
             else:
                 name = module_name
 
-            imp = ImportStatement(name, asname, is_from_import, is_star, source_path)
+            imp = ImportStatement(name, asname, is_from_import, is_star, None)
 
             try:
                 resolved_path = resolver.resolve_import(imp)

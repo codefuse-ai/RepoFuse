@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -67,22 +68,20 @@ class Resolver:
             # relative to the importing file path.
             filename = str((self.current_directory / filename).resolve())
 
-        try_filename = try_short_filename = True
-
-        # if not short_name:
-        #     try_filename = True
-        #     try_short_filename = False
-        # elif item.source:
-        #     # If the import has a source path, we can use it to eliminate
-        #     # filenames that don't match.
-        #     source_filename, _ = os.path.splitext(item.source)
-        #     dirname, basename = os.path.split(source_filename)
-        #     if basename == "__init__":
-        #         source_filename = dirname
-        #     try_filename = source_filename.endswith(filename)
-        #     try_short_filename = not try_filename
-        # else:
-        #     try_filename = try_short_filename = True
+        if not short_name:
+            try_filename = True
+            try_short_filename = False
+        elif item.source:
+            # If the import has a source path, we can use it to eliminate
+            # filenames that don't match.
+            source_filename, _ = os.path.splitext(item.source)
+            dirname, basename = os.path.split(source_filename)
+            if basename == "__init__":
+                source_filename = dirname
+            try_filename = source_filename.endswith(filename)
+            try_short_filename = not try_filename
+        else:
+            try_filename = try_short_filename = True
 
         try_filename_files = set()
         try_short_filename_files = set()
