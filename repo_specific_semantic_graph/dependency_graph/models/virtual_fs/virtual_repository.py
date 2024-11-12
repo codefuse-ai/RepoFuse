@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Iterable, List
+from typing import List
 
 from fs.memoryfs import MemoryFS
 
@@ -27,9 +27,8 @@ class VirtualRepository(Repository):
         for file_path, content in virtual_files:
             # Strip the leading slash on the file path
             p = VirtualPath(self.fs, self.repo_path / file_path.lstrip("/"))
-            # Only add files with supported suffixes to the repository to save memory usage
-            if p.suffix in self.code_file_extensions[language]:
-                p.parent.mkdir(parents=True, exist_ok=True)
-                p.write_text(content)
+            # Create all files in the file system
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(content)
 
         super().__init__(self.repo_path, language)

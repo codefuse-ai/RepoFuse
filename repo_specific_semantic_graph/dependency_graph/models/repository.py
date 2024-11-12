@@ -50,20 +50,18 @@ class Repository:
         else:
             self.repo_path = repo_path.expanduser().absolute().resolve()
 
-        self.language = language
-
         if self.repo_path.is_file():
             raise NotADirectoryError(f"Repo path {self.repo_path} is not a directory")
 
         if not self.repo_path.exists():
             raise FileNotFoundError(f"Repo path {self.repo_path} does not exist")
 
-        if self.language not in self.code_file_extensions:
-            raise ValueError(
-                f"Language {self.language} is not supported to get code files"
-            )
+        if language not in self.code_file_extensions:
+            raise ValueError(f"Language {language} is not supported to get code files")
 
         self._files: List[Path] = []
+        # This will trigger the computation of files
+        self.language = language
 
         # try:
         #     self._git_repo = Repo(repo_path)
@@ -71,14 +69,18 @@ class Repository:
         #     # The repo is not a git repo, just ignore
         #     pass
 
+    def _compute_files(self) -> List[Path]:
+        """Compute the files based on the current language."""
+
         # Loop through the file extensions
+        files = []
         for extension in self.code_file_extensions[self.language]:
             # Use rglob() with a pattern to match the file extension
             rglob_file_list = self.repo_path.rglob(f"*{extension}")
             rglob_file_list = [file for file in rglob_file_list if file.is_file()]
 
-            # Get the git-ignored files
-            ignored_files = []
+            # # Get the git-ignored files
+            # ignored_files = []
 
             # if self._git_repo:
             #     try:
@@ -96,16 +98,32 @@ class Repository:
             #     except GitCommandError:
             #         pass
 
-            # Add the files to the set filtering out git-ignored files
-            self._files.extend(
-                [file for file in rglob_file_list if str(file) not in ignored_files]
-            )
+            # # Add the files to the set filtering out git-ignored files
+            # self._files.extend(
+            #     [file for file in rglob_file_list if str(file) not in ignored_files]
+            # )
+
+            files.extend(rglob_file_list)  # Add all found files
+        return list(set(files))  # Remove duplicates
 
     @property
     def files(self) -> List[Path]:
-        return list(set(self._files))
+        if not self._files:  # Compute files if they haven't been computed yet
+            self._files = self._compute_files()
+        return self._files
+
+    @property
+    def language(self) -> Language:
+        return self._language
+
+    @language.setter
+    def language(self, value: Language):
+        if value not in self.code_file_extensions:
+            raise ValueError(f"Language {value} is not supported.")
+        self._language = value
+        self._files = self._compute_files()  # Recompute files based on new language
 
     @files.setter
     def files(self, file_paths: Iterable[Path]):
         """Setter to update the files in the repository."""
-        self._files = list(file_paths)
+        self._files = list(set(file_paths))  # Remove duplicates
