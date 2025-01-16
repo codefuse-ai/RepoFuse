@@ -6,7 +6,7 @@ authors = []
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = ">=3.7,<4.0"
 gitpython = "^3.1.40"
 networkx = ">=2.6.0"
 jedi = "^0.19.1"
@@ -27,7 +27,7 @@ priority = "primary"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
-black = "^23.12.1"
+black = "^23.3.0"
 pytest-unordered = "^0.5.2"
 
 [build-system]
