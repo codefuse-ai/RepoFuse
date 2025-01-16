@@ -2,12 +2,11 @@ import json
 import sys
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, Callable, Optional, Tuple, List, Set
+from typing import Callable, Iterable, List, Optional, Set, Tuple
 
 import networkx as nx
-
 from dependency_graph.models import PathLike, VirtualPath
-from dependency_graph.models.graph_data import Node, Edge, EdgeRelation, NodeType
+from dependency_graph.models.graph_data import Edge, EdgeRelation, Node, NodeType
 from dependency_graph.models.language import Language
 from dependency_graph.utils.digraph import lexicographical_cyclic_topological_sort
 from dependency_graph.utils.intervals import find_innermost_interval
@@ -236,6 +235,7 @@ class DependencyGraphContextRetriever:
         start_line: int,
         *relations: EdgeRelation,
     ) -> Optional[List[Tuple[Node, Node, Edge]]]:
+        file_path = self._Path(file_path)
         node = self._get_innermost_node_by_line(file_path, start_line)
         related_edge_list = self.graph.get_related_edges_by_node(
             node,
@@ -270,6 +270,7 @@ class DependencyGraphContextRetriever:
         - The in node should be located in the repo and be cross-file
         - The out node should be in the same file
         """
+        file_path = self._Path(file_path)
         # Don't feel guilty, self.graph.get_edges is cached!
         edge_list = self.graph.get_edges(
             edge_filter=lambda in_node, out_node, edge: self.is_node_from_cross_file(
@@ -296,6 +297,7 @@ class DependencyGraphContextRetriever:
         It will return the cross-file definition of the innermost scope(func/class) located between the start_line.
         Usually it is the out-node we are interested in.
         """
+        file_path = self._Path(file_path)
         edge_list = []
 
         related_edge_list = self.get_related_edges_by_innermost_node_between_line(
@@ -360,6 +362,7 @@ class DependencyGraphContextRetriever:
         It will return the cross-file usage of the innermost scope(func/class) located between the start_line.
         Usually it is the out-node we are interested in.
         """
+        file_path = self._Path(file_path)
         related_edge_list = self.get_related_edges_by_innermost_node_between_line(
             file_path,
             start_line,
@@ -392,6 +395,7 @@ class DependencyGraphContextRetriever:
         """
         Get all related edges of a file and return them
         """
+        file_path = self._Path(file_path)
         return self.graph.get_edges(
             edge_filter=lambda in_node, out_node, edge: self.is_node_from_in_file(
                 in_node, file_path
